@@ -448,7 +448,7 @@
       justify-content:flex-end;
     }
 
-    /* -------- Manual-style Briefing (white page like the image) -------- */
+    /* -------- Manual-style Briefing -------- */
     .manualPage{
       background:#ffffff;
       color:#000;
@@ -545,7 +545,49 @@
     }
     .manualDot li{ margin:4px 0; }
 
-    /* make manual page fit iPad better */
+    /* Home Flight Plan image card */
+    .fpWrap{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .fpActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .fpFrame{
+      border:1px solid var(--line);
+      border-radius:14px;
+      background: rgba(0,0,0,.22);
+      padding:10px;
+      min-height:220px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      overflow:hidden;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.02);
+    }
+    .fpImg{
+      width:100%;
+      height:100%;
+      max-height:520px;
+      object-fit:contain;
+      border-radius:10px;
+      display:none;
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+    .fpPlaceholder{
+      color:var(--muted);
+      font-size:13px;
+      text-align:center;
+      line-height:1.45;
+      padding:16px;
+    }
+
     @media (max-width: 1100px){
       .shell{ grid-template-columns: 1fr; }
       .sidebar{ flex-direction:row; align-items:center; }
@@ -594,7 +636,7 @@
 
       <div class="sidebarFooter">
         iPad • Offline Ready<br/>
-        Manual Exact
+        Flight Plan Pin
       </div>
     </aside>
 
@@ -623,6 +665,32 @@
       <!-- HOME -->
       <section class="view" id="view-home">
         <div class="home">
+          <!-- NEW: Flight Plan Screenshot pinned -->
+          <div class="card" style="grid-column: 1 / -1;">
+            <div>
+              <h2>Flight Plan (Pinned)</h2>
+              <p>Faça upload de um screenshot da primeira página do plano de voo para consulta rápida na Home. Funciona offline.</p>
+            </div>
+
+            <div class="fpWrap" style="margin-top:12px;">
+              <div class="fpActions">
+                <input id="fpFile" type="file" accept="image/*" style="display:none" />
+                <button class="btn primary" id="fpUploadBtn">Upload image</button>
+                <button class="btn danger" id="fpRemoveBtn">Remove</button>
+                <span class="muted" id="fpStatus">No image uploaded.</span>
+              </div>
+
+              <div class="fpFrame" id="fpFrame">
+                <img id="fpImg" class="fpImg" alt="Flight Plan Screenshot" />
+                <div id="fpPlaceholder" class="fpPlaceholder">
+                  Nenhuma imagem ainda.<br/>
+                  Use <b>Upload image</b> e selecione uma foto da sua galeria.<br/>
+                  Dica: tire um print da página inicial do plano de voo.
+                </div>
+              </div>
+            </div>
+          </div>
+
           <div class="card">
             <div>
               <h2>Departure</h2>
@@ -821,7 +889,7 @@
     </div>
   </div>
 
-  <!-- MODAL: Briefing Reference (EXACT wording + manual-like formatting) -->
+  <!-- MODAL: Briefing Reference -->
   <div class="backdrop" id="briefBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
       <header>
@@ -913,6 +981,27 @@
 
       <div class="modal-footer">
         <button class="btn primary" id="briefClose2">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Flight Plan full screen -->
+  <div class="backdrop" id="fpBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="fpTitle" style="width:min(1200px,100%);">
+      <header>
+        <div class="title">
+          <h1 id="fpTitle">Flight Plan (Pinned)</h1>
+          <div class="sub">Tap outside to close</div>
+        </div>
+        <button class="btn small" id="fpClose">Close</button>
+      </header>
+      <div class="modal-body" style="display:flex;align-items:center;justify-content:center;background:#0a0c0e;">
+        <img id="fpFullImg" alt="Flight Plan Full" style="max-width:100%;max-height:78vh;object-fit:contain;border-radius:12px;display:none;" />
+        <div id="fpFullEmpty" class="muted">No image uploaded.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn danger" id="fpRemoveBtn2">Remove</button>
+        <button class="btn primary" id="fpClose2">Close</button>
       </div>
     </div>
   </div>
@@ -1233,7 +1322,7 @@
     try{
       const obj = JSON.parse(raw);
       if(!obj || typeof obj.time !== "string") return null;
-      return obj.time; // "HH:MM"
+      return obj.time;
     } catch { return null; }
   }
 
@@ -1327,6 +1416,7 @@
     if(e.key === "Escape"){
       closeBrief();
       closeModalFn();
+      closeFpModal();
     }
   });
 
@@ -1338,6 +1428,200 @@
     if(!btn) return;
     btn.addEventListener("click", ()=> alert("Placeholder — next step we build this page/tool."));
   });
+
+  // =======================
+  // Flight Plan Pinned Image
+  // =======================
+  const FP_DB = "flightbag_db_v1";
+  const FP_STORE = "kv";
+  const FP_KEY = "flightplan_image";
+  const FP_FALLBACK_KEY = "flightbag_flightplan_image_fallback";
+
+  const fpFile = document.getElementById("fpFile");
+  const fpUploadBtn = document.getElementById("fpUploadBtn");
+  const fpRemoveBtn = document.getElementById("fpRemoveBtn");
+  const fpStatus = document.getElementById("fpStatus");
+  const fpImg = document.getElementById("fpImg");
+  const fpPlaceholder = document.getElementById("fpPlaceholder");
+
+  // Fullscreen modal
+  const fpBackdrop = document.getElementById("fpBackdrop");
+  const fpClose = document.getElementById("fpClose");
+  const fpClose2 = document.getElementById("fpClose2");
+  const fpRemoveBtn2 = document.getElementById("fpRemoveBtn2");
+  const fpFullImg = document.getElementById("fpFullImg");
+  const fpFullEmpty = document.getElementById("fpFullEmpty");
+
+  function openFpModal(){
+    if(!fpBackdrop) return;
+    fpBackdrop.classList.add("show");
+    fpBackdrop.setAttribute("aria-hidden","false");
+    syncFpFullModal();
+  }
+  function closeFpModal(){
+    if(!fpBackdrop) return;
+    fpBackdrop.classList.remove("show");
+    fpBackdrop.setAttribute("aria-hidden","true");
+  }
+  if(fpBackdrop) fpBackdrop.addEventListener("click", (e)=>{ if(e.target === fpBackdrop) closeFpModal(); });
+  if(fpClose) fpClose.addEventListener("click", closeFpModal);
+  if(fpClose2) fpClose2.addEventListener("click", closeFpModal);
+
+  if(fpUploadBtn && fpFile){
+    fpUploadBtn.addEventListener("click", ()=> fpFile.click());
+  }
+
+  if(fpFile){
+    fpFile.addEventListener("change", async ()=>{
+      const file = fpFile.files && fpFile.files[0];
+      if(!file) return;
+      if(!file.type || !file.type.startsWith("image/")){
+        alert("Please select an image.");
+        return;
+      }
+
+      // Convert to Blob (we already have file as Blob)
+      try{
+        await idbSet(FP_KEY, file);
+        localStorage.removeItem(FP_FALLBACK_KEY);
+        await renderPinnedFlightPlan();
+        fpFile.value = "";
+      } catch(err){
+        // Fallback to DataURL in localStorage (may fail if too large)
+        try{
+          const dataUrl = await fileToDataURL(file);
+          localStorage.setItem(FP_FALLBACK_KEY, dataUrl);
+          await renderPinnedFlightPlan();
+          fpFile.value = "";
+        } catch(e){
+          alert("Could not save image (storage limit). Try a smaller screenshot.");
+        }
+      }
+    });
+  }
+
+  async function removePinnedFlightPlan(){
+    try{ await idbDel(FP_KEY); } catch {}
+    try{ localStorage.removeItem(FP_FALLBACK_KEY); } catch {}
+    await renderPinnedFlightPlan();
+  }
+
+  if(fpRemoveBtn) fpRemoveBtn.addEventListener("click", removePinnedFlightPlan);
+  if(fpRemoveBtn2) fpRemoveBtn2.addEventListener("click", removePinnedFlightPlan);
+
+  if(fpImg){
+    fpImg.addEventListener("click", ()=>{
+      openFpModal();
+    });
+  }
+
+  function setPinnedUI(hasImage){
+    if(!fpImg || !fpPlaceholder || !fpStatus) return;
+    fpImg.style.display = hasImage ? "block" : "none";
+    fpPlaceholder.style.display = hasImage ? "none" : "block";
+    fpStatus.textContent = hasImage ? "Image saved on device (offline)." : "No image uploaded.";
+  }
+
+  async function renderPinnedFlightPlan(){
+    // 1) try IndexedDB
+    let blob = null;
+    try{
+      blob = await idbGet(FP_KEY);
+    } catch {}
+    if(blob && blob instanceof Blob){
+      const url = URL.createObjectURL(blob);
+      fpImg.src = url;
+      setPinnedUI(true);
+      syncFpFullModal(url);
+      return;
+    }
+
+    // 2) fallback localStorage dataURL
+    const dataUrl = localStorage.getItem(FP_FALLBACK_KEY);
+    if(dataUrl){
+      fpImg.src = dataUrl;
+      setPinnedUI(true);
+      syncFpFullModal(dataUrl);
+      return;
+    }
+
+    // none
+    fpImg.removeAttribute("src");
+    setPinnedUI(false);
+    syncFpFullModal(null);
+  }
+
+  function syncFpFullModal(src){
+    const currentSrc = src || (fpImg && fpImg.src ? fpImg.src : null);
+    if(!fpFullImg || !fpFullEmpty) return;
+    if(currentSrc){
+      fpFullImg.src = currentSrc;
+      fpFullImg.style.display = "block";
+      fpFullEmpty.style.display = "none";
+    } else {
+      fpFullImg.removeAttribute("src");
+      fpFullImg.style.display = "none";
+      fpFullEmpty.style.display = "block";
+    }
+  }
+
+  // IndexedDB helpers (store Blob safely)
+  function idbOpen(){
+    return new Promise((resolve, reject)=>{
+      if(!("indexedDB" in window)) return reject(new Error("IndexedDB not supported"));
+      const req = indexedDB.open(FP_DB, 1);
+      req.onupgradeneeded = () => {
+        const db = req.result;
+        if(!db.objectStoreNames.contains(FP_STORE)){
+          db.createObjectStore(FP_STORE);
+        }
+      };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => reject(req.error);
+    });
+  }
+
+  async function idbSet(key, value){
+    const db = await idbOpen();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(FP_STORE, "readwrite");
+      tx.objectStore(FP_STORE).put(value, key);
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  }
+
+  async function idbGet(key){
+    const db = await idbOpen();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(FP_STORE, "readonly");
+      const req = tx.objectStore(FP_STORE).get(key);
+      req.onsuccess = () => { db.close(); resolve(req.result || null); };
+      req.onerror = () => { db.close(); reject(req.error); };
+    });
+  }
+
+  async function idbDel(key){
+    const db = await idbOpen();
+    return new Promise((resolve, reject)=>{
+      const tx = db.transaction(FP_STORE, "readwrite");
+      tx.objectStore(FP_STORE).delete(key);
+      tx.oncomplete = () => { db.close(); resolve(true); };
+      tx.onerror = () => { db.close(); reject(tx.error); };
+    });
+  }
+
+  function fileToDataURL(file){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(reader.error);
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // init pinned image
+  renderPinnedFlightPlan();
 </script>
 </body>
 </html>
