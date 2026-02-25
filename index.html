@@ -28,7 +28,7 @@
       color:var(--txt);
     }
 
-    /* --- App shell: left vertical menu + content --- */
+    /* --- App shell --- */
     .shell{
       height:100vh;
       display:grid;
@@ -37,7 +37,7 @@
       padding:12px;
     }
 
-    /* Left vertical menu */
+    /* Sidebar */
     .sidebar{
       background: linear-gradient(180deg, rgba(10,12,14,.98), rgba(10,12,14,.85));
       border:1px solid var(--line);
@@ -106,7 +106,7 @@
       line-height:1.3;
     }
 
-    /* Content area */
+    /* Content */
     .content{
       min-height:0;
       display:flex;
@@ -114,7 +114,7 @@
       gap:12px;
     }
 
-    /* --- TOP WIDGET BAR (sticky) --- */
+    /* Top widgets */
     .topWidgets{
       position: sticky;
       top: 12px;
@@ -184,7 +184,7 @@
     }
     .view.active{ display:block; }
 
-    /* Home cards */
+    /* Home */
     .home{
       height:100%;
       min-height:0;
@@ -218,7 +218,7 @@
       line-height:1.4;
     }
 
-    /* Generic button */
+    /* Buttons */
     .btn{
       background:var(--btn);
       color:var(--txt);
@@ -232,6 +232,38 @@
     .btn.primary{ border-color:#2a3a4a; }
     .btn.danger{ border-color:#5a2424; color:#ffd4d4; }
     .btn.small{ padding:9px 12px; min-height:36px; border-radius:999px; }
+    .btn.block{ width:100%; }
+
+    /* Tool buttons row */
+    .toolRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    .toolBtn{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:10px 12px;
+      min-height:40px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.02);
+      color:var(--txt);
+      cursor:pointer;
+      user-select:none;
+      box-shadow: 0 6px 18px rgba(0,0,0,.22);
+    }
+    .toolBtn:hover{ background: rgba(255,255,255,.04); }
+    .toolBtn.primary{ border-color:#2a3a4a; }
+    .toolBtn .ic{ font-size:16px; line-height:1; opacity:.95; }
+    .toolBtn .lb{
+      font-size:12px;
+      letter-spacing:.6px;
+      text-transform:uppercase;
+      color:var(--muted);
+    }
 
     .pill{
       display:inline-flex;
@@ -246,7 +278,7 @@
       font-size:12px;
     }
 
-    /* Departure layout (3 columns) */
+    /* Departure layout */
     .app{
       height:100%;
       min-height:0;
@@ -380,7 +412,7 @@
       font-size:14px;
     }
 
-    /* Modal */
+    /* Modal / overlay */
     .backdrop{
       position:fixed; inset:0;
       background: rgba(0,0,0,.6);
@@ -392,35 +424,128 @@
     }
     .backdrop.show{ display:flex; }
     .modal{
-      width:min(620px, 100%);
+      width:min(980px, 100%);
+      max-height: 92vh;
       background: #0c0f12;
       border:1px solid var(--line);
       border-radius:16px;
       overflow:hidden;
       box-shadow: var(--shadow);
+      display:flex;
+      flex-direction:column;
     }
     .modal header{ border-bottom:1px solid var(--line); }
-    .modal-body{ padding:14px; display:grid; gap:10px; }
-    .row{ display:grid; grid-template-columns: 1fr 180px; gap:10px; }
-    .field label{ display:block; font-size:12px; color:var(--muted); margin:0 0 6px; }
-    .field input, .field select{
-      width:100%;
-      border-radius:12px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      color:var(--txt);
+    .modal-body{
       padding:12px;
-      min-height:44px;
-      outline:none;
+      overflow:auto;
+      min-height:0;
     }
     .modal-footer{
-      padding:12px 14px;
+      padding:10px 12px;
       border-top:1px solid var(--line);
       display:flex;
       gap:10px;
       justify-content:flex-end;
     }
 
+    /* -------- Manual-style Briefing (white page like the image) -------- */
+    .manualPage{
+      background:#ffffff;
+      color:#000;
+      border-radius:12px;
+      padding:16px 16px 14px;
+      border:1px solid #222;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .manualH{
+      font-weight:700;
+      font-size:22px;
+      letter-spacing:.2px;
+      margin:0 0 10px;
+    }
+
+    .manualBox{
+      border:2px solid #222;
+      margin:0 0 14px;
+    }
+    .manualBox .bar{
+      background:#9c9c9c;
+      color:#000;
+      font-weight:700;
+      text-align:center;
+      padding:8px 10px;
+      border-bottom:2px solid #222;
+      font-size:18px;
+    }
+    .manualBox .content{
+      padding:10px 12px 12px;
+      color:#000;
+    }
+    .manualBox .content .lead{
+      font-weight:700;
+      margin:0 0 8px;
+      font-size:16px;
+    }
+    .manualBullets{
+      margin:0;
+      padding-left:22px;
+      font-size:16px;
+      line-height:1.35;
+    }
+    .manualBullets li{ margin:6px 0; }
+    .manualBullets li b{ font-weight:700; }
+    .subBullets{
+      margin-top:6px;
+      padding-left:26px;
+      list-style-type: circle;
+      font-size:16px;
+    }
+
+    .manualTable{
+      width:100%;
+      border-collapse:collapse;
+      font-size:16px;
+      color:#000;
+      border:2px solid #222;
+    }
+    .manualTable th{
+      background:#9c9c9c;
+      border:2px solid #222;
+      padding:8px 10px;
+      text-align:center;
+      font-weight:700;
+    }
+    .manualTable td{
+      border:2px solid #222;
+      padding:10px 12px;
+      vertical-align:middle;
+    }
+    .stepCol{
+      width:80px;
+      text-align:center;
+      font-weight:400;
+    }
+    .centerText{
+      text-align:center;
+    }
+    .note{
+      font-style:italic;
+      font-weight:700;
+      margin-left:8px;
+      white-space:nowrap;
+    }
+    .plan{
+      font-weight:700;
+    }
+    .plan .note{ margin-left:8px; }
+    .manualDot{
+      margin:6px 0 0;
+      padding-left:22px;
+      line-height:1.4;
+    }
+    .manualDot li{ margin:4px 0; }
+
+    /* make manual page fit iPad better */
     @media (max-width: 1100px){
       .shell{ grid-template-columns: 1fr; }
       .sidebar{ flex-direction:row; align-items:center; }
@@ -436,7 +561,7 @@
 
 <body>
   <div class="shell">
-    <!-- LEFT VERTICAL MENU -->
+    <!-- LEFT MENU -->
     <aside class="sidebar">
       <div class="logo">FlightBag</div>
 
@@ -469,13 +594,13 @@
 
       <div class="sidebarFooter">
         iPad • Offline Ready<br/>
-        Widgets + Countdown
+        Manual Exact
       </div>
     </aside>
 
     <!-- CONTENT -->
     <main class="content">
-      <!-- TOP STICKY WIDGETS (UTC + Departure input + Countdown) -->
+      <!-- TOP WIDGETS -->
       <div class="topWidgets" id="topWidgets">
         <div class="left">
           <span class="chip">UTC <span class="mono" id="utcMini">--:--:--</span></span>
@@ -533,12 +658,12 @@
       <!-- DEPARTURE -->
       <section class="view" id="view-departure">
         <div class="app">
-          <!-- Left: Pre-flight -->
+          <!-- Left: Pre-flight checklist -->
           <section class="panel">
             <header>
               <div class="title">
                 <h1>Departure • Pre-Flight</h1>
-                <div class="sub">Toque para Done • Edit/Add disponível</div>
+                <div class="sub">Tap: Done • Edit/Add</div>
               </div>
               <div class="pill" id="progressPill">0/0 done</div>
             </header>
@@ -552,27 +677,41 @@
             <div class="list" id="list"></div>
           </section>
 
-          <!-- Center -->
+          <!-- Center: Tools -->
           <section class="panel">
             <header>
               <div class="title">
-                <h1>Departure • Sections</h1>
-                <div class="sub">Próximo: Fuel / Briefing / Security / Timers</div>
+                <h1>Departure • Tools</h1>
+                <div class="sub">Quick access</div>
               </div>
             </header>
 
             <div class="widget">
-              <div class="muted">Vamos adicionar botões aqui (estilo seu mockup):</div>
-              <ul style="margin:10px 0 0; color:var(--muted); line-height:1.7;">
-                <li><b>Fuel</b>: SG, figures, cross-checks</li>
-                <li><b>Briefing</b>: threats/mitigations, runway, WX</li>
-                <li><b>Security</b>: check form</li>
-                <li><b>Timers</b>: departure time + countdown</li>
-              </ul>
+              <div class="toolRow">
+                <button class="toolBtn primary" id="briefingBtn" title="Departure Briefing Reference">
+                  <span class="ic">📋</span><span class="lb">Briefing</span>
+                </button>
+
+                <button class="toolBtn" id="fuelBtn" title="Fuel (placeholder)">
+                  <span class="ic">⛽</span><span class="lb">Fuel</span>
+                </button>
+
+                <button class="toolBtn" id="securityBtn" title="Security (placeholder)">
+                  <span class="ic">🔒</span><span class="lb">Security</span>
+                </button>
+
+                <button class="toolBtn" id="timersBtn" title="Timers (placeholder)">
+                  <span class="ic">⏱️</span><span class="lb">Timers</span>
+                </button>
+              </div>
+
+              <div class="muted" style="margin-top:10px;">
+                (Fuel/Security/Timers são placeholders — adicionamos em seguida.)
+              </div>
             </div>
           </section>
 
-          <!-- Right: Scratchpad only -->
+          <!-- Right: Utilities -->
           <section class="panel">
             <header>
               <div class="title">
@@ -648,20 +787,25 @@
       </header>
 
       <div class="modal-body">
-        <div class="field">
-          <label for="nameInput">Item name</label>
-          <input id="nameInput" type="text" maxlength="40" placeholder="e.g., Fuel Figures - CTL & ENG" />
+        <div class="field" style="margin-bottom:10px;">
+          <label for="nameInput" style="display:block;font-size:12px;color:var(--muted);margin:0 0 6px;">Item name</label>
+          <input id="nameInput" type="text" maxlength="40"
+                 style="width:100%;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--txt);padding:12px;min-height:44px;outline:none;"
+                 placeholder="e.g., Fuel Figures - CTL & ENG" />
         </div>
 
-        <div class="row">
+        <div class="row" style="display:grid;grid-template-columns:1fr 180px;gap:10px;">
           <div class="field">
-            <label for="noteInput">Note (optional)</label>
-            <input id="noteInput" type="text" maxlength="60" placeholder="e.g., Compare with OFP / EFB" />
+            <label for="noteInput" style="display:block;font-size:12px;color:var(--muted);margin:0 0 6px;">Note (optional)</label>
+            <input id="noteInput" type="text" maxlength="60"
+                   style="width:100%;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--txt);padding:12px;min-height:44px;outline:none;"
+                   placeholder="e.g., Compare with OFP / EFB" />
           </div>
 
           <div class="field">
-            <label for="colorSelect">Color</label>
-            <select id="colorSelect">
+            <label for="colorSelect" style="display:block;font-size:12px;color:var(--muted);margin:0 0 6px;">Color</label>
+            <select id="colorSelect"
+                    style="width:100%;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.03);color:var(--txt);padding:12px;min-height:44px;outline:none;">
               <option value="green">Green (done/ok)</option>
               <option value="cyan">Cyan (flow)</option>
               <option value="orange">Orange (consider)</option>
@@ -673,6 +817,102 @@
       <div class="modal-footer">
         <button class="btn danger" id="deleteBtn" style="display:none;">Delete</button>
         <button class="btn primary" id="saveBtn">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Briefing Reference (EXACT wording + manual-like formatting) -->
+  <div class="backdrop" id="briefBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
+      <header>
+        <div class="title">
+          <h1 id="briefTitle">Briefing Guide</h1>
+          <div class="sub">Copied from manual (exact wording)</div>
+        </div>
+        <button class="btn small" id="briefClose">Close</button>
+      </header>
+
+      <div class="modal-body">
+        <div class="manualPage">
+          <div class="manualH">3.2&nbsp;&nbsp;DEPARTURE BRIEFING</div>
+
+          <div class="manualBox">
+            <div class="bar">Prior to Departure Briefing</div>
+            <div class="content">
+              <div class="lead">Prior to departure briefing, both Flight Crew members shall review and verify the following:</div>
+              <ul class="manualBullets">
+                <li>All relevant data / NOTAMS / OM Part C / Notes on Jeppesen Charts / SCB / FCOM Bulletins / OEBs;</li>
+                <li>Aerodrome Special Procedures (e.g. NADP);</li>
+                <li>FMS setup checked against <b>Departure Clearance</b>, <b>OFP</b> and <b>Published Procedures</b> by PF and PM:
+                  <ul class="subBullets">
+                    <li>From <b>FMS</b>: Runway / SID / Transition / Altitude and Speed Restrictions</li>
+                    <li>From <b>Chart</b>: SID Designator / Initial Altitude or Level / Altitude and Speed Restrictions / Transition Altitude / Terrain</li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <table class="manualTable">
+            <thead>
+              <tr>
+                <th style="width:90px;">Step</th>
+                <th>PF</th>
+                <th>PM</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="stepCol">1</td>
+                <td class="centerText" colspan="2">Set Distraction-Free Environment <span class="note">NOTE 1</span></td>
+              </tr>
+
+              <tr>
+                <td class="stepCol">2a</td>
+                <td class="centerText">Cross-check (FMS / Charts / Clearance)</td>
+                <td>
+                  <span class="plan">PLAN</span><span class="note">NOTE 2</span>
+                  <ul class="manualDot">
+                    <li>T/O RWY (Intersection)</li>
+                    <li>SID Designator / NADP</li>
+                    <li>First Cleared ALT / Speed Restriction</li>
+                    <li>MSA / MORA / MOCA for planned trajectory</li>
+                  </ul>
+                </td>
+              </tr>
+
+              <tr>
+                <td class="stepCol">2b</td>
+                <td>
+                  <span class="plan">PLAN</span><span class="note">NOTE 2</span>
+                  <ul class="manualDot">
+                    <li>Taxi Route Options and Hotspots</li>
+                    <li>Takeoff Emergency Briefing</li>
+                    <li>EOSID</li>
+                    <li>Return / Diversion Considerations</li>
+                    <li>MEL</li>
+                    <li>Special Operations / Supplementary<br/>Procedure</li>
+                  </ul>
+                </td>
+                <td class="centerText">Cross-check (FMS / Charts / Clearance)</td>
+              </tr>
+
+              <tr>
+                <td class="stepCol">3</td>
+                <td class="centerText" colspan="2">THREATS / MITIGATIONS <span class="note">NOTE 3</span></td>
+              </tr>
+
+              <tr>
+                <td class="stepCol">4</td>
+                <td class="centerText" colspan="2">MISCELLANEOUS <span class="note">NOTE 4</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn primary" id="briefClose2">Close</button>
       </div>
     </div>
   </div>
@@ -742,7 +982,7 @@
     notesArea.addEventListener("input", () => localStorage.setItem(NOTES_KEY, notesArea.value));
   }
 
-  // ---------------- Pre-Flight checklist (Departure) ----------------
+  // ---------------- Pre-Flight checklist ----------------
   const STORAGE_KEY = "flightbag_departure_preflight_items_v1";
 
   const FACTORY_DEFAULTS = [
@@ -947,7 +1187,7 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
   }
 
-  // ---------------- Departure Countdown (UTC) + top widget ----------------
+  // ---------------- Departure Countdown (UTC) ----------------
   const DEP_KEY = "flightbag_departure_time_utc_v1";
   const depTimeUtc = document.getElementById("depTimeUtc");
   const setDepTimeBtn = document.getElementById("setDepTimeBtn");
@@ -1026,7 +1266,6 @@
     let depDate = buildUtcDateForToday(depSec);
     const now = new Date();
 
-    // If already passed today (UTC), assume next day
     if(depDate.getTime() < now.getTime()){
       depDate = new Date(depDate.getTime() + 24*3600*1000);
     }
@@ -1041,7 +1280,7 @@
       if(!depTimeUtc) return;
       const t = depTimeUtc.value;
       if(!t){ depTimeUtc.focus(); return; }
-      const normalized = t.slice(0,5); // HH:MM
+      const normalized = t.slice(0,5);
       saveDepartureTime(normalized);
       updateCountdown();
     });
@@ -1055,12 +1294,50 @@
     });
   }
 
-  // init from storage
   const savedDep = loadDepartureTime();
   if(depTimeUtc && savedDep) depTimeUtc.value = savedDep;
 
   setInterval(updateCountdown, 1000);
   updateCountdown();
+
+  // ---------------- Briefing modal ----------------
+  const briefingBtn = document.getElementById("briefingBtn");
+  const briefBackdrop = document.getElementById("briefBackdrop");
+  const briefClose = document.getElementById("briefClose");
+  const briefClose2 = document.getElementById("briefClose2");
+
+  function openBrief(){
+    if(!briefBackdrop) return;
+    briefBackdrop.classList.add("show");
+    briefBackdrop.setAttribute("aria-hidden","false");
+  }
+  function closeBrief(){
+    if(!briefBackdrop) return;
+    briefBackdrop.classList.remove("show");
+    briefBackdrop.setAttribute("aria-hidden","true");
+  }
+
+  if(briefingBtn) briefingBtn.addEventListener("click", openBrief);
+  if(briefClose) briefClose.addEventListener("click", closeBrief);
+  if(briefClose2) briefClose2.addEventListener("click", closeBrief);
+  if(briefBackdrop) briefBackdrop.addEventListener("click", (e)=>{ if(e.target === briefBackdrop) closeBrief(); });
+
+  // ESC for desktop testing
+  window.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape"){
+      closeBrief();
+      closeModalFn();
+    }
+  });
+
+  // Placeholder buttons (no-op)
+  const fuelBtn = document.getElementById("fuelBtn");
+  const securityBtn = document.getElementById("securityBtn");
+  const timersBtn = document.getElementById("timersBtn");
+  [fuelBtn, securityBtn, timersBtn].forEach(btn=>{
+    if(!btn) return;
+    btn.addEventListener("click", ()=> alert("Placeholder — next step we build this page/tool."));
+  });
 </script>
 </body>
 </html>
