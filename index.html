@@ -2634,7 +2634,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.20</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.21</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -8051,38 +8051,5 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   }
 })();
 </script>
-</body>
-</html>
-
-`;
-
-  function ensureFrameLoaded(){
-    if(frame && !frame.dataset.loaded){
-      frame.srcdoc = fdpSrcdoc;
-      frame.dataset.loaded = "1";
-    }
-  }
-
-  if(openBtn){
-    openBtn.addEventListener("click", function(){
-      ensureFrameLoaded();
-      if(backdrop) backdrop.classList.add("show");
-    });
-  }
-
-  if(closeBtn){
-    closeBtn.addEventListener("click", function(){
-      if(backdrop) backdrop.classList.remove("show");
-    });
-  }
-
-  if(backdrop){
-    backdrop.addEventListener("click", function(e){
-      if(e.target === backdrop) backdrop.classList.remove("show");
-    });
-  }
-})();
-</script>
-
 </body>
 </html>
