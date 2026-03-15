@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -2635,7 +2635,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.24</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.25</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -6945,12 +6945,7 @@ function populatePaFromOfp(){
       clearCacheBtn.textContent = "Clearing…";
       clearCacheBtn.disabled = true;
       try{
-        // 1) Unregister all service workers
-        if("serviceWorker" in navigator){
-          const regs = await navigator.serviceWorker.getRegistrations();
-          for(const reg of regs){ await reg.unregister(); }
-        }
-        // 2) Delete all caches
+        // 1) Delete all caches (SW kept registered â€” offline works after reload)
         if("caches" in window){
           const keys = await caches.keys();
           await Promise.all(keys.map(k => caches.delete(k)));
