@@ -2263,6 +2263,22 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       overflow:auto !important;
     }
 
+    #arrPaBackdrop .modal{
+      width:min(1240px, 96vw) !important;
+    }
+
+    #arrPaBackdrop .grid2{
+      display:grid !important;
+      grid-template-columns: minmax(320px, .95fr) minmax(360px, 1.15fr) !important;
+      gap:12px !important;
+      align-items:start !important;
+    }
+
+    #arrPaBackdrop .manualPage{
+      max-height:70vh !important;
+      overflow:auto !important;
+    }
+
     #dgBackdrop .modal,
     #dgAddBackdrop .modal,
     #dgDrillBackdrop .modal,
@@ -2422,6 +2438,9 @@ body.day-theme .scratchColorBtn[data-color="default"]{
         grid-template-columns:minmax(0,1fr) 300px !important;
       }
       #paBackdrop .grid2{
+        grid-template-columns:1fr !important;
+      }
+      #arrPaBackdrop .grid2{
         grid-template-columns:1fr !important;
       }
       .grid2{
@@ -2625,9 +2644,9 @@ body.day-theme .panel{
       <section class="sideTools" id="sideToolsArrival">
         <div class="sideToolsTitle">Arrival Tools</div>
         <div class="toolStack">
-          <div class="muted" style="padding:10px; font-size:12px; line-height:1.35;">
-            Tools will be added here.
-          </div>
+          <button class="toolBtnSide" id="arrPaBtnSide">
+            <span class="ic">&#128226;</span><span class="lb">Arrival P.A</span>
+          </button>
         </div>
       </section>
 
@@ -2641,7 +2660,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.26</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.27</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3194,6 +3213,120 @@ body.day-theme .panel{
       </div>
       <footer>
         <button class="btn" id="paClose2">Close</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- MODAL: Arrival P.A -->
+  <div class="backdrop" id="arrPaBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="arrPaTitle" style="width:min(1100px,100%);">
+      <header>
+        <div class="title">
+          <h1 id="arrPaTitle">Arrival P.A</h1>
+          <div class="sub">Top of Descent Passenger Address Generator</div>
+        </div>
+        <button class="btn small" id="arrPaClose">Close</button>
+      </header>
+      <div class="modal-body" style="position:relative; overflow:hidden;">
+        <!-- Arrival PA Guide: hidden overlay, shown via PA Guide button -->
+        <div id="arrPaGuideOverlay" style="display:none; position:absolute; inset:0; z-index:10; background:var(--panel); border-radius:18px; overflow:auto; padding:16px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div><strong style="font-size:15px;">Arrival PA Guide</strong><div class="muted" style="font-size:12px;margin-top:2px;">Qatar Airways reference model</div></div>
+            <button class="btn small" id="arrPaGuideClose">Close</button>
+          </div>
+          <div class="manualPage" style="padding:12px;">
+            <div style="font-family: Arial, Helvetica, sans-serif; font-weight:700; font-size:16px; margin:0 0 10px;">TOP OF DESCENT PA â€” REFERENCE</div>
+            <p style="font-style:italic; color:var(--muted); font-size:13px; margin:0 0 14px;">Qatar Airways official reference model (Top of Descent)</p>
+            <div style="background:rgba(255,255,255,.04); border-radius:10px; padding:14px; font-size:13px; line-height:1.8; white-space:pre-wrap;">Good [morning/afternoon/evening] ladies and gentlemen. This is your [Captain/First Officer] speaking.
+
+We trust you're having a pleasant flight with us today.
+
+We'll be starting our descent into [CITY], [AIRPORT NAME] shortly, and should be landing in about [MINUTES] minutes.
+
+It's a [WEATHER] day today, with a temperature of [TEMP] [&deg;C/&deg;F].
+
+The local time now is [TIME].
+
+On behalf of all the crew, we wish you a very pleasant stay in [CITY], or a smooth onward journey.
+
+It's been our pleasure having you on board today.
+
+Thank you for choosing Qatar Airways, The World's Best Airline.</div>
+          </div>
+        </div>
+        <!-- End Arrival PA Guide overlay -->
+
+        <div class="panel" style="padding:12px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+            <div class="muted" style="font-size:12px;">Fill fields</div>
+            <button class="btn small" id="arrPaGuideOpenBtn">PA Guide</button>
+          </div>
+
+          <div class="formGrid">
+            <label class="field" style="grid-column:1/-1;">
+              <span>Destination (ICAO or IATA)</span>
+              <input id="arrPaDest" type="text" placeholder="DOH / OTHH" />
+            </label>
+            <div id="arrPaCity" style="grid-column:1/-1; font-size:11px; color:var(--muted); padding:2px 4px; min-height:16px; border-radius:6px; background:var(--chipBg); display:none;"></div>
+
+            <label class="field">
+              <span>Speaker</span>
+              <select id="arrPaSpeaker">
+                <option value="Captain">Captain</option>
+                <option value="First Officer">First Officer</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Greeting</span>
+              <select id="arrPaGreeting">
+                <option value="Good morning">Good morning</option>
+                <option value="Good afternoon">Good afternoon</option>
+                <option value="Good evening">Good evening</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span>Minutes to landing</span>
+              <input id="arrPaMinutes" type="number" placeholder="25" min="1" max="180" />
+            </label>
+
+            <label class="field">
+              <span>Weather</span>
+              <input id="arrPaWeather" type="text" placeholder="sunny" />
+            </label>
+
+            <label class="field">
+              <span>Temperature</span>
+              <input id="arrPaTemp" type="number" placeholder="28" />
+            </label>
+
+            <label class="field">
+              <span>Temp unit</span>
+              <select id="arrPaTempUnit">
+                <option value="&#176;C">&#176;C</option>
+                <option value="&#176;F">&#176;F</option>
+              </select>
+            </label>
+
+            <label class="field" style="grid-column:1/-1;">
+              <span>Local time at destination</span>
+              <input id="arrPaTime" type="text" placeholder="02:30 PM" />
+            </label>
+          </div>
+
+          <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+            <button class="btn small primary" id="arrPaGenerateBtn">Generate</button>
+            <button class="btn small" id="arrPaCopyBtn">Copy</button>
+            <button class="btn small danger" id="arrPaClearBtn">Clear</button>
+          </div>
+
+          <div class="muted" style="font-size:12px;margin:12px 0 6px;">Generated P.A</div>
+          <div id="arrPaOutput" class="manualPage" style="white-space:pre-wrap; padding:12px; max-height:42vh; overflow:auto;"></div>
+        </div>
+      </div>
+      <footer>
+        <button class="btn" id="arrPaClose2">Close</button>
       </footer>
     </div>
   </div>
@@ -6933,8 +7066,195 @@ function populatePaFromOfp(){
   [paFlightNumber, paDeckCrew, paCsd, paCs, paFlightTime, paCruiseAlt, paDest].forEach(el => {
     if(el) el.addEventListener("input", savePa);
   });
-  if(paStarlink) paStarlink.addEventListener("change", savePa);
 
+  // ==================== ARRIVAL PA ====================
+  const ARR_PA_KEY = "flightbag_arrpa_v1";
+
+  const arrPaBackdrop    = document.getElementById("arrPaBackdrop");
+  const arrPaClose       = document.getElementById("arrPaClose");
+  const arrPaClose2      = document.getElementById("arrPaClose2");
+  const arrPaDest        = document.getElementById("arrPaDest");
+  const arrPaCity        = document.getElementById("arrPaCity");
+  const arrPaSpeaker     = document.getElementById("arrPaSpeaker");
+  const arrPaGreeting    = document.getElementById("arrPaGreeting");
+  const arrPaMinutes     = document.getElementById("arrPaMinutes");
+  const arrPaWeather     = document.getElementById("arrPaWeather");
+  const arrPaTemp        = document.getElementById("arrPaTemp");
+  const arrPaTempUnit    = document.getElementById("arrPaTempUnit");
+  const arrPaTime        = document.getElementById("arrPaTime");
+  const arrPaGenerateBtn = document.getElementById("arrPaGenerateBtn");
+  const arrPaCopyBtn     = document.getElementById("arrPaCopyBtn");
+  const arrPaClearBtn    = document.getElementById("arrPaClearBtn");
+  const arrPaOutput      = document.getElementById("arrPaOutput");
+  const arrPaBtnSide     = document.getElementById("arrPaBtnSide");
+
+  function getArrLocalTime(ianaTimezone) {
+    if (!ianaTimezone) return '';
+    try {
+      const now = new Date();
+      return new Intl.DateTimeFormat('en-US', {
+        timeZone: ianaTimezone,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      }).format(now);
+    } catch(e) { return ''; }
+  }
+
+  function saveArrPa() {
+    try {
+      localStorage.setItem(ARR_PA_KEY, JSON.stringify({
+        dest:     arrPaDest?.value     || "",
+        speaker:  arrPaSpeaker?.value  || "Captain",
+        greeting: arrPaGreeting?.value || "Good morning",
+        minutes:  arrPaMinutes?.value  || "",
+        weather:  arrPaWeather?.value  || "",
+        temp:     arrPaTemp?.value     || "",
+        tempUnit: arrPaTempUnit?.value || "\u00b0C",
+        time:     arrPaTime?.value     || ""
+      }));
+    } catch(e) {}
+  }
+
+  function loadArrPaSaved() {
+    try {
+      const d = JSON.parse(localStorage.getItem(ARR_PA_KEY) || "{} ");
+      if (d.dest     && arrPaDest)     arrPaDest.value     = d.dest;
+      if (d.speaker  && arrPaSpeaker)  arrPaSpeaker.value  = d.speaker;
+      if (d.greeting && arrPaGreeting) arrPaGreeting.value = d.greeting;
+      if (d.minutes  && arrPaMinutes)  arrPaMinutes.value  = d.minutes;
+      if (d.weather  && arrPaWeather)  arrPaWeather.value  = d.weather;
+      if (d.temp     && arrPaTemp)     arrPaTemp.value     = d.temp;
+      if (d.tempUnit && arrPaTempUnit) arrPaTempUnit.value = d.tempUnit;
+      if (d.time     && arrPaTime)     arrPaTime.value     = d.time;
+    } catch(e) {}
+  }
+
+  function updateArrPaCity() {
+    const code = arrPaDest?.value || "";
+    const info = lookupAirport(code);
+    if (info && arrPaCity) {
+      arrPaCity.textContent = "\u2708\ufe0f " + info.c + " \u2014 " + info.n + (info.i ? " (" + info.i + ")" : "") + "  " + (info.gmt || "");
+      arrPaCity.style.display = "block";
+      if (info.tz && arrPaTime && !arrPaTime.value) {
+        arrPaTime.value = getArrLocalTime(info.tz);
+      }
+    } else if (arrPaCity) {
+      arrPaCity.textContent = "";
+      arrPaCity.style.display = "none";
+    }
+  }
+
+  function openArrPa() {
+    if (!arrPaBackdrop) return;
+    loadArrPaSaved();
+    try {
+      const h = new Date().getHours();
+      if (arrPaGreeting) {
+        if (h < 12) arrPaGreeting.value = "Good morning";
+        else if (h < 18) arrPaGreeting.value = "Good afternoon";
+        else arrPaGreeting.value = "Good evening";
+      }
+    } catch(e) {}
+    updateArrPaCity();
+    arrPaBackdrop.classList.add("show");
+    arrPaBackdrop.setAttribute("aria-hidden", "false");
+  }
+
+  function closeArrPa() {
+    if (!arrPaBackdrop) return;
+    arrPaBackdrop.classList.remove("show");
+    arrPaBackdrop.setAttribute("aria-hidden", "true");
+  }
+
+  function generateArrPa() {
+    if (!arrPaOutput) return;
+    const dest    = (arrPaDest?.value || "").trim();
+    const info    = lookupAirport(dest);
+    const city    = info ? info.c : (dest || "[CITY]");
+    const airport = info ? info.n : "[AIRPORT NAME]";
+    const speaker = (arrPaSpeaker?.value || "Captain").trim();
+    const greet   = (arrPaGreeting?.value || "Good morning").trim();
+    const mins    = String(arrPaMinutes?.value || "[MINUTES]").trim() || "[MINUTES]";
+    const weather = (arrPaWeather?.value || "[WEATHER]").trim() || "[WEATHER]";
+    const temp    = String(arrPaTemp?.value || "[TEMP]").trim() || "[TEMP]";
+    const unit    = (arrPaTempUnit?.value || "\u00b0C").trim();
+    const time    = (arrPaTime?.value || "[TIME]").trim() || "[TIME]";
+
+    const out = [];
+    out.push(greet + " ladies and gentlemen. This is your " + speaker + " speaking.");
+    out.push("");
+    out.push("We trust you\u2019re having a pleasant flight with us today.");
+    out.push("");
+    out.push("We\u2019ll be starting our descent into " + city + ", " + airport + " shortly, and should be landing in about " + mins + " minutes.");
+    out.push("");
+    out.push("It\u2019s a " + weather + " day today, with a temperature of " + temp + " " + unit + ".");
+    out.push("");
+    out.push("The local time now is " + time + ".");
+    out.push("");
+    out.push("On behalf of all the crew, we wish you a very pleasant stay in " + city + ", or a smooth onward journey.");
+    out.push("");
+    out.push("It\u2019s been our pleasure having you on board today.");
+    out.push("");
+    out.push("Thank you for choosing Qatar Airways, The World\u2019s Best Airline.");
+    arrPaOutput.textContent = out.join("\n");
+  }
+
+  async function copyArrPa() {
+    try {
+      const txt = arrPaOutput?.textContent || "";
+      if (!txt) return;
+      await navigator.clipboard.writeText(txt);
+      if (arrPaCopyBtn) {
+        const old = arrPaCopyBtn.textContent;
+        arrPaCopyBtn.textContent = "Copied";
+        setTimeout(() => { arrPaCopyBtn.textContent = old; }, 900);
+      }
+    } catch(e) {}
+  }
+
+  function clearArrPa() {
+    if (arrPaDest)     arrPaDest.value     = "";
+    if (arrPaSpeaker)  arrPaSpeaker.value  = "Captain";
+    if (arrPaGreeting) arrPaGreeting.value = "Good morning";
+    if (arrPaMinutes)  arrPaMinutes.value  = "";
+    if (arrPaWeather)  arrPaWeather.value  = "";
+    if (arrPaTemp)     arrPaTemp.value     = "";
+    if (arrPaTempUnit) arrPaTempUnit.value = "\u00b0C";
+    if (arrPaTime)     arrPaTime.value     = "";
+    if (arrPaOutput)   arrPaOutput.textContent = "";
+    if (arrPaCity)   { arrPaCity.textContent = ""; arrPaCity.style.display = "none"; }
+    try { localStorage.removeItem(ARR_PA_KEY); } catch(e) {}
+  }
+
+  if (arrPaBtnSide)     arrPaBtnSide.addEventListener("click", openArrPa);
+  if (arrPaClose)       arrPaClose.addEventListener("click", closeArrPa);
+  if (arrPaClose2)      arrPaClose2.addEventListener("click", closeArrPa);
+  if (arrPaBackdrop)    arrPaBackdrop.addEventListener("click", (e) => { if (e.target === arrPaBackdrop) closeArrPa(); });
+  if (arrPaGenerateBtn) arrPaGenerateBtn.addEventListener("click", generateArrPa);
+  if (arrPaCopyBtn)     arrPaCopyBtn.addEventListener("click", copyArrPa);
+  if (arrPaClearBtn)    arrPaClearBtn.addEventListener("click", clearArrPa);
+
+  if (arrPaDest) {
+    arrPaDest.addEventListener("input",  () => { updateArrPaCity(); saveArrPa(); });
+    arrPaDest.addEventListener("change", () => { updateArrPaCity(); saveArrPa(); });
+  }
+
+  [arrPaSpeaker, arrPaGreeting, arrPaMinutes, arrPaWeather, arrPaTemp, arrPaTempUnit, arrPaTime].forEach(el => {
+    if (el) el.addEventListener("input",  saveArrPa);
+    if (el) el.addEventListener("change", saveArrPa);
+  });
+
+  const arrPaGuideOverlay = document.getElementById("arrPaGuideOverlay");
+  const arrPaGuideOpenBtn = document.getElementById("arrPaGuideOpenBtn");
+  const arrPaGuideClose   = document.getElementById("arrPaGuideClose");
+  if (arrPaGuideOpenBtn) arrPaGuideOpenBtn.addEventListener("click", () => {
+    if (arrPaGuideOverlay) arrPaGuideOverlay.style.display = "block";
+  });
+  if (arrPaGuideClose) arrPaGuideClose.addEventListener("click", () => {
+    if (arrPaGuideOverlay) arrPaGuideOverlay.style.display = "none";
+  });
+  // ==================== END ARRIVAL PA ====================
   // Placeholder tool buttons
   const fuelBtnSide = document.getElementById("fuelBtnSide");
   const securityBtnSide = document.getElementById("securityBtnSide");
