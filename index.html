@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -2302,6 +2302,134 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     #briefBackdrop .modal{
       width:min(760px,96vw) !important;
     }
+    /* â”€â”€ RVSM Cruise Level Table â”€â”€ */
+    #rvsmBtn{
+      display:flex; align-items:center; gap:6px;
+      padding:6px 11px;
+      border-radius:999px;
+      background:rgba(40,195,255,.13);
+      border:1px solid rgba(40,195,255,.30);
+      color:var(--cyan);
+      font-size:11px; font-weight:800; letter-spacing:.08em;
+      cursor:pointer;
+      white-space:nowrap;
+      transition:background .18s, border-color .18s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    #rvsmBtn:hover{ background:rgba(40,195,255,.22); border-color:rgba(40,195,255,.55); }
+    #rvsmBtn svg{ flex-shrink:0; }
+
+    #rvsmBackdrop{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.72);
+      backdrop-filter:blur(6px);
+      -webkit-backdrop-filter:blur(6px);
+      display:none; align-items:center; justify-content:center;
+      z-index:10200;
+      padding:16px;
+    }
+    #rvsmBackdrop.show{ display:flex; }
+    #rvsmModal{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:18px;
+      width:min(540px,96vw);
+      max-height:88vh;
+      display:flex; flex-direction:column;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+      overflow:hidden;
+    }
+    #rvsmModal .rvsmHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px 10px;
+      border-bottom:1px solid var(--line);
+      flex-shrink:0;
+    }
+    #rvsmModal .rvsmTitle{
+      font-size:13px; font-weight:900; letter-spacing:.08em; color:var(--cyan);
+    }
+    #rvsmModal .rvsmSub{
+      font-size:11px; color:var(--muted); margin-top:2px;
+    }
+    #rvsmSelected{
+      display:none;
+      margin:10px 16px 0;
+      padding:10px 14px;
+      background:rgba(40,195,255,.10);
+      border:1px solid rgba(40,195,255,.35);
+      border-radius:10px;
+      flex-shrink:0;
+    }
+    #rvsmSelected .rvsmSelDir{
+      font-size:10px; font-weight:800; letter-spacing:.12em; color:var(--cyan); text-transform:uppercase; margin-bottom:4px;
+    }
+    #rvsmSelected .rvsmSelVals{
+      display:flex; gap:18px; align-items:baseline;
+    }
+    #rvsmSelected .rvsmSelM{
+      font-size:26px; font-weight:900; color:var(--txt); letter-spacing:.02em;
+    }
+    #rvsmSelected .rvsmSelF{
+      font-size:16px; font-weight:700; color:var(--muted);
+    }
+    #rvsmSelected .rvsmClearSel{
+      font-size:10px; color:var(--muted); cursor:pointer; margin-top:4px; text-decoration:underline;
+    }
+    #rvsmTableWrap{
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      flex:1;
+      padding:10px 12px 16px;
+    }
+    .rvsmTable{
+      width:100%; border-collapse:collapse;
+      font-size:12.5px;
+    }
+    .rvsmTable thead tr th{
+      padding:7px 6px;
+      font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--muted);
+      border-bottom:1px solid var(--line);
+      text-align:center;
+    }
+    .rvsmTable thead tr th.rvsmDirHdr{
+      color:var(--txt); font-size:11px; letter-spacing:.10em;
+      padding-bottom:4px;
+    }
+    .rvsmTable .rvsmDivider td{
+      border-left:2px solid var(--line);
+      padding:0;
+    }
+    .rvsmTable tbody tr{
+      cursor:pointer;
+      transition:background .12s;
+      border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    .rvsmTable tbody tr:nth-child(even){ background:rgba(255,255,255,.025); }
+    .rvsmTable tbody tr:hover{ background:rgba(40,195,255,.09); }
+    .rvsmTable tbody tr.rvsm-active{
+      background:rgba(40,195,255,.18) !important;
+      box-shadow:inset 3px 0 0 var(--cyan);
+    }
+    .rvsmTable tbody tr.rvsm-active td{ color:var(--cyan); font-weight:800; }
+    .rvsmTable td{
+      padding:8px 6px;
+      text-align:center;
+      color:var(--txt);
+      letter-spacing:.02em;
+    }
+    .rvsmTable td.rvsmSepCol{
+      width:1px; padding:0;
+      background:var(--line);
+    }
+    /* day theme */
+    body.day-theme #rvsmBtn{
+      background:rgba(10,111,182,.12);
+      border-color:rgba(10,111,182,.35);
+      color:var(--cyan);
+    }
+    body.day-theme .rvsmTable tbody tr.rvsm-active{ background:rgba(10,111,182,.15) !important; }
+    body.day-theme .rvsmTable tbody tr.rvsm-active td{ color:var(--cyan); }
     #briefBackdrop .depBriefScroll{
       overflow-y:auto;
       max-height:72vh;
@@ -2614,6 +2742,12 @@ body.day-theme .panel{
         </div>
       </div>
     </div>
+    <div class="fsRight">
+      <button id="rvsmBtn" title="RVSM Cruise Levels" aria-label="RVSM Cruise Level Table">
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="1" y1="2.5" x2="14" y2="2.5"/><line x1="1" y1="6" x2="14" y2="6"/><line x1="1" y1="9.5" x2="14" y2="9.5"/><line x1="1" y1="13" x2="14" y2="13"/></svg>
+        FL
+      </button>
+    </div>
   </header>
 
 <div class="shell">
@@ -2682,7 +2816,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.31</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.32</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3109,6 +3243,46 @@ body.day-theme .panel{
   </div>
 
   <!-- MODAL: Briefing Reference -->
+  <!-- â”€â”€ RVSM Cruise Level Table Modal â”€â”€ -->
+  <div id="rvsmBackdrop" role="dialog" aria-modal="true" aria-label="RVSM Cruise Levels">
+    <div id="rvsmModal">
+      <div class="rvsmHead">
+        <div>
+          <div class="rvsmTitle">â–² RVSM CRUISE LEVELS</div>
+          <div class="rvsmSub">Westbound &amp; Eastbound â€” tap a level to select</div>
+        </div>
+        <button class="btn small" id="rvsmClose">Close</button>
+      </div>
+      <div id="rvsmSelected">
+        <div class="rvsmSelDir" id="rvsmSelDir">â€”</div>
+        <div class="rvsmSelVals">
+          <span class="rvsmSelM" id="rvsmSelM">â€”</span>
+          <span class="rvsmSelF" id="rvsmSelF">â€”</span>
+        </div>
+        <div class="rvsmClearSel" id="rvsmClearSel">Clear selection</div>
+      </div>
+      <div id="rvsmTableWrap">
+        <table class="rvsmTable">
+          <thead>
+            <tr>
+              <th colspan="2" class="rvsmDirHdr">Westbound</th>
+              <th class="rvsmSepCol"></th>
+              <th colspan="2" class="rvsmDirHdr">Eastbound</th>
+            </tr>
+            <tr>
+              <th>Metres</th><th>Feet</th>
+              <th class="rvsmSepCol"></th>
+              <th>Metres</th><th>Feet</th>
+            </tr>
+          </thead>
+          <tbody id="rvsmTbody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- end RVSM Modal -->
+
   <div class="backdrop" id="briefBackdrop" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="briefTitle">
       <header>
@@ -4563,6 +4737,128 @@ listEl.appendChild(row);
 
 
 // ---------------- Briefing modal (tools in sidebar) ----------------
+  // â”€â”€ RVSM Cruise Level Table â”€â”€
+  (function(){
+    const RVSM_DATA = [
+      // [wb_m, wb_ft, eb_m, eb_ft]
+      [13100,43000,12500,41100],
+      [12200,40100,11900,39100],
+      [11600,38100,11300,37100],
+      [11000,36100,10700,35100],
+      [10400,34100,10100,33100],
+      [9800,32100,9500,31100],
+      [9200,30100,8900,29100],
+      [8400,27600,8100,26600],
+      [7800,25600,7500,24600],
+      [7200,23600,6900,22600],
+      [6600,21700,6300,20700],
+      [6000,19700,5700,18700],
+      [5400,17700,5100,16700],
+      [4800,15700,4500,14800],
+      [4200,13800,3900,12800],
+      [3600,11800,3300,10800],
+      [3000,9800,2700,8900],
+      [2400,7900,2100,6900],
+      [1800,5900,1500,4900],
+      [1200,3900,900,3000],
+      [600,2000,550,1800],
+    ];
+    const fmt = n => n.toLocaleString('en-US');
+    const RVSM_KEY = "flightbag_rvsm_sel_v1";
+    let rvsmSel = null; // {dir:'W'|'E', idx:number}
+
+    // Build table
+    const tbody = document.getElementById("rvsmTbody");
+    if(tbody){
+      RVSM_DATA.forEach((row, i) => {
+        const tr = document.createElement("tr");
+        tr.dataset.idx = i;
+        tr.dataset.dir = "W";
+        tr.innerHTML = `<td>${fmt(row[0])}</td><td>${fmt(row[1])}</td><td class="rvsmSepCol"></td><td>${fmt(row[2])}</td><td>${fmt(row[3])}</td>`;
+        // Click: left half = Westbound, right half = Eastbound
+        tr.addEventListener("click", function(e){
+          const tds = tr.querySelectorAll("td");
+          const rect = tr.getBoundingClientRect();
+          const midX = rect.left + rect.width / 2;
+          const dir = e.clientX < midX ? "W" : "E";
+          selectRvsm(i, dir);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+
+    function selectRvsm(idx, dir){
+      // Toggle off if same
+      if(rvsmSel && rvsmSel.idx === idx && rvsmSel.dir === dir){
+        clearRvsmSel(); return;
+      }
+      rvsmSel = {idx, dir};
+      try{ localStorage.setItem(RVSM_KEY, JSON.stringify(rvsmSel)); }catch(e){}
+      renderRvsmSel();
+    }
+
+    function clearRvsmSel(){
+      rvsmSel = null;
+      try{ localStorage.removeItem(RVSM_KEY); }catch(e){}
+      renderRvsmSel();
+    }
+
+    function renderRvsmSel(){
+      const tbody2 = document.getElementById("rvsmTbody");
+      const selBox = document.getElementById("rvsmSelected");
+      const selDir = document.getElementById("rvsmSelDir");
+      const selM   = document.getElementById("rvsmSelM");
+      const selF   = document.getElementById("rvsmSelF");
+      if(!tbody2) return;
+      // Remove all active
+      tbody2.querySelectorAll("tr.rvsm-active").forEach(r=>r.classList.remove("rvsm-active"));
+      if(!rvsmSel){ if(selBox) selBox.style.display="none"; return; }
+      const row = RVSM_DATA[rvsmSel.idx];
+      if(!row){ if(selBox) selBox.style.display="none"; return; }
+      const tr = tbody2.querySelector(`tr[data-idx="${rvsmSel.idx}"]`);
+      if(tr) tr.classList.add("rvsm-active");
+      const isW = rvsmSel.dir === "W";
+      if(selBox){ selBox.style.display="block"; }
+      if(selDir) selDir.textContent = (isW ? "â—€ Westbound" : "â–¶ Eastbound");
+      if(selM) selM.textContent = fmt(isW ? row[0] : row[2]) + " m";
+      if(selF) selF.textContent = fmt(isW ? row[1] : row[3]) + " ft";
+    }
+
+    // Restore saved
+    try{
+      const saved = JSON.parse(localStorage.getItem(RVSM_KEY)||"null");
+      if(saved && typeof saved.idx==="number") rvsmSel = saved;
+    }catch(e){}
+
+    // Open / close
+    const backdrop = document.getElementById("rvsmBackdrop");
+    const rvsmBtn  = document.getElementById("rvsmBtn");
+    const rvsmClose= document.getElementById("rvsmClose");
+    const rvsmClearSelBtn = document.getElementById("rvsmClearSel");
+
+    function openRvsm(){
+      if(!backdrop) return;
+      renderRvsmSel();
+      // Scroll selected row into view
+      if(rvsmSel){
+        setTimeout(()=>{
+          const tr = document.querySelector(`#rvsmTbody tr[data-idx="${rvsmSel.idx}"]`);
+          if(tr) tr.scrollIntoView({block:"center", behavior:"smooth"});
+        }, 80);
+      }
+      backdrop.classList.add("show");
+    }
+    function closeRvsm(){
+      if(!backdrop) return;
+      backdrop.classList.remove("show");
+    }
+    if(rvsmBtn)  rvsmBtn.addEventListener("click", openRvsm);
+    if(rvsmClose) rvsmClose.addEventListener("click", closeRvsm);
+    if(backdrop) backdrop.addEventListener("click", e=>{ if(e.target===backdrop) closeRvsm(); });
+    if(rvsmClearSelBtn) rvsmClearSelBtn.addEventListener("click", e=>{ e.stopPropagation(); clearRvsmSel(); });
+  })();
+  // â”€â”€ end RVSM â”€â”€
+
   const briefBackdrop = document.getElementById("briefBackdrop");
   const briefClose = document.getElementById("briefClose");
   const briefClose2 = document.getElementById("briefClose2");
