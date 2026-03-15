@@ -61,6 +61,7 @@
     }
 
     *{box-sizing:border-box}
+    html,body{height:100%;overflow:hidden;overscroll-behavior:none;}
     body{
       margin:0;
       font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
@@ -2634,11 +2635,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-<<<<<<< HEAD
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.22</div>
-=======
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.21</div>
->>>>>>> 7f73f83872c8261eb1162cd994851d7a083d7b4f
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.23</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -2923,17 +2920,11 @@ body.day-theme .panel{
 
       <!-- CRUISE -->
       <section class="view" id="view-cruise">
-        <div class="depGrid">
-          <!-- CENTER -->
+        <div class="departureGrid">
+                    <!-- CENTER -->
           <section class="panel">
             <div class="toolbar">
               <div class="ttl">Cruise</div>
-              <div class="muted">Cruise phase checklist</div>
-            </div>
-            <div class="fpPanelBody" style="padding:12px;">
-              <div class="muted" style="line-height:1.5;">
-                Use the checklist on the right. Add/remove items as needed.
-              </div>
             </div>
           </section>
 
@@ -2953,17 +2944,11 @@ body.day-theme .panel{
       
       <!-- ARRIVAL -->
       <section class="view" id="view-arrival">
-        <div class="depGrid">
-          <!-- CENTER -->
+        <div class="departureGrid">
+                    <!-- CENTER -->
           <section class="panel">
             <div class="toolbar">
               <div class="ttl">Arrival</div>
-              <div class="muted">Editable checklist (offline)</div>
-            </div>
-            <div class="fpPanelBody" style="padding:12px;">
-              <div class="muted" style="line-height:1.5;">
-                Use the checklist on the right. Add/remove items as needed.
-              </div>
             </div>
           </section>
 
