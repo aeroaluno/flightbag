@@ -2279,6 +2279,16 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       overflow:auto !important;
     }
 
+    #arrBriefBackdrop .modal{
+      width:min(760px,96vw) !important;
+    }
+    #arrBriefBackdrop .arrBriefScroll{
+      overflow-y:auto;
+      max-height:72vh;
+      padding:4px 2px 12px;
+      -webkit-overflow-scrolling:touch;
+    }
+
     #dgBackdrop .modal,
     #dgAddBackdrop .modal,
     #dgDrillBackdrop .modal,
@@ -2647,6 +2657,9 @@ body.day-theme .panel{
           <button class="toolBtnSide" id="arrPaBtnSide">
             <span class="ic">&#128226;</span><span class="lb">Arrival P.A</span>
           </button>
+          <button class="toolBtnSide" id="arrBriefBtnSide">
+            <span class="ic">&#128203;</span><span class="lb">Arr. Briefing</span>
+          </button>
         </div>
       </section>
 
@@ -2660,7 +2673,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.29</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.30</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3214,6 +3227,76 @@ body.day-theme .panel{
       <footer>
         <button class="btn" id="paClose2">Close</button>
       </footer>
+    </div>
+  </div>
+
+  <!-- MODAL: Arrival Briefing (SVG inline, ~5KB) -->
+  <div class="backdrop" id="arrBriefBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="arrBriefTitle">
+      <header>
+        <div class="title">
+          <h1 id="arrBriefTitle">3.3 Arrival Briefing</h1>
+          <div class="sub">Prior to Arrival Briefing Reference Card</div>
+        </div>
+        <button class="btn small" id="arrBriefClose">Close</button>
+      </header>
+      <div class="arrBriefScroll">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 720" style="width:100%;height:auto;display:block;" aria-label="3.3 Arrival Briefing reference">
+          <rect width="700" height="720" fill="#ffffff" rx="6"/>
+          <foreignObject x="0" y="0" width="700" height="720" overflow="visible">
+            <div xmlns="http://www.w3.org/1999/xhtml" style="font-family:Arial,Helvetica,sans-serif;font-size:10.5px;color:#111;padding:14px 14px 18px;box-sizing:border-box;width:700px;">
+              <p style="font-size:13.5px;font-weight:bold;margin:0 0 11px;letter-spacing:.3px;">3.3&nbsp;&nbsp;ARRIVAL BRIEFING</p>
+              <div style="border:1.5px solid #7a8090;margin-bottom:13px;">
+                <div style="background:#b6bfcc;padding:5px 10px;font-weight:bold;text-align:center;border-bottom:1.5px solid #7a8090;font-size:11px;">Prior to Arrival Briefing</div>
+                <div style="padding:8px 12px;">
+                  <p style="margin:0 0 5px;"><b>Prior to arrival briefing, both Flight Crew members shall review and verify the following:</b></p>
+                  <ul style="margin:0 0 0 16px;padding:0;">
+                    <li style="margin-bottom:3px;">All Relevant Data / NOTAMS / OM Part C / Notes on Jeppesen Charts / SCB / Runway Condition Report / FCOM Bulletins / OEBs;</li>
+                    <li style="margin-bottom:3px;">Aerodrome Special Procedures (e.g. CDA, Approach Speed Compliance);</li>
+                    <li style="margin-bottom:3px;">FMS setup checked against <b>Arrival Clearance, OFP</b> and <b>published procedures</b> by PF and PM:
+                      <ul style="margin:3px 0 0 16px;padding:0;">
+                        <li style="margin-bottom:2px;">From <b>FMS</b>: STAR / Transition / Type of Approach / Runway / Altitude and Speed Restrictions</li>
+                        <li>From <b>Charts</b>: ID Designators / NAVAID Type, Ident and Freq / Final App Course / Airport Elevation / Transition Level / Minimum / Altitude and Speed Restrictions</li>
+                      </ul>
+                    </li>
+                    <li>Review the stabilisation criteria altitudes.</li>
+                  </ul>
+                </div>
+              </div>
+              <table style="border-collapse:collapse;width:100%;font-size:10.5px;">
+                <colgroup><col style="width:36px"/><col style="width:332px"/><col style="width:332px"/></colgroup>
+                <tr>
+                  <th style="border:1.5px solid #7a8090;background:#b6bfcc;padding:5px 4px;text-align:center;font-size:11px;">Step</th>
+                  <th style="border:1.5px solid #7a8090;background:#b6bfcc;padding:5px 8px;text-align:center;font-size:11px;">PF</th>
+                  <th style="border:1.5px solid #7a8090;background:#b6bfcc;padding:5px 8px;text-align:center;font-size:11px;">PM</th>
+                </tr>
+                <tr>
+                  <td style="border:1.5px solid #7a8090;padding:5px 4px;text-align:center;vertical-align:middle;">1</td>
+                  <td colspan="2" style="border:1.5px solid #7a8090;padding:5px 8px;text-align:center;vertical-align:middle;">Set Distraction-Free Environment <b><i>NOTE 1</i></b></td>
+                </tr>
+                <tr>
+                  <td style="border:1.5px solid #7a8090;padding:5px 4px;text-align:center;vertical-align:middle;">2a</td>
+                  <td style="border:1.5px solid #7a8090;padding:5px 8px;vertical-align:middle;">Cross-check (FMS / Charts / Clearance)</td>
+                  <td style="border:1.5px solid #7a8090;padding:6px 8px;vertical-align:top;"><b>PLAN <i>NOTE 2</i></b><ul style="margin:3px 0 0 14px;padding:0;"><li style="margin-bottom:2px;">MORA / MOCA / MSA for planned trajectory</li><li style="margin-bottom:2px;">STAR</li><li style="margin-bottom:2px;">Type of APP</li><li style="margin-bottom:2px;">MINIMUM</li><li style="margin-bottom:2px;">G/A TRAJECTORY</li><li>Extra Fuel &amp; Time</li></ul></td>
+                </tr>
+                <tr>
+                  <td style="border:1.5px solid #7a8090;padding:5px 4px;text-align:center;vertical-align:middle;">2b</td>
+                  <td style="border:1.5px solid #7a8090;padding:6px 8px;vertical-align:top;"><b>PLAN <i>NOTE 2</i></b><ul style="margin:3px 0 0 14px;padding:0;"><li style="margin-bottom:2px;">Strategy and Guidance for APP / CDA</li><li style="margin-bottom:2px;">Landing FLAP Setting</li><li style="margin-bottom:2px;">Landing Performance</li><li style="margin-bottom:2px;">Use of Reverse</li><li style="margin-bottom:2px;">Use of Autobrake</li><li style="margin-bottom:2px;">Planned RWY Exit, Taxi-in Route Options and Hotspots</li><li style="margin-bottom:2px;">MEL</li><li>Special Operations / Supplementary Procedure</li></ul></td>
+                  <td style="border:1.5px solid #7a8090;padding:5px 8px;vertical-align:middle;">Cross-check (FMS / Charts / Clearance)</td>
+                </tr>
+                <tr>
+                  <td style="border:1.5px solid #7a8090;padding:5px 4px;text-align:center;vertical-align:middle;">3</td>
+                  <td colspan="2" style="border:1.5px solid #7a8090;padding:5px 8px;text-align:center;vertical-align:middle;">THREATS / MITIGATIONS <b><i>NOTE 3</i></b></td>
+                </tr>
+                <tr>
+                  <td style="border:1.5px solid #7a8090;padding:5px 4px;text-align:center;vertical-align:middle;">4</td>
+                  <td colspan="2" style="border:1.5px solid #7a8090;padding:5px 8px;text-align:center;vertical-align:middle;">MISCELLANEOUS <b><i>NOTE 4</i></b></td>
+                </tr>
+              </table>
+            </div>
+          </foreignObject>
+        </svg>
+      </div>
     </div>
   </div>
 
@@ -7298,6 +7381,25 @@ function parseDeckCrew(raw){
     if (arrPaGuideOverlay) arrPaGuideOverlay.style.display = "none";
   });
   // ==================== END ARRIVAL PA ====================
+
+  // ==================== ARRIVAL BRIEFING ====================
+  const arrBriefBackdrop = document.getElementById("arrBriefBackdrop");
+  const arrBriefBtnSide  = document.getElementById("arrBriefBtnSide");
+  const arrBriefClose    = document.getElementById("arrBriefClose");
+  function openArrBrief() {
+    if (!arrBriefBackdrop) return;
+    arrBriefBackdrop.classList.add("show");
+    arrBriefBackdrop.setAttribute("aria-hidden", "false");
+  }
+  function closeArrBrief() {
+    if (!arrBriefBackdrop) return;
+    arrBriefBackdrop.classList.remove("show");
+    arrBriefBackdrop.setAttribute("aria-hidden", "true");
+  }
+  if (arrBriefBtnSide) arrBriefBtnSide.addEventListener("click", openArrBrief);
+  if (arrBriefClose)   arrBriefClose.addEventListener("click", closeArrBrief);
+  if (arrBriefBackdrop) arrBriefBackdrop.addEventListener("click", (e) => { if (e.target === arrBriefBackdrop) closeArrBrief(); });
+  // ==================== END ARRIVAL BRIEFING ====================
   // Placeholder tool buttons
   const fuelBtnSide = document.getElementById("fuelBtnSide");
   const securityBtnSide = document.getElementById("securityBtnSide");
