@@ -6939,28 +6939,28 @@ function hhmmToDuration(hhmm){
 function populatePaFromOfp(){
   try{
     const d = (typeof getOfpDataSafe === "function") ? getOfpDataSafe() : (()=>{ try{return JSON.parse(localStorage.getItem("flightbag_ofp_data_v1")||"{}")}catch{return {}} })();
-    if(paFlightNumber && !String(paFlightNumber.value||"").trim()){
-      const fn = (d.flightNumber || d.flight || "").toString().trim();
-      if(fn) paFlightNumber.value = fn;
-    }
-    if(paDest && !String(paDest.value||"").trim()){
-      const _route = (d.route || d.arrIcao || "").toString().trim();
+    // Flight-specific fields: OFP ALWAYS overrides saved state
+    const fn = (d.flightNumber || d.flight || "").toString().trim();
+    if(fn && paFlightNumber) paFlightNumber.value = fn;
+
+    const _route = (d.route || d.arrIcao || "").toString().trim();
+    if(_route){
       const _rPts = _route.split(/[\/\-\s]+/).map(s=>s.trim()).filter(Boolean);
       const dest = _rPts.length > 1 ? _rPts[_rPts.length-1] : _route;
-      if(dest) paDest.value = dest;
+      if(dest && paDest) paDest.value = dest;
     }
-    if(paFlightTime && !String(paFlightTime.value||"").trim()){
-      const dur = hhmmToDuration(d.blk || d.tripTime || "");
-      if(dur) paFlightTime.value = dur;
-    }
+
+    const dur = hhmmToDuration(d.blk || d.tripTime || "");
+    if(dur && paFlightTime) paFlightTime.value = dur;
   }catch(e){}
 }
 
   function populateArrPaFromOfp(){
   try{
     const _d = (typeof getOfpDataSafe === "function") ? getOfpDataSafe() : (()=>{ try{return JSON.parse(localStorage.getItem("flightbag_ofp_data_v1")||"{}")}catch{return {}} })();
-    if(typeof arrPaDest !== "undefined" && arrPaDest && !String(arrPaDest.value||"").trim()){
-      const _r = (_d.route || _d.arrIcao || "").toString().trim();
+    // Destination: OFP ALWAYS overrides saved state
+    const _r = (_d.route || _d.arrIcao || "").toString().trim();
+    if(_r && typeof arrPaDest !== "undefined" && arrPaDest){
       const _rPts2 = _r.split(/[\/\-\s]+/).map(s=>s.trim()).filter(Boolean);
       const _arr = _rPts2.length > 1 ? _rPts2[_rPts2.length-1] : _r;
       if(_arr){ arrPaDest.value = _arr; if(typeof updateArrPaCity==="function") updateArrPaCity(); }
