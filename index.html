@@ -2660,7 +2660,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.27</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.28</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -6929,7 +6929,8 @@ function populatePaFromOfp(){
       if(fn) paFlightNumber.value = fn;
     }
     if(paDest && !String(paDest.value||"").trim()){
-      const dest = (d.arrIcao || "").toString().trim();
+      const _route = (d.route || d.arrIcao || "").toString().trim();
+      const dest = _route.includes("/") ? _route.split("/").pop().trim() : _route;
       if(dest) paDest.value = dest;
     }
     if(paFlightTime && !String(paFlightTime.value||"").trim()){
@@ -6939,7 +6940,18 @@ function populatePaFromOfp(){
   }catch(e){}
 }
 
-  function parseDeckCrew(raw){
+  function populateArrPaFromOfp(){
+  try{
+    const _d = (typeof getOfpDataSafe === "function") ? getOfpDataSafe() : (()=>{ try{return JSON.parse(localStorage.getItem("flightbag_ofp_data_v1")||"{}")}catch{return {}} })();
+    if(typeof arrPaDest !== "undefined" && arrPaDest && !String(arrPaDest.value||"").trim()){
+      const _r = (_d.route || _d.arrIcao || "").toString().trim();
+      const _arr = _r.includes("/") ? _r.split("/").pop().trim() : _r;
+      if(_arr){ arrPaDest.value = _arr; if(typeof updateArrPaCity==="function") updateArrPaCity(); }
+    }
+  }catch(e){}
+}
+
+function parseDeckCrew(raw){
     const text = (raw || "").trim();
     if(!text) return { fo:"[NAME]" };
     // Accept "CAPT / FO" but we only use FO now.
@@ -7136,7 +7148,7 @@ function populatePaFromOfp(){
     if (info && arrPaCity) {
       arrPaCity.textContent = "\u2708\ufe0f " + info.c + " \u2014 " + info.n + (info.i ? " (" + info.i + ")" : "") + "  " + (info.gmt || "");
       arrPaCity.style.display = "block";
-      if (info.tz && arrPaTime && !arrPaTime.value) {
+      if (info.tz && arrPaTime) {  // always refresh current local time
         arrPaTime.value = getArrLocalTime(info.tz);
       }
     } else if (arrPaCity) {
@@ -7156,6 +7168,13 @@ function populatePaFromOfp(){
         else arrPaGreeting.value = "Good evening";
       }
     } catch(e) {}
+    // Populate from OFP if fields empty
+    if(typeof populateArrPaFromOfp === "function") populateArrPaFromOfp();
+    // Always refresh local time (current time at destination)
+    try{
+      const _c = arrPaDest ? arrPaDest.value : "";
+      if(_c){ const _i = lookupAirport(_c); if(_i && _i.tz && arrPaTime) arrPaTime.value = getArrLocalTime(_i.tz); }
+    }catch(e){}
     updateArrPaCity();
     arrPaBackdrop.classList.add("show");
     arrPaBackdrop.setAttribute("aria-hidden", "false");
