@@ -1,11 +1,14 @@
 // sw.js - FlightBag offline
-// v1.10.25 - cache-first navigation with robust fallback
-const CACHE_NAME = "flightbag-cache-v1.10.25";
+// v1.10.26 - iOS PWA support + robust cache-first navigation
+const CACHE_NAME = "flightbag-cache-v1.10.26";
 
+// Core shell — must all be cached for offline to work
 const CORE = [
     "./",
     "./index.html",
     "./sw.js",
+    "./manifest.json",
+    "./icon.svg",
 ];
 
 const OCR_FILES = [
@@ -44,31 +47,33 @@ self.addEventListener("activate", (event) => {
 self.addEventListener("fetch", (event) => {
     const req = event.request;
 
-    // Navigation: CACHE FIRST — tries multiple keys, updates in background
+    // Navigation requests: CACHE FIRST
+    // iOS Safari needs this path to work reliably for offline PWA support
     if (req.mode === "navigate") {
         event.respondWith(
             (async () => {
                 try {
                     const cache = await caches.open(CACHE_NAME);
 
-                    // Try multiple cache keys (handles GitHub Pages root vs /index.html)
-                    const cached = await cache.match(req)
-                                || await cache.match("./index.html")
-                                || await cache.match("./")
-                                || await caches.match(req)
-                                || await caches.match("./index.html");
+                    // Try multiple keys — ignoreSearch handles ?v=timestamp redirects
+                    const cached =
+                        await cache.match(req, { ignoreSearch: true }) ||
+                        await cache.match("./index.html", { ignoreSearch: true }) ||
+                        await cache.match("./", { ignoreSearch: true }) ||
+                        await caches.match(req, { ignoreSearch: true }) ||
+                        await caches.match("./index.html", { ignoreSearch: true });
 
-                    // Stale-while-revalidate: update cache in background
+                    // Update cache silently in background (stale-while-revalidate)
                     fetch(req).then((resp) => {
                         if (resp && resp.ok) {
                             cache.put(req, resp.clone());
                             cache.put("./index.html", resp.clone());
                         }
-                    }).catch(() => {});
+                    }).catch(() => { /* offline — no update needed */ });
 
                     if (cached) return cached;
 
-                    // Nothing in cache — try network
+                    // Not cached yet — must go to network
                     const netResp = await fetch(req);
                     if (netResp.ok) {
                         cache.put(req, netResp.clone());
@@ -77,26 +82,28 @@ self.addEventListener("fetch", (event) => {
                     return netResp;
 
                 } catch (err) {
-                    // Offline and nothing cached — friendly fallback page
+                    // Offline AND nothing in cache (first ever visit) — friendly error page
                     return new Response(
-                        `<!DOCTYPE html><html lang="pt"><head><meta charset="utf-8">
+                        `<!DOCTYPE html><html lang="pt"><head>
+<meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
 <title>FlightBag</title>
 <style>
   body{margin:0;font-family:system-ui,sans-serif;background:#0f1117;color:#e2e8f0;
-       display:flex;align-items:center;justify-content:center;height:100vh;text-align:center;}
-  .box{padding:32px;max-width:360px;}
-  h2{font-size:22px;margin-bottom:8px;}
-  p{color:#94a3b8;font-size:14px;line-height:1.6;margin:0 0 8px;}
-  button{margin-top:20px;padding:12px 28px;border:none;border-radius:10px;
-         background:#3b82f6;color:#fff;font-size:15px;cursor:pointer;}
-  .icon{font-size:48px;margin-bottom:16px;}
+       display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}
+  .box{padding:32px;max-width:380px;}
+  .icon{font-size:56px;margin-bottom:20px;}
+  h2{font-size:20px;margin:0 0 12px;}
+  p{color:#94a3b8;font-size:14px;line-height:1.7;margin:0 0 8px;}
+  button{margin-top:24px;padding:14px 32px;border:none;border-radius:12px;
+         background:#3b82f6;color:#fff;font-size:16px;cursor:pointer;width:100%;}
 </style></head>
 <body><div class="box">
   <div class="icon">&#9992;</div>
   <h2>FlightBag &mdash; Sem conexao</h2>
-  <p>O app nao esta armazenado em cache neste dispositivo.</p>
-  <p>Conecte-se a internet e abra o app uma vez para ativar o modo offline.</p>
+  <p>Para usar offline, abra o app pelo menos uma vez com internet.</p>
+  <p>Se ja fez isso, tente: <strong>Settings &rsaquo; Safari &rsaquo; Clear History</strong> e reabra o app com internet.</p>
   <button onclick="location.reload()">Tentar novamente</button>
 </div></body></html>`,
                         { headers: { "Content-Type": "text/html;charset=utf-8" } }
@@ -107,7 +114,7 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    // OCR engine files: CACHE FIRST
+    // OCR engine files: CACHE FIRST (large files — always serve from cache)
     const url = req.url;
     const isOcrFile = (
         url.includes("tesseract") ||
@@ -133,7 +140,7 @@ self.addEventListener("fetch", (event) => {
 
     // All other assets: CACHE FIRST with network fallback
     event.respondWith(
-        caches.match(req).then((cached) => {
+        caches.match(req, { ignoreSearch: true }).then((cached) => {
             if (cached) return cached;
             return fetch(req).then((resp) => {
                 if (resp.ok) {
