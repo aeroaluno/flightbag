@@ -2302,132 +2302,98 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     #briefBackdrop .modal{
       width:min(760px,96vw) !important;
     }
-    /* â”€â”€ RVSM Cruise Level Table â”€â”€ */
+    /* RVSM Cruise Level Table v2 */
     #rvsmBtn{
-      display:flex; align-items:center; gap:6px;
-      padding:6px 11px;
+      display:flex; align-items:center; gap:5px;
+      padding:5px 12px;
       border-radius:999px;
       background:rgba(40,195,255,.13);
       border:1px solid rgba(40,195,255,.30);
       color:var(--cyan);
-      font-size:11px; font-weight:800; letter-spacing:.08em;
-      cursor:pointer;
-      white-space:nowrap;
+      font-size:14px; font-weight:900; letter-spacing:.06em;
+      cursor:pointer; white-space:nowrap;
       transition:background .18s, border-color .18s;
       -webkit-tap-highlight-color:transparent;
     }
     #rvsmBtn:hover{ background:rgba(40,195,255,.22); border-color:rgba(40,195,255,.55); }
     #rvsmBtn svg{ flex-shrink:0; }
-
     #rvsmBackdrop{
       position:fixed; inset:0;
-      background:rgba(0,0,0,.72);
-      backdrop-filter:blur(6px);
-      -webkit-backdrop-filter:blur(6px);
+      background:rgba(0,0,0,.78);
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
       display:none; align-items:center; justify-content:center;
-      z-index:10200;
-      padding:16px;
+      z-index:10200; padding:12px;
     }
     #rvsmBackdrop.show{ display:flex; }
     #rvsmModal{
       background:var(--panel);
       border:1px solid var(--line);
       border-radius:18px;
-      width:min(540px,96vw);
-      max-height:88vh;
+      width:min(520px,96vw);
+      max-height:93vh;
       display:flex; flex-direction:column;
-      box-shadow:0 20px 60px rgba(0,0,0,.55);
+      box-shadow:0 20px 60px rgba(0,0,0,.6);
       overflow:hidden;
     }
     #rvsmModal .rvsmHead{
       display:flex; align-items:center; justify-content:space-between;
-      padding:14px 18px 10px;
+      padding:9px 14px 8px;
       border-bottom:1px solid var(--line);
       flex-shrink:0;
     }
     #rvsmModal .rvsmTitle{
-      font-size:13px; font-weight:900; letter-spacing:.08em; color:var(--cyan);
-    }
-    #rvsmModal .rvsmSub{
-      font-size:11px; color:var(--muted); margin-top:2px;
-    }
-    #rvsmSelected{
-      display:none;
-      margin:10px 16px 0;
-      padding:10px 14px;
-      background:rgba(40,195,255,.10);
-      border:1px solid rgba(40,195,255,.35);
-      border-radius:10px;
-      flex-shrink:0;
-    }
-    #rvsmSelected .rvsmSelDir{
-      font-size:10px; font-weight:800; letter-spacing:.12em; color:var(--cyan); text-transform:uppercase; margin-bottom:4px;
-    }
-    #rvsmSelected .rvsmSelVals{
-      display:flex; gap:18px; align-items:baseline;
-    }
-    #rvsmSelected .rvsmSelM{
-      font-size:26px; font-weight:900; color:var(--txt); letter-spacing:.02em;
-    }
-    #rvsmSelected .rvsmSelF{
-      font-size:16px; font-weight:700; color:var(--muted);
-    }
-    #rvsmSelected .rvsmClearSel{
-      font-size:10px; color:var(--muted); cursor:pointer; margin-top:4px; text-decoration:underline;
+      font-size:11px; font-weight:900; letter-spacing:.14em;
+      color:var(--muted); text-transform:uppercase;
     }
     #rvsmTableWrap{
-      overflow-y:auto;
-      -webkit-overflow-scrolling:touch;
-      flex:1;
-      padding:10px 12px 16px;
+      overflow-y:auto; -webkit-overflow-scrolling:touch;
+      flex:1; padding:0 0 14px;
+      position:relative;
     }
-    .rvsmTable{
-      width:100%; border-collapse:collapse;
-      font-size:12.5px;
+    #rvsmSelOverlay{
+      display:none;
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      z-index:20;
+      background:rgba(5,6,7,.95);
+      border:1px solid rgba(40,195,255,.50);
+      border-radius:18px;
+      padding:20px 28px 16px;
+      min-width:270px;
+      text-align:center;
+      box-shadow:0 8px 48px rgba(0,0,0,.75);
     }
+    #rvsmSelOverlay.show{ display:block; }
+    .rvsm-ov-dir{
+      font-size:11px; font-weight:900; letter-spacing:.16em;
+      color:var(--cyan); text-transform:uppercase; margin-bottom:12px;
+    }
+    .rvsm-ov-cols{ display:flex; align-items:stretch; justify-content:center; }
+    .rvsm-ov-col{ flex:1; display:flex; flex-direction:column; align-items:center; }
+    .rvsm-ov-lbl{ font-size:12px; font-weight:900; letter-spacing:.12em; color:rgba(255,255,255,.75); text-transform:uppercase; margin-bottom:8px; }
+    .rvsm-ov-hline{ width:80%; height:1px; background:rgba(255,255,255,.22); margin-bottom:10px; }
+    .rvsm-ov-val{ font-size:54px; font-weight:900; color:#fff; letter-spacing:.01em; line-height:1; }
+    .rvsm-ov-vsep{ width:1px; background:rgba(255,255,255,.20); margin:0 22px; flex-shrink:0; }
+    .rvsm-ov-clear{ margin-top:14px; font-size:11px; color:var(--muted); cursor:pointer; border:none; background:none; padding:3px 10px; border-radius:999px; transition:color .15s; }
+    .rvsm-ov-clear:hover{ color:var(--txt); }
+    .rvsmTable{ width:100%; border-collapse:collapse; font-size:17px; }
     .rvsmTable thead tr th{
-      padding:7px 6px;
-      font-size:10px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;
-      color:var(--muted);
-      border-bottom:1px solid var(--line);
-      text-align:center;
+      padding:9px 8px; font-size:11px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;
+      color:var(--muted); border-bottom:1px solid var(--line); text-align:center;
+      position:sticky; top:0; background:var(--panel); z-index:2;
     }
-    .rvsmTable thead tr th.rvsmDirHdr{
-      color:var(--txt); font-size:11px; letter-spacing:.10em;
-      padding-bottom:4px;
-    }
-    .rvsmTable .rvsmDivider td{
-      border-left:2px solid var(--line);
-      padding:0;
-    }
-    .rvsmTable tbody tr{
-      cursor:pointer;
-      transition:background .12s;
-      border-bottom:1px solid rgba(255,255,255,.04);
-    }
-    .rvsmTable tbody tr:nth-child(even){ background:rgba(255,255,255,.025); }
-    .rvsmTable tbody tr:hover{ background:rgba(40,195,255,.09); }
-    .rvsmTable tbody tr.rvsm-active{
-      background:rgba(40,195,255,.18) !important;
-      box-shadow:inset 3px 0 0 var(--cyan);
-    }
+    .rvsmTable thead tr th.rvsmDirHdr{ color:var(--txt); font-size:12px; letter-spacing:.10em; padding-bottom:4px; }
+    .rvsmTable thead tr th.rvsmSepCol{ width:2px; padding:0; background:var(--line); }
+    .rvsmTable tbody tr{ cursor:pointer; transition:background .12s; border-bottom:1px solid rgba(255,255,255,.04); }
+    .rvsmTable tbody tr:nth-child(even){ background:rgba(255,255,255,.03); }
+    .rvsmTable tbody tr:hover{ background:rgba(40,195,255,.10); }
+    .rvsmTable tbody tr.rvsm-active{ background:rgba(40,195,255,.18) !important; box-shadow:inset 3px 0 0 var(--cyan); }
     .rvsmTable tbody tr.rvsm-active td{ color:var(--cyan); font-weight:800; }
-    .rvsmTable td{
-      padding:8px 6px;
-      text-align:center;
-      color:var(--txt);
-      letter-spacing:.02em;
-    }
-    .rvsmTable td.rvsmSepCol{
-      width:1px; padding:0;
-      background:var(--line);
-    }
-    /* day theme */
-    body.day-theme #rvsmBtn{
-      background:rgba(10,111,182,.12);
-      border-color:rgba(10,111,182,.35);
-      color:var(--cyan);
-    }
+    .rvsmTable td{ padding:12px 10px; text-align:center; color:var(--txt); letter-spacing:.02em; }
+    .rvsmTable td.rvsmSepCol{ width:2px; padding:0; background:var(--line); }
+    body.day-theme #rvsmBtn{ background:rgba(10,111,182,.12); border-color:rgba(10,111,182,.35); color:var(--cyan); }
+    body.day-theme #rvsmSelOverlay{ background:rgba(240,244,250,.97); border-color:rgba(10,111,182,.55); }
+    body.day-theme .rvsm-ov-val{ color:var(--txt); }
     body.day-theme .rvsmTable tbody tr.rvsm-active{ background:rgba(10,111,182,.15) !important; }
     body.day-theme .rvsmTable tbody tr.rvsm-active td{ color:var(--cyan); }
     #briefBackdrop .depBriefScroll{
@@ -2745,7 +2711,7 @@ body.day-theme .panel{
     <div class="fsRight">
       <button id="rvsmBtn" title="RVSM Cruise Levels" aria-label="RVSM Cruise Level Table">
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="1" y1="2.5" x2="14" y2="2.5"/><line x1="1" y1="6" x2="14" y2="6"/><line x1="1" y1="9.5" x2="14" y2="9.5"/><line x1="1" y1="13" x2="14" y2="13"/></svg>
-        FL
+        M
       </button>
     </div>
   </header>
@@ -2816,7 +2782,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.32</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.33</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3243,25 +3209,31 @@ body.day-theme .panel{
   </div>
 
   <!-- MODAL: Briefing Reference -->
-  <!-- â”€â”€ RVSM Cruise Level Table Modal â”€â”€ -->
+  <!-- RVSM Cruise Level Table Modal v2 -->
   <div id="rvsmBackdrop" role="dialog" aria-modal="true" aria-label="RVSM Cruise Levels">
     <div id="rvsmModal">
       <div class="rvsmHead">
-        <div>
-          <div class="rvsmTitle">â–² RVSM CRUISE LEVELS</div>
-          <div class="rvsmSub">Westbound &amp; Eastbound â€” tap a level to select</div>
-        </div>
+        <span class="rvsmTitle">RVSM CRUISE LEVELS</span>
         <button class="btn small" id="rvsmClose">Close</button>
       </div>
-      <div id="rvsmSelected">
-        <div class="rvsmSelDir" id="rvsmSelDir">â€”</div>
-        <div class="rvsmSelVals">
-          <span class="rvsmSelM" id="rvsmSelM">â€”</span>
-          <span class="rvsmSelF" id="rvsmSelF">â€”</span>
-        </div>
-        <div class="rvsmClearSel" id="rvsmClearSel">Clear selection</div>
-      </div>
       <div id="rvsmTableWrap">
+        <div id="rvsmSelOverlay">
+          <div class="rvsm-ov-dir" id="rvsmOvDir">WESTBOUND</div>
+          <div class="rvsm-ov-cols">
+            <div class="rvsm-ov-col">
+              <div class="rvsm-ov-lbl">Metres</div>
+              <div class="rvsm-ov-hline"></div>
+              <div class="rvsm-ov-val" id="rvsmOvM">---</div>
+            </div>
+            <div class="rvsm-ov-vsep"></div>
+            <div class="rvsm-ov-col">
+              <div class="rvsm-ov-lbl">Feet</div>
+              <div class="rvsm-ov-hline"></div>
+              <div class="rvsm-ov-val" id="rvsmOvF">---</div>
+            </div>
+          </div>
+          <button class="rvsm-ov-clear" id="rvsmOvClear">x clear</button>
+        </div>
         <table class="rvsmTable">
           <thead>
             <tr>
@@ -3275,8 +3247,7 @@ body.day-theme .panel{
               <th>Metres</th><th>Feet</th>
             </tr>
           </thead>
-          <tbody id="rvsmTbody">
-          </tbody>
+          <tbody id="rvsmTbody"></tbody>
         </table>
       </div>
     </div>
@@ -4804,24 +4775,23 @@ listEl.appendChild(row);
     }
 
     function renderRvsmSel(){
-      const tbody2 = document.getElementById("rvsmTbody");
-      const selBox = document.getElementById("rvsmSelected");
-      const selDir = document.getElementById("rvsmSelDir");
-      const selM   = document.getElementById("rvsmSelM");
-      const selF   = document.getElementById("rvsmSelF");
+      const tbody2  = document.getElementById("rvsmTbody");
+      const overlay = document.getElementById("rvsmSelOverlay");
+      const ovDir   = document.getElementById("rvsmOvDir");
+      const ovM     = document.getElementById("rvsmOvM");
+      const ovF     = document.getElementById("rvsmOvF");
       if(!tbody2) return;
-      // Remove all active
       tbody2.querySelectorAll("tr.rvsm-active").forEach(r=>r.classList.remove("rvsm-active"));
-      if(!rvsmSel){ if(selBox) selBox.style.display="none"; return; }
+      if(!rvsmSel){ if(overlay) overlay.classList.remove("show"); return; }
       const row = RVSM_DATA[rvsmSel.idx];
-      if(!row){ if(selBox) selBox.style.display="none"; return; }
+      if(!row){ if(overlay) overlay.classList.remove("show"); return; }
       const tr = tbody2.querySelector(`tr[data-idx="${rvsmSel.idx}"]`);
       if(tr) tr.classList.add("rvsm-active");
       const isW = rvsmSel.dir === "W";
-      if(selBox){ selBox.style.display="block"; }
-      if(selDir) selDir.textContent = (isW ? "â—€ Westbound" : "â–¶ Eastbound");
-      if(selM) selM.textContent = fmt(isW ? row[0] : row[2]) + " m";
-      if(selF) selF.textContent = fmt(isW ? row[1] : row[3]) + " ft";
+      if(overlay) overlay.classList.add("show");
+      if(ovDir) ovDir.textContent = isW ? "< WESTBOUND" : "> EASTBOUND";
+      if(ovM) ovM.textContent = fmt(isW ? row[0] : row[2]);
+      if(ovF) ovF.textContent = fmt(isW ? row[1] : row[3]);
     }
 
     // Restore saved
@@ -4834,7 +4804,7 @@ listEl.appendChild(row);
     const backdrop = document.getElementById("rvsmBackdrop");
     const rvsmBtn  = document.getElementById("rvsmBtn");
     const rvsmClose= document.getElementById("rvsmClose");
-    const rvsmClearSelBtn = document.getElementById("rvsmClearSel");
+    const rvsmClearSelBtn = document.getElementById("rvsmOvClear");
 
     function openRvsm(){
       if(!backdrop) return;
