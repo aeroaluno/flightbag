@@ -2782,7 +2782,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.33</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.34</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -4746,9 +4746,10 @@ listEl.appendChild(row);
         tr.dataset.idx = i;
         tr.dataset.dir = "W";
         tr.innerHTML = `<td>${fmt(row[0])}</td><td>${fmt(row[1])}</td><td class="rvsmSepCol"></td><td>${fmt(row[2])}</td><td>${fmt(row[3])}</td>`;
-        // Click: left half = Westbound, right half = Eastbound
+        // Click: if overlay visible -> dismiss; else select W or E half
         tr.addEventListener("click", function(e){
-          const tds = tr.querySelectorAll("td");
+          const ov = document.getElementById("rvsmSelOverlay");
+          if(ov && ov.classList.contains("show")){ clearRvsmSel(); return; }
           const rect = tr.getBoundingClientRect();
           const midX = rect.left + rect.width / 2;
           const dir = e.clientX < midX ? "W" : "E";
@@ -4826,6 +4827,16 @@ listEl.appendChild(row);
     if(rvsmClose) rvsmClose.addEventListener("click", closeRvsm);
     if(backdrop) backdrop.addEventListener("click", e=>{ if(e.target===backdrop) closeRvsm(); });
     if(rvsmClearSelBtn) rvsmClearSelBtn.addEventListener("click", e=>{ e.stopPropagation(); clearRvsmSel(); });
+    // Tap anywhere (overlay or empty table area) dismisses selection
+    const rvsmTableWrap = document.getElementById("rvsmTableWrap");
+    if(rvsmTableWrap) rvsmTableWrap.addEventListener("click", function(e){
+      const ov = document.getElementById("rvsmSelOverlay");
+      if(ov && ov.classList.contains("show") && !e.target.closest("tr")){ clearRvsmSel(); }
+    });
+    const rvsmOvEl = document.getElementById("rvsmSelOverlay");
+    if(rvsmOvEl) rvsmOvEl.addEventListener("click", function(e){
+      if(!e.target.closest("#rvsmOvClear")) clearRvsmSel();
+    });
   })();
   // â”€â”€ end RVSM â”€â”€
 
