@@ -2660,7 +2660,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.28</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.29</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -6854,7 +6854,15 @@ const AIRPORT_DB = {
 function lookupAirport(code) {
   if (!code) return null;
   const c = code.trim().toUpperCase();
-  return AIRPORT_DB[c] || null;
+  // Direct lookup (ICAO 4-letter or IATA 3-letter)
+  if (AIRPORT_DB[c]) return AIRPORT_DB[c];
+  // Route format fallback: "EGLL-OTHH", "DOH/LHR", "OTHH EGLL" -> take last token (arrival)
+  const parts = c.split(/[\/\-\s]+/).map(s => s.trim()).filter(Boolean);
+  if (parts.length > 1) {
+    const arr = parts[parts.length - 1];
+    if (AIRPORT_DB[arr]) return AIRPORT_DB[arr];
+  }
+  return null;
 }
 
   const PA_KEY = "flightbag_pa_v1";
@@ -6900,6 +6908,13 @@ function lookupAirport(code) {
         else paGreeting.value = "Good evening";
       }
     }catch{}
+    // Clean up any compound route code saved in dest field (e.g. "EGLL-OTHH" -> "OTHH")
+    try{
+      if(paDest && /[\/\-]/.test(paDest.value)){
+        const _dpts = paDest.value.trim().split(/[\/\-\s]+/).filter(Boolean);
+        if(_dpts.length > 1) paDest.value = _dpts[_dpts.length-1];
+      }
+    }catch(e){}
     populatePaFromOfp();
     paBackdrop.classList.add("show");
     paBackdrop.setAttribute("aria-hidden","false");
@@ -6930,7 +6945,8 @@ function populatePaFromOfp(){
     }
     if(paDest && !String(paDest.value||"").trim()){
       const _route = (d.route || d.arrIcao || "").toString().trim();
-      const dest = _route.includes("/") ? _route.split("/").pop().trim() : _route;
+      const _rPts = _route.split(/[\/\-\s]+/).map(s=>s.trim()).filter(Boolean);
+      const dest = _rPts.length > 1 ? _rPts[_rPts.length-1] : _route;
       if(dest) paDest.value = dest;
     }
     if(paFlightTime && !String(paFlightTime.value||"").trim()){
@@ -6945,7 +6961,8 @@ function populatePaFromOfp(){
     const _d = (typeof getOfpDataSafe === "function") ? getOfpDataSafe() : (()=>{ try{return JSON.parse(localStorage.getItem("flightbag_ofp_data_v1")||"{}")}catch{return {}} })();
     if(typeof arrPaDest !== "undefined" && arrPaDest && !String(arrPaDest.value||"").trim()){
       const _r = (_d.route || _d.arrIcao || "").toString().trim();
-      const _arr = _r.includes("/") ? _r.split("/").pop().trim() : _r;
+      const _rPts2 = _r.split(/[\/\-\s]+/).map(s=>s.trim()).filter(Boolean);
+      const _arr = _rPts2.length > 1 ? _rPts2[_rPts2.length-1] : _r;
       if(_arr){ arrPaDest.value = _arr; if(typeof updateArrPaCity==="function") updateArrPaCity(); }
     }
   }catch(e){}
@@ -7168,6 +7185,13 @@ function parseDeckCrew(raw){
         else arrPaGreeting.value = "Good evening";
       }
     } catch(e) {}
+    // Clean up any compound route code saved in dest field (e.g. "EGLL-OTHH" -> "OTHH")
+    try{
+      if(arrPaDest && /[\/\-]/.test(arrPaDest.value)){
+        const _pts = arrPaDest.value.trim().split(/[\/\-\s]+/).filter(Boolean);
+        if(_pts.length > 1) arrPaDest.value = _pts[_pts.length-1];
+      }
+    }catch(e){}
     // Populate from OFP if fields empty
     if(typeof populateArrPaFromOfp === "function") populateArrPaFromOfp();
     // Always refresh local time (current time at destination)
