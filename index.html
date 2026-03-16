@@ -2317,6 +2317,158 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
     #rvsmBtn:hover{ background:rgba(40,195,255,.22); border-color:rgba(40,195,255,.55); }
     #rvsmBtn svg{ flex-shrink:0; }
+    /* â”€â”€ WX (METAR/TAF) Button + Modal â”€â”€ */
+    #wxBtn{
+      display:flex; align-items:center; gap:5px;
+      padding:5px 12px; border-radius:999px;
+      background:rgba(40,195,255,.13);
+      border:1px solid rgba(40,195,255,.30);
+      color:var(--cyan);
+      font-size:13px; font-weight:900; letter-spacing:.06em;
+      cursor:pointer; white-space:nowrap;
+      transition:background .18s, border-color .18s;
+      -webkit-tap-highlight-color:transparent;
+    }
+    #wxBtn:hover{ background:rgba(40,195,255,.22); border-color:rgba(40,195,255,.55); }
+    #wxBackdrop{
+      position:fixed; inset:0;
+      background:rgba(0,0,0,.78);
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+      display:none; align-items:flex-start; justify-content:center;
+      z-index:10200; padding:12px;
+      padding-top:calc(var(--stripH) + 12px);
+      overflow-y:auto;
+    }
+    #wxBackdrop.show{ display:flex; }
+    #wxModal{
+      background:var(--panel);
+      border:1px solid var(--line);
+      border-radius:14px;
+      width:min(640px,100%);
+      max-height:calc(90vh - var(--stripH) - 24px);
+      display:flex; flex-direction:column;
+      overflow:hidden;
+    }
+    .wxHead{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px 10px;
+      border-bottom:1px solid var(--line);
+      flex-shrink:0;
+    }
+    .wxTitle{
+      font-size:11px; font-weight:900; letter-spacing:.16em;
+      text-transform:uppercase; color:var(--cyan);
+    }
+    .wxInputRow{
+      display:flex; gap:8px; align-items:center;
+      padding:12px 18px;
+      border-bottom:1px solid var(--line);
+      flex-shrink:0;
+    }
+    #wxIcaoInput{
+      flex:1; height:38px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--line);
+      border-radius:8px;
+      color:var(--txt); font-size:15px; font-weight:700;
+      padding:0 12px; outline:none;
+      text-transform:uppercase; letter-spacing:.12em;
+    }
+    #wxIcaoInput:focus{ border-color:rgba(40,195,255,.45); }
+    #wxFetchBtn{
+      height:38px; padding:0 18px;
+      border-radius:8px;
+      background:rgba(40,195,255,.15);
+      border:1px solid rgba(40,195,255,.35);
+      color:var(--cyan); font-size:13px; font-weight:800;
+      cursor:pointer; white-space:nowrap;
+      transition:background .15s;
+    }
+    #wxFetchBtn:hover{ background:rgba(40,195,255,.28); }
+    #wxFetchBtn:disabled{ opacity:.5; cursor:default; }
+    .wxTabs{
+      display:flex;
+      border-bottom:1px solid var(--line);
+      padding:0 18px;
+      flex-shrink:0;
+    }
+    .wx-tab{
+      padding:10px 18px;
+      font-size:12px; font-weight:800; letter-spacing:.10em;
+      text-transform:uppercase; color:var(--muted);
+      border-bottom:2px solid transparent;
+      cursor:pointer;
+      transition:color .15s, border-color .15s;
+    }
+    .wx-tab.active{ color:var(--cyan); border-bottom-color:var(--cyan); }
+    #wxBody{
+      flex:1; overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:16px 18px 20px;
+    }
+    .wx-fc{
+      display:inline-block;
+      padding:3px 14px; border-radius:999px;
+      font-size:12px; font-weight:900; letter-spacing:.12em;
+      margin-bottom:10px;
+    }
+    .wx-fc.VFR { background:rgba(0,200,80,.15);  color:#00c850; border:1px solid rgba(0,200,80,.30); }
+    .wx-fc.MVFR{ background:rgba(60,120,255,.15); color:#6699ff; border:1px solid rgba(60,120,255,.30); }
+    .wx-fc.IFR { background:rgba(255,60,60,.15);  color:#ff5555; border:1px solid rgba(255,60,60,.30); }
+    .wx-fc.LIFR{ background:rgba(200,40,200,.15); color:#dd55dd; border:1px solid rgba(200,40,200,.30); }
+    .wx-raw{
+      background:rgba(0,0,0,.35);
+      border:1px solid var(--line);
+      border-radius:8px;
+      padding:10px 14px;
+      font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+      font-size:12px; line-height:1.65; color:var(--cyan);
+      word-break:break-all; margin-bottom:14px;
+    }
+    .wx-grid{
+      display:grid; grid-template-columns:1fr 1fr;
+      gap:8px; margin-bottom:14px;
+    }
+    .wx-cell{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:8px; padding:10px 12px;
+    }
+    .wx-cell-lbl{
+      font-size:10px; font-weight:700; letter-spacing:.12em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:4px;
+    }
+    .wx-cell-val{ font-size:15px; font-weight:700; color:var(--txt); }
+    .wx-cell-sub{ font-size:11px; color:var(--muted); margin-top:2px; }
+    .taf-period{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:8px; padding:12px 14px; margin-bottom:8px;
+    }
+    .taf-period-hdr{ display:flex; align-items:center; gap:8px; margin-bottom:8px; }
+    .taf-change-badge{
+      font-size:10px; font-weight:900; letter-spacing:.10em;
+      padding:2px 9px; border-radius:999px;
+      background:rgba(40,195,255,.12); color:var(--cyan);
+      border:1px solid rgba(40,195,255,.25);
+    }
+    .taf-period-time{ font-size:11px; color:var(--muted); }
+    .taf-period-raw{
+      font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+      font-size:11px; color:var(--txt); opacity:.85; word-break:break-all;
+    }
+    .wx-msg{ text-align:center; padding:48px 20px; color:var(--muted); font-size:14px; }
+    .wx-err{ color:#ff6060; text-align:center; padding:24px; font-size:13px; }
+    .wx-spin{
+      width:24px; height:24px;
+      border:3px solid rgba(40,195,255,.18);
+      border-top-color:var(--cyan);
+      border-radius:50%;
+      animation:wxSpin .7s linear infinite;
+      margin:48px auto;
+    }
+    .wx-obs{ font-size:11px; color:var(--muted); margin-top:6px; }
+    @keyframes wxSpin{ to{ transform:rotate(360deg); } }
     #rvsmBackdrop{
       position:fixed; inset:0;
       background:rgba(0,0,0,.78);
@@ -2805,6 +2957,10 @@ body.day-theme .panel{
         <svg width="15" height="15" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="1" y1="2.5" x2="14" y2="2.5"/><line x1="1" y1="6" x2="14" y2="6"/><line x1="1" y1="9.5" x2="14" y2="9.5"/><line x1="1" y1="13" x2="14" y2="13"/></svg>
         M
       </button>
+      <button id="wxBtn" title="METAR / TAF" aria-label="Weather — METAR and TAF">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="3"/><line x1="8" y1="1" x2="8" y2="2.5"/><line x1="8" y1="13.5" x2="8" y2="15"/><line x1="1" y1="8" x2="2.5" y2="8"/><line x1="13.5" y1="8" x2="15" y2="8"/><line x1="3.1" y1="3.1" x2="4.2" y2="4.2"/><line x1="11.8" y1="11.8" x2="12.9" y2="12.9"/><line x1="11.8" y1="4.2" x2="12.9" y2="3.1"/><line x1="3.1" y1="12.9" x2="4.2" y2="11.8"/></svg>
+        WX
+      </button>
     </div>
   </header>
 
@@ -2877,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.46</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.47</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3303,6 +3459,177 @@ body.day-theme .panel{
     </div>
   </div>
 
+  <!-- WX METAR/TAF Modal -->
+  <div id="wxBackdrop" role="dialog" aria-modal="true" aria-label="METAR / TAF Weather" aria-hidden="true">
+    <div id="wxModal">
+      <div class="wxHead">
+        <span class="wxTitle">&#9925; METAR / TAF</span>
+        <button class="btn small" id="wxClose">Close</button>
+      </div>
+      <div class="wxInputRow">
+        <input id="wxIcaoInput" type="text" maxlength="4" placeholder="ICAO â€” ex: OMDB"
+          autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"/>
+        <button id="wxFetchBtn">Fetch</button>
+      </div>
+      <div class="wxTabs">
+        <div class="wx-tab active" data-wx-tab="wx-metar">METAR</div>
+        <div class="wx-tab" data-wx-tab="wx-taf">TAF</div>
+      </div>
+      <div id="wxBody">
+        <div class="wx-msg">Enter an ICAO code and tap Fetch</div>
+      </div>
+    </div>
+  </div>
+  <script>
+  (function(){
+    var WX_KEY  = '15af4320fca64d3dac7936dcb9cb9d22';
+    var WX_BASE = 'https://api.checkwx.com/v2';
+    var wxCache = {};
+    var wxTab   = 'wx-metar';
+    var wxData  = null;
+
+    var bd       = document.getElementById('wxBackdrop');
+    var btn      = document.getElementById('wxBtn');
+    var cls      = document.getElementById('wxClose');
+    var inp      = document.getElementById('wxIcaoInput');
+    var fetchBtn = document.getElementById('wxFetchBtn');
+    var body     = document.getElementById('wxBody');
+    var tabs     = document.querySelectorAll('.wx-tab');
+
+    function openWx(){ bd.classList.add('show'); bd.setAttribute('aria-hidden','false'); setTimeout(function(){ if(inp) inp.focus(); },120); }
+    function closeWx(){ bd.classList.remove('show'); bd.setAttribute('aria-hidden','true'); }
+
+    if(btn) btn.addEventListener('click', openWx);
+    if(cls) cls.addEventListener('click', closeWx);
+    if(bd)  bd.addEventListener('click', function(e){ if(e.target===bd) closeWx(); });
+
+    tabs.forEach(function(t){
+      t.addEventListener('click', function(){
+        tabs.forEach(function(x){ x.classList.remove('active'); });
+        t.classList.add('active');
+        wxTab = t.getAttribute('data-wx-tab');
+        if(wxData) renderTab();
+      });
+    });
+
+    if(fetchBtn) fetchBtn.addEventListener('click', doFetch);
+    if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') doFetch(); });
+
+    function doFetch(){
+      var icao = inp ? inp.value.trim().toUpperCase() : '';
+      if(!icao || icao.length < 3) return;
+      var now = Date.now();
+      if(wxCache[icao] && (now - wxCache[icao].ts) < 900000){
+        wxData = wxCache[icao]; renderTab(); return;
+      }
+      showSpin();
+      if(fetchBtn) fetchBtn.disabled = true;
+      var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
+      var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
+      Promise.all([
+        window.fetch(mUrl).then(function(r){ return r.json(); }),
+        window.fetch(tUrl).then(function(r){ return r.json(); })
+      ]).then(function(res){
+        wxData = { ts:Date.now(), metar:res[0], taf:res[1] };
+        wxCache[icao] = wxData;
+        renderTab();
+      }).catch(function(err){
+        if(body) body.innerHTML = '<div class="wx-err">&#9888; '+esc(err.message||'Network error')+'</div>';
+      }).finally(function(){
+        if(fetchBtn) fetchBtn.disabled = false;
+      });
+    }
+
+    function showSpin(){ if(body) body.innerHTML = '<div class="wx-spin"></div>'; }
+
+    function renderTab(){
+      if(wxTab==='wx-metar') renderMetar(); else renderTaf();
+    }
+
+    function renderMetar(){
+      var d = wxData && wxData.metar;
+      if(!d || !d.data || !d.data.length){ body.innerHTML='<div class="wx-msg">No METAR data found for this station.</div>'; return; }
+      var m = d.data[0];
+      var h = '';
+      if(m.flight_category) h += '<span class="wx-fc '+m.flight_category+'">'+m.flight_category+'</span> ';
+      if(m.station && m.station.name) h += '<span style="font-size:12px;color:var(--muted)">'+esc(m.station.name)+'</span>';
+      h += '<div class="wx-raw">'+esc(m.raw_text||'')+'</div>';
+      h += '<div class="wx-grid">';
+      // Wind
+      var w = '—';
+      if(m.wind){
+        var spd = m.wind.speed && m.wind.speed.kts !== undefined ? m.wind.speed.kts+'kt' : '';
+        var dir = m.wind.degrees !== undefined ? m.wind.degrees+'°' : (m.wind.direction||'');
+        w = dir+(spd?' / '+spd:'');
+        if(m.wind.gust && m.wind.gust.kts) w += ' G'+m.wind.gust.kts+'kt';
+        if(m.wind.direction==='VRB') w = 'VRB'+spd;
+      }
+      h += cell('Wind', w);
+      // Visibility
+      var vis = '—';
+      if(m.visibility){ vis = m.visibility.miles ? m.visibility.miles+' SM' : (m.visibility.meters ? m.visibility.meters+'m' : '—'); }
+      h += cell('Visibility', vis);
+      // Ceiling / Clouds
+      var cld = '—';
+      if(m.ceiling) cld = m.ceiling.code+' '+m.ceiling.feet.toLocaleString()+'ft';
+      else if(m.clouds && m.clouds.length) cld = m.clouds.map(function(c){ return c.code+(c.feet?c.feet:''); }).join(' ');
+      else cld = 'SKC/CLR';
+      h += cell('Ceiling / Clouds', cld);
+      // Conditions
+      var wx = 'None';
+      if(m.conditions && m.conditions.length) wx = m.conditions.map(function(c){ return c.code; }).join(' ');
+      h += cell('Weather', wx);
+      // Temp / Dew
+      var td = '—';
+      if(m.temperature) td = m.temperature.celsius+'°C / '+(m.dewpoint?m.dewpoint.celsius+'°C':'—');
+      h += cell('Temp / Dew', td);
+      // QNH
+      var qnh = '—';
+      if(m.pressure) qnh = m.pressure.mb+'&nbsp;hPa&nbsp;/&nbsp;'+m.pressure.hg+'&nbsp;inHg';
+      h += cell('QNH', qnh);
+      h += '</div>';
+      if(m.observed) h += '<div class="wx-obs">Observed: '+utcStr(m.observed)+'</div>';
+      body.innerHTML = h;
+    }
+
+    function renderTaf(){
+      var d = wxData && wxData.taf;
+      if(!d || !d.data || !d.data.length){ body.innerHTML='<div class="wx-msg">No TAF data found for this station.</div>'; return; }
+      var t = d.data[0];
+      var h = '';
+      if(t.station && t.station.name) h += '<div style="font-size:12px;color:var(--muted);margin-bottom:8px;">'+esc(t.station.name)+'</div>';
+      h += '<div class="wx-raw">'+esc(t.raw_text||'')+'</div>';
+      if(t.issued) h += '<div class="wx-obs" style="margin-bottom:12px;">Issued: '+utcStr(t.issued)+'</div>';
+      if(t.forecast && t.forecast.length){
+        t.forecast.forEach(function(p){
+          h += '<div class="taf-period">';
+          h += '<div class="taf-period-hdr">';
+          var code = p.change && p.change.code ? p.change.code : 'PERIOD';
+          h += '<span class="taf-change-badge">'+esc(code)+'</span>';
+          if(p.change && p.change.period){
+            var from = p.change.period.from ? utcStr(p.change.period.from) : '';
+            var to   = p.change.period.to   ? utcStr(p.change.period.to)   : '';
+            if(p.change.probability) h += '<span class="taf-change-badge" style="background:rgba(255,180,0,.12);color:#ffb400;border-color:rgba(255,180,0,.25);">PROB'+p.change.probability+'</span>';
+            h += '<span class="taf-period-time">'+from+(to?' &#8594; '+to:'')+'</span>';
+          }
+          h += '</div>';
+          if(p.section) h += '<div class="taf-period-raw">'+esc(p.section)+'</div>';
+          h += '</div>';
+        });
+      }
+      body.innerHTML = h;
+    }
+
+    function cell(lbl, val){
+      return '<div class="wx-cell"><div class="wx-cell-lbl">'+lbl+'</div><div class="wx-cell-val">'+val+'</div></div>';
+    }
+    function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+    function utcStr(iso){
+      try{ var d=new Date(iso); return d.toISOString().replace('T',' ').slice(0,16)+'Z'; }
+      catch(e){ return String(iso); }
+    }
+  })();
+  </script>
   <!-- MODAL: Briefing Reference -->
   <!-- RVSM Cruise Level Table Modal v2 -->
   <div id="rvsmBackdrop" role="dialog" aria-modal="true" aria-label="RVSM Cruise Levels">
