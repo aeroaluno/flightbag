@@ -2877,7 +2877,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.43</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.44</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -7808,31 +7808,7 @@ function parseDeckCrew(raw){
   if (arrPaClearBtn)    arrPaClearBtn.addEventListener("click", clearArrPa);
 
   // â”€â”€ MEL Quick Reference â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  (function(){
-    var melBd   = document.getElementById("melBackdrop");
-    var melBtn  = document.getElementById("melBtnSide");
-    var melCls  = document.getElementById("melClose");
-    function openMel(){
-      if(melBd){ melBd.classList.add("show"); melBd.setAttribute("aria-hidden","false"); }
-    }
-    function closeMel(){
-      if(melBd){ melBd.classList.remove("show"); melBd.setAttribute("aria-hidden","true"); }
-    }
-    if(melBtn) melBtn.addEventListener("click", openMel);
-    if(melCls) melCls.addEventListener("click", closeMel);
-    if(melBd)  melBd.addEventListener("click", function(e){ if(e.target===melBd) closeMel(); });
-    // Tab switching
-    document.querySelectorAll(".mel-tab").forEach(function(tab){
-      tab.addEventListener("click", function(){
-        var target = tab.getAttribute("data-mel-tab");
-        document.querySelectorAll(".mel-tab").forEach(function(t){ t.classList.remove("active"); });
-        document.querySelectorAll(".mel-section").forEach(function(s){ s.classList.remove("active"); });
-        tab.classList.add("active");
-        var sec = document.getElementById(target);
-        if(sec) sec.classList.add("active");
-      });
-    });
-  })();
+
   // â”€â”€ end MEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
   if (arrPaDest) {
@@ -11735,6 +11711,32 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
       </div>
     </div>
   </div>
+<script>
+(function(){
+  var melBd  = document.getElementById("melBackdrop");
+  var melBtn = document.getElementById("melBtnSide");
+  var melCls = document.getElementById("melClose");
+  function openMel(){
+    if(melBd){ melBd.classList.add("show"); melBd.setAttribute("aria-hidden","false"); }
+  }
+  function closeMel(){
+    if(melBd){ melBd.classList.remove("show"); melBd.setAttribute("aria-hidden","true"); }
+  }
+  if(melBtn) melBtn.addEventListener("click", openMel);
+  if(melCls) melCls.addEventListener("click", closeMel);
+  if(melBd)  melBd.addEventListener("click", function(e){ if(e.target===melBd) closeMel(); });
+  document.querySelectorAll(".mel-tab").forEach(function(tab){
+    tab.addEventListener("click", function(){
+      var target = tab.getAttribute("data-mel-tab");
+      document.querySelectorAll(".mel-tab").forEach(function(t){ t.classList.remove("active"); });
+      document.querySelectorAll(".mel-section").forEach(function(s){ s.classList.remove("active"); });
+      tab.classList.add("active");
+      var sec = document.getElementById(target);
+      if(sec) sec.classList.add("active");
+    });
+  });
+})();
+</script>
   <div id="paTextOverlay" role="region" aria-label="Generated PA text" aria-hidden="true">
     <div id="paOvHeader">
       <span id="paOvLabel">Generated P.A</span>
