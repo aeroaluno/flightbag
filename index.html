@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.47</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.48</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3474,6 +3474,7 @@ body.day-theme .panel{
       <div class="wxTabs">
         <div class="wx-tab active" data-wx-tab="wx-metar">METAR</div>
         <div class="wx-tab" data-wx-tab="wx-taf">TAF</div>
+        <div class="wx-tab" data-wx-tab="wx-airmet">AIRMET</div>
       </div>
       <div id="wxBody">
         <div class="wx-msg">Enter an ICAO code and tap Fetch</div>
@@ -3526,11 +3527,13 @@ body.day-theme .panel{
       if(fetchBtn) fetchBtn.disabled = true;
       var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
       var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
+      var aUrl = WX_BASE+'/gairmet/'+icao+'/decoded?x-api-key='+WX_KEY;
       Promise.all([
         window.fetch(mUrl).then(function(r){ return r.json(); }),
-        window.fetch(tUrl).then(function(r){ return r.json(); })
+        window.fetch(tUrl).then(function(r){ return r.json(); }),
+        window.fetch(aUrl).then(function(r){ return r.json(); }).catch(function(){ return null; })
       ]).then(function(res){
-        wxData = { ts:Date.now(), metar:res[0], taf:res[1] };
+        wxData = { ts:Date.now(), metar:res[0], taf:res[1], airmet:res[2] };
         wxCache[icao] = wxData;
         renderTab();
       }).catch(function(err){
@@ -3543,7 +3546,9 @@ body.day-theme .panel{
     function showSpin(){ if(body) body.innerHTML = '<div class="wx-spin"></div>'; }
 
     function renderTab(){
-      if(wxTab==='wx-metar') renderMetar(); else renderTaf();
+      if(wxTab==='wx-metar') renderMetar();
+      else if(wxTab==='wx-taf') renderTaf();
+      else renderAirmet();
     }
 
     function renderMetar(){
@@ -3617,6 +3622,51 @@ body.day-theme .panel{
           h += '</div>';
         });
       }
+      body.innerHTML = h;
+    }
+
+    function renderAirmet(){
+      var d = wxData && wxData.airmet;
+      if(!d || !d.data || !d.data.length){
+        body.innerHTML='<div class="wx-msg">No active G-AIRMETs found near this station.</div>'; return;
+      }
+      // Group by product type
+      var groups = {};
+      d.data.forEach(function(a){
+        var prod = (a.product||'OTHER').toUpperCase();
+        if(!groups[prod]) groups[prod] = [];
+        groups[prod].push(a);
+      });
+      var prodColors = {
+        SIERRA:'rgba(255,100,30,.18)',   // IFR/Mountain Obs — orange
+        TANGO: 'rgba(255,200,0,.15)',    // Turbulence       — yellow
+        ZULU:  'rgba(60,140,255,.15)'    // Icing            — blue
+      };
+      var prodText = {
+        SIERRA:'IFR / Mountain Obscuration',
+        TANGO: 'Turbulence / Wind Shear',
+        ZULU:  'Icing / Freezing Level'
+      };
+      var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+d.data.length+' active G-AIRMET'+(d.data.length>1?'s':'')+' near this station</div>';
+      Object.keys(groups).forEach(function(prod){
+        var col = prodColors[prod]||'rgba(255,255,255,.06)';
+        var lbl = prodText[prod]||prod;
+        h += '<div style="margin-bottom:6px;font-size:10px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);">'+esc(lbl)+'</div>';
+        groups[prod].forEach(function(a){
+          h += '<div class="taf-period" style="border-left:3px solid;border-left-color:'+col.replace('rgba(','rgba(').replace(',.',',.6,')+';margin-bottom:8px;">';
+          h += '<div class="taf-period-hdr">';
+          h += '<span class="taf-change-badge" style="background:'+col+'">'+esc(prod)+'</span>';
+          if(a.hazard && a.hazard.type) h += '<span style="font-size:12px;font-weight:700;color:var(--txt);">'+esc(a.hazard.type.text||a.hazard.type.code||'')+'</span>';
+          h += '</div>';
+          if(a.reason && a.reason.text) h += '<div style="font-size:12px;color:var(--muted);margin-bottom:6px;">'+esc(a.reason.text)+'</div>';
+          if(a.period){
+            var iss = a.period.issued ? utcStr(a.period.issued) : '';
+            var exp = a.period.expires ? utcStr(a.period.expires) : '';
+            h += '<div style="font-size:11px;color:var(--muted);">Valid: '+esc(iss)+' &#8594; '+esc(exp)+'</div>';
+          }
+          h += '</div>';
+        });
+      });
       body.innerHTML = h;
     }
 
