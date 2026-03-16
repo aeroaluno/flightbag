@@ -2476,6 +2476,18 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       border-bottom-color:rgba(10,111,182,.30);
     }
     body.day-theme #paOvContent{ color:var(--txt); font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace; }
+    /* â”€â”€ MEL Tool â”€â”€ */
+    #melBackdrop .modal{ width:min(820px,97vw); max-height:90vh; display:flex; flex-direction:column; }
+    .mel-hdr{ display:flex; align-items:center; justify-content:space-between; padding:10px 16px 0; flex-shrink:0; }
+    .mel-hdr-title{ font-size:13px; font-weight:900; letter-spacing:.12em; text-transform:uppercase; color:var(--cyan); }
+    .mel-tabs{ display:flex; gap:0; border-bottom:1px solid var(--line); padding:0 16px; flex-shrink:0; }
+    .mel-tab{ padding:9px 16px 7px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--muted); background:none; border:none; border-bottom:2px solid transparent; cursor:pointer; transition:color .15s,border-color .15s; margin-bottom:-1px; }
+    .mel-tab.active{ color:var(--cyan); border-bottom-color:var(--cyan); }
+    .mel-body{ flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; padding:16px; }
+    .mel-section{ display:none; }
+    .mel-section.active{ display:block; }
+    .mel-svg-wrap{ width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+    .mel-note{ font-size:11px; color:var(--muted); line-height:1.6; margin-top:12px; padding:10px 12px; background:rgba(255,255,255,.04); border-radius:8px; border-left:3px solid rgba(40,195,255,.3); }
     #briefBackdrop .depBriefScroll{
       overflow-y:auto;
       max-height:72vh;
@@ -2824,6 +2836,9 @@ body.day-theme .panel{
           <button class="toolBtnSide" id="timeFuelBtnSide">
             <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="2" width="16" height="20" rx="2"/><rect x="7" y="5" width="10" height="6" rx="1" fill="currentColor" opacity=".3"/><line x1="7" y1="14" x2="9" y2="14"/><line x1="11" y1="14" x2="13" y2="14"/><line x1="15" y1="14" x2="17" y2="14"/><line x1="7" y1="17" x2="9" y2="17"/><line x1="11" y1="17" x2="13" y2="17"/><line x1="15" y1="17" x2="17" y2="17"/></svg></span><span class="lb">FMC Time Fuel</span>
           </button>
+          <button class="toolBtnSide" id="melBtnSide">
+            <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 22h20Z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17.5" r=".9" fill="currentColor" stroke="none"/></svg></span><span class="lb">MEL</span>
+          </button>
 
         </div>
       </section>
@@ -2862,7 +2877,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.42</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.43</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -7792,6 +7807,34 @@ function parseDeckCrew(raw){
   if (arrPaCopyBtn)     arrPaCopyBtn.addEventListener("click", copyArrPa);
   if (arrPaClearBtn)    arrPaClearBtn.addEventListener("click", clearArrPa);
 
+  // â”€â”€ MEL Quick Reference â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  (function(){
+    var melBd   = document.getElementById("melBackdrop");
+    var melBtn  = document.getElementById("melBtnSide");
+    var melCls  = document.getElementById("melClose");
+    function openMel(){
+      if(melBd){ melBd.classList.add("show"); melBd.setAttribute("aria-hidden","false"); }
+    }
+    function closeMel(){
+      if(melBd){ melBd.classList.remove("show"); melBd.setAttribute("aria-hidden","true"); }
+    }
+    if(melBtn) melBtn.addEventListener("click", openMel);
+    if(melCls) melCls.addEventListener("click", closeMel);
+    if(melBd)  melBd.addEventListener("click", function(e){ if(e.target===melBd) closeMel(); });
+    // Tab switching
+    document.querySelectorAll(".mel-tab").forEach(function(tab){
+      tab.addEventListener("click", function(){
+        var target = tab.getAttribute("data-mel-tab");
+        document.querySelectorAll(".mel-tab").forEach(function(t){ t.classList.remove("active"); });
+        document.querySelectorAll(".mel-section").forEach(function(s){ s.classList.remove("active"); });
+        tab.classList.add("active");
+        var sec = document.getElementById(target);
+        if(sec) sec.classList.add("active");
+      });
+    });
+  })();
+  // â”€â”€ end MEL â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+
   if (arrPaDest) {
     arrPaDest.addEventListener("input",  () => { updateArrPaCity(); saveArrPa(); });
     arrPaDest.addEventListener("change", () => { updateArrPaCity(); saveArrPa(); });
@@ -11484,6 +11527,214 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
 })();
 </script>
   <!-- PA Text Overlay â€” slides down from top on Generate -->
+  <!-- MEL Quick Reference Modal -->
+  <div class="backdrop" id="melBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="melModalTitle">
+      <div class="mel-hdr">
+        <span class="mel-hdr-title" id="melModalTitle">MEL Quick Reference</span>
+        <button class="btn small" id="melClose">Close</button>
+      </div>
+      <div class="mel-tabs">
+        <button class="mel-tab active" data-mel-tab="mel-timeline">Applicability Timeline</button>
+        <button class="mel-tab" data-mel-tab="mel-flowchart">Decision Flowchart</button>
+      </div>
+      <div class="mel-body">
+        <div class="mel-section active" id="mel-timeline">
+          <div class="mel-svg-wrap">
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 780 200' style='width:100%;min-width:520px;display:block;font-family:system-ui,sans-serif;'>
+  <!-- BG -->
+  <rect width='780' height='200' fill='#0b0d0f' rx='10'/>
+  <!-- Phase zone backgrounds -->
+  <rect x='1' y='1' width='153' height='198' fill='rgba(40,195,255,0.07)' rx='9'/>
+  <rect x='631' y='1' width='148' height='198' fill='rgba(40,195,255,0.07)' rx='0 9 9 0'/>
+  <!-- Phase dividers -->
+  <line x1='154' y1='10' x2='154' y2='190' stroke='#20262c' stroke-width='1'/>
+  <line x1='292' y1='10' x2='292' y2='190' stroke='#20262c' stroke-width='1'/>
+  <line x1='530' y1='10' x2='530' y2='190' stroke='#20262c' stroke-width='1'/>
+  <line x1='632' y1='10' x2='632' y2='190' stroke='#20262c' stroke-width='1'/>
+  <!-- Phase labels (row 1) -->
+  <text x='77' y='20' text-anchor='middle' fill='#28c3ff' font-size='9.5' font-weight='700' letter-spacing='0.08em'>FLIGHT PREP</text>
+  <text x='223' y='20' text-anchor='middle' fill='#9aa8b8' font-size='9.5' font-weight='700' letter-spacing='0.08em'>TAXI OUT</text>
+  <text x='411' y='20' text-anchor='middle' fill='#9aa8b8' font-size='9.5' font-weight='700' letter-spacing='0.08em'>FLIGHT</text>
+  <text x='581' y='20' text-anchor='middle' fill='#9aa8b8' font-size='9.5' font-weight='700' letter-spacing='0.08em'>TAXI IN</text>
+  <text x='706' y='20' text-anchor='middle' fill='#28c3ff' font-size='9.5' font-weight='700' letter-spacing='0.08em'>PARKING</text>
+  <!-- Doc reference boxes (row 2: crew action who applies) -->
+  <!-- FLIGHT PREP: CREW+MTCE APPLY MEL -->
+  <rect x='10' y='28' width='134' height='34' rx='5' fill='rgba(40,195,255,0.12)' stroke='rgba(40,195,255,0.3)' stroke-width='1'/>
+  <text x='77' y='41' text-anchor='middle' fill='#28c3ff' font-size='8.5' font-weight='600'>CREW + MTCE</text>
+  <text x='77' y='54' text-anchor='middle' fill='#28c3ff' font-size='8.5' font-weight='600'>APPLY MEL</text>
+  <!-- TAXI + FLIGHT: CREW ABNORMAL + MEL -->
+  <rect x='162' y='28' width='360' height='34' rx='5' fill='rgba(255,180,0,0.10)' stroke='rgba(255,180,0,0.3)' stroke-width='1'/>
+  <text x='342' y='41' text-anchor='middle' fill='#ffb400' font-size='8.5' font-weight='600'>CREW: APPLY ABNORMAL PROCEDURES</text>
+  <text x='342' y='54' text-anchor='middle' fill='#ffb400' font-size='8.5' font-weight='600'>REFER TO MEL AS PER APPLICABILITY POLICY</text>
+  <!-- TAXI IN -->
+  <rect x='538' y='28' width='86' height='34' rx='5' fill='rgba(255,180,0,0.08)' stroke='rgba(255,180,0,0.25)' stroke-width='1'/>
+  <text x='581' y='41' text-anchor='middle' fill='#ffb400' font-size='8' font-weight='600'>CREW: ABNORMAL</text>
+  <text x='581' y='54' text-anchor='middle' fill='#e08800' font-size='7.5'>(MEL NEXT FLT)</text>
+  <!-- PARKING -->
+  <rect x='640' y='28' width='132' height='34' rx='5' fill='rgba(40,195,255,0.12)' stroke='rgba(40,195,255,0.3)' stroke-width='1'/>
+  <text x='706' y='41' text-anchor='middle' fill='#28c3ff' font-size='8.5' font-weight='600'>CREW + MTCE</text>
+  <text x='706' y='54' text-anchor='middle' fill='#28c3ff' font-size='8.5' font-weight='600'>APPLY MEL</text>
+  <!-- Doc ref boxes (row 3) -->
+  <rect x='10' y='70' width='134' height='22' rx='4' fill='rgba(40,195,255,0.18)' stroke='rgba(40,195,255,0.4)' stroke-width='1'/>
+  <text x='77' y='84' text-anchor='middle' fill='#28c3ff' font-size='9' font-weight='800' letter-spacing='0.1em'>MEL</text>
+  <rect x='162' y='70' width='185' height='22' rx='4' fill='rgba(100,160,255,0.15)' stroke='rgba(100,160,255,0.35)' stroke-width='1'/>
+  <text x='254' y='84' text-anchor='middle' fill='#a0c4ff' font-size='8.5' font-weight='700'>ECAM/EICAS + FCOM/QRH + MEL</text>
+  <rect x='355' y='70' width='167' height='22' rx='4' fill='rgba(100,160,255,0.12)' stroke='rgba(100,160,255,0.3)' stroke-width='1'/>
+  <text x='438' y='84' text-anchor='middle' fill='#a0c4ff' font-size='8.5' font-weight='700'>ECAM/EICAS + FCOM/QRH</text>
+  <rect x='538' y='70' width='86' height='22' rx='4' fill='rgba(100,160,255,0.10)' stroke='rgba(100,160,255,0.25)' stroke-width='1'/>
+  <text x='581' y='84' text-anchor='middle' fill='#a0c4ff' font-size='8' font-weight='700'>ECAM + FCOM/QRH</text>
+  <rect x='640' y='70' width='132' height='22' rx='4' fill='rgba(40,195,255,0.18)' stroke='rgba(40,195,255,0.4)' stroke-width='1'/>
+  <text x='706' y='84' text-anchor='middle' fill='#28c3ff' font-size='9' font-weight='800' letter-spacing='0.1em'>MEL</text>
+  <!-- Timeline arrow -->
+  <line x1='10' y1='118' x2='762' y2='118' stroke='#9aa8b8' stroke-width='2'/>
+  <polygon points='762,114 772,118 762,122' fill='#9aa8b8'/>
+  <!-- Event markers on timeline -->
+  <!-- PUSHBACK -->
+  <line x1='154' y1='108' x2='154' y2='140' stroke='#28c3ff' stroke-width='1.5' stroke-dasharray='3,2'/>
+  <rect x='104' y='140' width='100' height='28' rx='4' fill='rgba(40,195,255,0.15)' stroke='rgba(40,195,255,0.4)' stroke-width='1'/>
+  <text x='154' y='151' text-anchor='middle' fill='#28c3ff' font-size='7.5' font-weight='700'>START OF</text>
+  <text x='154' y='162' text-anchor='middle' fill='#28c3ff' font-size='7.5' font-weight='700'>PUSHBACK *</text>
+  <!-- ENG START -->
+  <line x1='210' y1='108' x2='210' y2='175' stroke='#20262c' stroke-width='1' stroke-dasharray='3,2'/>
+  <rect x='165' y='174' width='90' height='22' rx='3' fill='rgba(100,120,100,0.2)' stroke='rgba(100,180,100,0.3)' stroke-width='1'/>
+  <text x='210' y='185' text-anchor='middle' fill='#8ab88a' font-size='7' font-weight='600'>ENG START / GND DISC</text>
+  <!-- T/O ROLL -->
+  <line x1='292' y1='108' x2='292' y2='140' stroke='#28c3ff' stroke-width='1.5' stroke-dasharray='3,2'/>
+  <rect x='242' y='140' width='100' height='22' rx='4' fill='rgba(40,195,255,0.12)' stroke='rgba(40,195,255,0.35)' stroke-width='1'/>
+  <text x='292' y='155' text-anchor='middle' fill='#28c3ff' font-size='7.5' font-weight='700'>START T/O ROLL</text>
+  <!-- ARRIVAL GATE -->
+  <line x1='530' y1='108' x2='530' y2='140' stroke='rgba(100,200,100,0.8)' stroke-width='1.5' stroke-dasharray='3,2'/>
+  <rect x='476' y='140' width='108' height='22' rx='4' fill='rgba(80,180,80,0.12)' stroke='rgba(80,200,80,0.35)' stroke-width='1'/>
+  <text x='530' y='155' text-anchor='middle' fill='#7ecb7e' font-size='7.5' font-weight='700'>ARRIVAL AT GATE</text>
+  <!-- Legend bottom -->
+  <polygon points='20,192 28,180 36,192' fill='#c0392b'/>
+  <text x='42' y='192' fill='#9aa8b8' font-size='8.5'>In case of failure</text>
+  <polygon points='140,192 148,180 156,192' fill='#28c3ff'/>
+  <text x='162' y='192' fill='#9aa8b8' font-size='8.5'>Doc reference</text>
+  <text x='400' y='192' fill='#9aa8b8' font-size='7.5'>* Or when all doors closed if aircraft at power in / power out parking</text>
+</svg>
+          </div>
+          <div class="mel-note"><b>MEL Applicability:</b> Pre-departure and parking â€” Crew + Maintenance apply MEL. Once pushback starts, crew applies Abnormal Procedures and refers to MEL per the Applicability Policy. MEL applies again for the next flight after arrival.</div>
+        </div>
+        <div class="mel-section" id="mel-flowchart">
+          <div class="mel-svg-wrap">
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 500 680' style='width:100%;max-width:500px;display:block;margin:0 auto;font-family:system-ui,sans-serif;'>
+  <rect width='500' height='680' fill='#0b0d0f' rx='10'/>
+  <!-- START box -->
+  <rect x='110' y='14' width='280' height='40' rx='6' fill='rgba(40,195,255,0.12)' stroke='rgba(40,195,255,0.45)' stroke-width='1.5'/>
+  <text x='250' y='30' text-anchor='middle' fill='#28c3ff' font-size='9.5' font-weight='700'>FAILURE IDENTIFIED AFTER</text>
+  <text x='250' y='46' text-anchor='middle' fill='#28c3ff' font-size='9.5' font-weight='700'>START OF PUSHBACK (*)</text>
+  <!-- Arrow -->
+  <line x1='250' y1='54' x2='250' y2='68' stroke='#9aa8b8' stroke-width='1.5'/>
+  <polygon points='246,65 250,73 254,65' fill='#9aa8b8'/>
+  <!-- Apply abnormal -->
+  <rect x='120' y='73' width='260' height='32' rx='5' fill='rgba(60,80,120,0.25)' stroke='rgba(100,140,220,0.4)' stroke-width='1.2'/>
+  <text x='250' y='85' text-anchor='middle' fill='#c4d0f0' font-size='9' font-weight='600'>APPLY ASSOCIATED ABNORMAL</text>
+  <text x='250' y='97' text-anchor='middle' fill='#c4d0f0' font-size='9' font-weight='600'>PROCEDURES (if any)</text>
+  <!-- Arrow -->
+  <line x1='250' y1='105' x2='250' y2='118' stroke='#9aa8b8' stroke-width='1.5'/>
+  <polygon points='246,115 250,123 254,115' fill='#9aa8b8'/>
+  <!-- Refer to MEL -->
+  <rect x='120' y='123' width='260' height='28' rx='5' fill='rgba(60,80,120,0.25)' stroke='rgba(100,140,220,0.4)' stroke-width='1.2'/>
+  <text x='250' y='141' text-anchor='middle' fill='#c4d0f0' font-size='9.5' font-weight='700'>REFER TO MEL</text>
+  <!-- Arrow -->
+  <line x1='250' y1='151' x2='250' y2='163' stroke='#9aa8b8' stroke-width='1.5'/>
+  <polygon points='246,160 250,168 254,160' fill='#9aa8b8'/>
+  <!-- NOGO / GO diamonds -->
+  <!-- NO GO diamond (red, left) -->
+  <polygon points='110,193 150,168 190,193 150,218' fill='rgba(192,57,43,0.75)' stroke='#c0392b' stroke-width='1.5'/>
+  <text x='150' y='190' text-anchor='middle' fill='#fff' font-size='8.5' font-weight='800'>NO GO</text>
+  <text x='150' y='201' text-anchor='middle' fill='#fff' font-size='8.5' font-weight='800'>ITEM</text>
+  <!-- GO diamond (green, right) -->
+  <polygon points='310,193 350,168 390,193 350,218' fill='rgba(39,174,96,0.75)' stroke='#27ae60' stroke-width='1.5'/>
+  <text x='350' y='190' text-anchor='middle' fill='#fff' font-size='8.5' font-weight='800'>GO</text>
+  <text x='350' y='201' text-anchor='middle' fill='#fff' font-size='8.5' font-weight='800'>ITEM</text>
+  <!-- Arrow from Refer MEL to NO GO -->
+  <line x1='200' y1='163' x2='158' y2='175' stroke='#c0392b' stroke-width='1.2'/>
+  <polygon points='155,172 155,180 163,175' fill='#c0392b'/>
+  <text x='178' y='163' fill='#c0392b' font-size='8.5' font-weight='700'>NO GO</text>
+  <!-- Arrow from Refer MEL to GO -->
+  <line x1='300' y1='163' x2='342' y2='175' stroke='#27ae60' stroke-width='1.2'/>
+  <polygon points='339,172 347,175 339,180' fill='#27ae60'/>
+  <text x='308' y='163' fill='#27ae60' font-size='8.5' font-weight='700'>GO</text>
+  <!-- NO GO path: down to RETURN TO STAND -->
+  <line x1='150' y1='218' x2='150' y2='610' stroke='#c0392b' stroke-width='1.2' stroke-dasharray='4,3'/>
+  <!-- Maintenance Action diamond (orange) -->
+  <polygon points='310,268 350,243 390,268 350,293' fill='rgba(230,126,34,0.7)' stroke='#e67e22' stroke-width='1.5'/>
+  <text x='350' y='264' text-anchor='middle' fill='#fff' font-size='8.5' font-weight='700'>MAINT</text>
+  <text x='350' y='276' text-anchor='middle' fill='#fff' font-size='8.5' font-weight='700'>ACTION</text>
+  <!-- Arrow GO to Maint -->
+  <line x1='350' y1='218' x2='350' y2='243' stroke='#9aa8b8' stroke-width='1.5'/>
+  <polygon points='346,240 350,248 354,240' fill='#9aa8b8'/>
+  <!-- Maint YES arrow left to Inform IOC -->
+  <line x1='310' y1='268' x2='240' y2='268' stroke='#9aa8b8' stroke-width='1.2'/>
+  <polygon points='243,264 235,268 243,272' fill='#9aa8b8'/>
+  <text x='272' y='262' text-anchor='middle' fill='#9aa8b8' font-size='8'>YES</text>
+  <!-- Inform IOC box -->
+  <rect x='100' y='255' width='130' height='26' rx='5' fill='rgba(60,80,120,0.25)' stroke='rgba(100,140,220,0.4)' stroke-width='1.2'/>
+  <text x='165' y='272' text-anchor='middle' fill='#c4d0f0' font-size='9' font-weight='600'>INFORM IOC (**)</text>
+  <!-- Maint NO arrow down to Operational Assessment -->
+  <line x1='350' y1='293' x2='350' y2='315' stroke='#9aa8b8' stroke-width='1.5'/>
+  <polygon points='346,312 350,320 354,312' fill='#9aa8b8'/>
+  <text x='358' y='308' fill='#9aa8b8' font-size='8'>NO</text>
+  <!-- Operational Assessment box -->
+  <rect x='235' y='320' width='230' height='18' rx='4' fill='rgba(40,195,255,0.06)' stroke='rgba(40,195,255,0.2)' stroke-width='1'/>
+  <text x='350' y='332' text-anchor='middle' fill='#9aa8b8' font-size='8.5' font-weight='700' letter-spacing='0.06em'>OPERATIONAL ASSESSMENT</text>
+  <!-- Apply Ops Procedures box -->
+  <rect x='215' y='346' width='270' height='30' rx='5' fill='rgba(60,80,120,0.2)' stroke='rgba(100,140,220,0.35)' stroke-width='1'/>
+  <text x='350' y='358' text-anchor='middle' fill='#c4d0f0' font-size='8.5'>APPLY OPERATIONAL PROCEDURES</text>
+  <text x='350' y='370' text-anchor='middle' fill='#c4d0f0' font-size='8.5'>AND CHECK RESTRICTIONS (if any)</text>
+  <!-- Arrow -->
+  <line x1='350' y1='338' x2='350' y2='346' stroke='#9aa8b8' stroke-width='1'/>
+  <!-- Get IOC Feedback box -->
+  <rect x='240' y='384' width='220' height='26' rx='5' fill='rgba(60,80,120,0.2)' stroke='rgba(100,140,220,0.35)' stroke-width='1'/>
+  <text x='350' y='400' text-anchor='middle' fill='#c4d0f0' font-size='9'>GET IOC FEEDBACK (***)</text>
+  <!-- Arrow from Apply to Get IOC -->
+  <line x1='350' y1='376' x2='350' y2='384' stroke='#9aa8b8' stroke-width='1'/>
+  <polygon points='346,381 350,389 354,381' fill='#9aa8b8'/>
+  <!-- Inform IOC convergence arrow down to Safe Flight diamond level -->
+  <line x1='165' y1='281' x2='165' y2='450' stroke='#9aa8b8' stroke-width='1.2' stroke-dasharray='3,3'/>
+  <line x1='165' y1='450' x2='295' y2='450' stroke='#9aa8b8' stroke-width='1.2'/>
+  <polygon points='292,446 300,450 292,454' fill='#9aa8b8'/>
+  <!-- Arrow from IOC Feedback to Safe Flight -->
+  <line x1='350' y1='410' x2='350' y2='435' stroke='#9aa8b8' stroke-width='1.5'/>
+  <polygon points='346,432 350,440 354,432' fill='#9aa8b8'/>
+  <!-- Safe Flight Possible diamond (orange) -->
+  <polygon points='300,465 350,440 400,465 350,490' fill='rgba(230,126,34,0.7)' stroke='#e67e22' stroke-width='1.5'/>
+  <text x='350' y='461' text-anchor='middle' fill='#fff' font-size='8' font-weight='700'>SAFE FLIGHT</text>
+  <text x='350' y='472' text-anchor='middle' fill='#fff' font-size='8' font-weight='700'>POSSIBLE?</text>
+  <!-- NO arrow left to Return to Stand -->
+  <line x1='300' y1='465' x2='150' y2='465' stroke='#c0392b' stroke-width='1.2'/>
+  <polygon points='153,461 145,465 153,469' fill='#c0392b'/>
+  <text x='222' y='459' text-anchor='middle' fill='#c0392b' font-size='8'>NO</text>
+  <!-- YES arrow down to Continue -->
+  <line x1='350' y1='490' x2='350' y2='520' stroke='#27ae60' stroke-width='1.5'/>
+  <polygon points='346,517 350,525 354,517' fill='#27ae60'/>
+  <text x='358' y='510' fill='#27ae60' font-size='8'>YES</text>
+  <!-- NO GO bottom arrow -->
+  <line x1='150' y1='610' x2='150' y2='615' stroke='#c0392b' stroke-width='1.2'/>
+  <polygon points='146,612 150,620 154,612' fill='#c0392b'/>
+  <!-- RETURN TO STAND -->
+  <rect x='60' y='620' width='180' height='34' rx='6' fill='rgba(192,57,43,0.7)' stroke='#c0392b' stroke-width='1.5'/>
+  <text x='150' y='641' text-anchor='middle' fill='#fff' font-size='11' font-weight='800'>RETURN TO STAND</text>
+  <!-- CONTINUE FLIGHT -->
+  <rect x='260' y='525' width='180' height='34' rx='6' fill='rgba(39,174,96,0.7)' stroke='#27ae60' stroke-width='1.5'/>
+  <text x='350' y='546' text-anchor='middle' fill='#fff' font-size='11' font-weight='800'>CONTINUE THE FLIGHT</text>
+  <!-- Safe Flight NO path: arrow to Return to Stand -->
+  <line x1='150' y1='465' x2='150' y2='620' stroke='#c0392b' stroke-width='1.2'/>
+  <!-- NOTES -->
+  <text x='10' y='598' fill='#9aa8b8' font-size='7.5'>(*) Or when all doors closed, if aircraft at power in / power out parking</text>
+  <text x='10' y='610' fill='#9aa8b8' font-size='7.5'>(**) If IOC contact not possible and MEL item requires maint procedure â†’ Return to Stand</text>
+  <text x='10' y='622' fill='#9aa8b8' font-size='7.5'>(***) IOC feedback may include customer service, failure history, repair options</text>
+  <!-- Border -->
+  <rect x='1' y='1' width='498' height='678' rx='9' fill='none' stroke='rgba(40,195,255,0.15)' stroke-width='1'/>
+</svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
   <div id="paTextOverlay" role="region" aria-label="Generated PA text" aria-hidden="true">
     <div id="paOvHeader">
       <span id="paOvLabel">Generated P.A</span>
