@@ -7787,6 +7787,52 @@ function parseDeckCrew(raw){
   if (arrPaClose2)      arrPaClose2.addEventListener("click", closeArrPa);
   if (arrPaBackdrop)    arrPaBackdrop.addEventListener("click", (e) => { if (e.target === arrPaBackdrop) closeArrPa(); });
   if (arrPaGenerateBtn) arrPaGenerateBtn.addEventListener("click", generateArrPa);
+
+  // â”€â”€ PA Text Overlay: Close + Copy buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+  (function(){
+    var ov        = document.getElementById("paTextOverlay");
+    var ovClose   = document.getElementById("paOvCloseBtn");
+    var ovCopy    = document.getElementById("paOvCopyBtn");
+    var ovContent = document.getElementById("paOvContent");
+
+    function closeOv(){
+      if(ov){ ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); }
+    }
+
+    if(ovClose) ovClose.addEventListener("click", function(e){
+      e.stopPropagation();
+      closeOv();
+    });
+
+    if(ovCopy) ovCopy.addEventListener("click", function(e){
+      e.stopPropagation();
+      var txt = ovContent ? ovContent.textContent : "";
+      if(!txt) return;
+      try{
+        navigator.clipboard.writeText(txt).then(function(){
+          ovCopy.textContent = "Copied!";
+          setTimeout(function(){ ovCopy.textContent = "Copy"; }, 1000);
+        });
+      } catch(err){
+        var ta = document.createElement("textarea");
+        ta.value = txt; document.body.appendChild(ta); ta.select();
+        document.execCommand("copy"); document.body.removeChild(ta);
+        ovCopy.textContent = "Copied!";
+        setTimeout(function(){ ovCopy.textContent = "Copy"; }, 1000);
+      }
+    });
+
+    // Auto-close when PA modals close
+    ["paBackdrop","arrPaBackdrop"].forEach(function(id){
+      var bd = document.getElementById(id);
+      if(!bd) return;
+      var obs = new MutationObserver(function(){
+        if(!bd.classList.contains("show")) closeOv();
+      });
+      obs.observe(bd, {attributes:true, attributeFilter:["class"]});
+    });
+  })();
+  // â”€â”€ end PA Text Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (arrPaCopyBtn)     arrPaCopyBtn.addEventListener("click", copyArrPa);
   if (arrPaClearBtn)    arrPaClearBtn.addEventListener("click", clearArrPa);
 
