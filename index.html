@@ -2355,15 +2355,13 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       position:absolute; top:50%; left:50%;
       transform:translate(-50%,-50%);
       z-index:20;
-      background:rgba(5,6,7,.45);
-      border:1px solid rgba(40,195,255,.55);
+      background:rgba(5,6,7,.18);
+      border:1px solid rgba(40,195,255,.45);
       border-radius:18px;
       padding:20px 28px 16px;
       min-width:270px;
       text-align:center;
-      box-shadow:0 4px 32px rgba(0,0,0,.40);
-      backdrop-filter:blur(4px);
-      -webkit-backdrop-filter:blur(4px);
+      box-shadow:0 2px 16px rgba(0,0,0,.20);
     }
     #rvsmSelOverlay.show{ display:block; }
     .rvsm-ov-dir{
@@ -2394,7 +2392,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .rvsmTable td{ padding:12px 10px; text-align:center; color:var(--txt); letter-spacing:.02em; }
     .rvsmTable td.rvsmSepCol{ width:2px; padding:0; background:var(--line); }
     body.day-theme #rvsmBtn{ background:rgba(10,111,182,.12); border-color:rgba(10,111,182,.35); color:var(--cyan); }
-    body.day-theme #rvsmSelOverlay{ background:rgba(230,236,244,.50); border-color:rgba(10,111,182,.60); backdrop-filter:blur(4px); -webkit-backdrop-filter:blur(4px); }
+    body.day-theme #rvsmSelOverlay{ background:rgba(230,236,244,.20); border-color:rgba(10,111,182,.55); }
     body.day-theme .rvsm-ov-val{ color:var(--txt); }
     body.day-theme .rvsmTable tbody tr.rvsm-active{ background:rgba(10,111,182,.15) !important; }
     body.day-theme .rvsmTable tbody tr.rvsm-active td{ color:var(--cyan); }
@@ -2784,7 +2782,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.35</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.36</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
