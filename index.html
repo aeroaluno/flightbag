@@ -2403,13 +2403,11 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       top:var(--stripH);
       left:0; right:0;
       z-index:10500;
-      max-height:56vh;
+      max-height:60vh;
       flex-direction:column;
-      background:rgba(5,6,7,.97);
-      border-bottom:1px solid rgba(40,195,255,.22);
-      box-shadow:0 6px 40px rgba(0,0,0,.65);
-      backdrop-filter:blur(4px);
-      -webkit-backdrop-filter:blur(4px);
+      background:var(--panel);
+      border-bottom:2px solid rgba(40,195,255,.30);
+      box-shadow:0 8px 48px rgba(0,0,0,.80);
     }
     #paTextOverlay.show{
       display:flex;
@@ -2423,16 +2421,17 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      padding:8px 16px 6px;
-      border-bottom:1px solid rgba(255,255,255,.06);
+      padding:10px 16px 8px;
+      border-bottom:1px solid var(--line);
       flex-shrink:0;
+      background:rgba(0,0,0,.25);
     }
     #paOvLabel{
-      font-size:10px;
+      font-size:11px;
       font-weight:900;
-      letter-spacing:.14em;
+      letter-spacing:.16em;
       text-transform:uppercase;
-      color:rgba(40,195,255,.7);
+      color:var(--cyan);
     }
     #paOvActions{ display:flex; gap:8px; align-items:center; }
     #paOvCopyBtn{
@@ -2463,19 +2462,20 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       flex:1;
       overflow-y:auto;
       -webkit-overflow-scrolling:touch;
-      padding:14px 20px 16px;
+      padding:16px 20px 20px;
       white-space:pre-wrap;
-      font-size:14px;
-      line-height:1.7;
-      color:var(--txt);
-      letter-spacing:.01em;
+      font-size:15px;
+      line-height:1.8;
+      color:#e8edf2;
+      letter-spacing:.02em;
+      font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
     }
     /* day theme */
     body.day-theme #paTextOverlay{
-      background:rgba(244,246,249,.97);
-      border-bottom-color:rgba(10,111,182,.22);
+      background:var(--panel);
+      border-bottom-color:rgba(10,111,182,.30);
     }
-    body.day-theme #paOvContent{ color:var(--txt); }
+    body.day-theme #paOvContent{ color:var(--txt); font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace; }
     #briefBackdrop .depBriefScroll{
       overflow-y:auto;
       max-height:72vh;
@@ -2862,7 +2862,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.41</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.42</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -7788,51 +7788,7 @@ function parseDeckCrew(raw){
   if (arrPaBackdrop)    arrPaBackdrop.addEventListener("click", (e) => { if (e.target === arrPaBackdrop) closeArrPa(); });
   if (arrPaGenerateBtn) arrPaGenerateBtn.addEventListener("click", generateArrPa);
 
-  // â”€â”€ PA Text Overlay: Close + Copy buttons â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-  (function(){
-    var ov        = document.getElementById("paTextOverlay");
-    var ovClose   = document.getElementById("paOvCloseBtn");
-    var ovCopy    = document.getElementById("paOvCopyBtn");
-    var ovContent = document.getElementById("paOvContent");
 
-    function closeOv(){
-      if(ov){ ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); }
-    }
-
-    if(ovClose) ovClose.addEventListener("click", function(e){
-      e.stopPropagation();
-      closeOv();
-    });
-
-    if(ovCopy) ovCopy.addEventListener("click", function(e){
-      e.stopPropagation();
-      var txt = ovContent ? ovContent.textContent : "";
-      if(!txt) return;
-      try{
-        navigator.clipboard.writeText(txt).then(function(){
-          ovCopy.textContent = "Copied!";
-          setTimeout(function(){ ovCopy.textContent = "Copy"; }, 1000);
-        });
-      } catch(err){
-        var ta = document.createElement("textarea");
-        ta.value = txt; document.body.appendChild(ta); ta.select();
-        document.execCommand("copy"); document.body.removeChild(ta);
-        ovCopy.textContent = "Copied!";
-        setTimeout(function(){ ovCopy.textContent = "Copy"; }, 1000);
-      }
-    });
-
-    // Auto-close when PA modals close
-    ["paBackdrop","arrPaBackdrop"].forEach(function(id){
-      var bd = document.getElementById(id);
-      if(!bd) return;
-      var obs = new MutationObserver(function(){
-        if(!bd.classList.contains("show")) closeOv();
-      });
-      obs.observe(bd, {attributes:true, attributeFilter:["class"]});
-    });
-  })();
-  // â”€â”€ end PA Text Overlay â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
   if (arrPaCopyBtn)     arrPaCopyBtn.addEventListener("click", copyArrPa);
   if (arrPaClearBtn)    arrPaClearBtn.addEventListener("click", clearArrPa);
 
@@ -11533,10 +11489,53 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
       <span id="paOvLabel">Generated P.A</span>
       <div id="paOvActions">
         <button id="paOvCopyBtn">Copy</button>
-        <button id="paOvCloseBtn">âœ• Close</button>
+        <button id="paOvCloseBtn">&#10005; Close</button>
       </div>
     </div>
     <div id="paOvContent"></div>
   </div>
+  <script>
+  (function(){
+    var ov        = document.getElementById("paTextOverlay");
+    var ovClose   = document.getElementById("paOvCloseBtn");
+    var ovCopy    = document.getElementById("paOvCopyBtn");
+    var ovContent = document.getElementById("paOvContent");
+    function closeOv(){
+      if(ov){ ov.classList.remove("show"); ov.setAttribute("aria-hidden","true"); }
+    }
+    if(ovClose) ovClose.addEventListener("click", function(e){
+      e.stopPropagation(); closeOv();
+    });
+    if(ovCopy) ovCopy.addEventListener("click", function(e){
+      e.stopPropagation();
+      var txt = ovContent ? ovContent.textContent : "";
+      if(!txt) return;
+      try{
+        navigator.clipboard.writeText(txt).then(function(){
+          ovCopy.textContent = "Copied!";
+          setTimeout(function(){ ovCopy.textContent = "Copy"; }, 1500);
+        }).catch(function(){ fallbackCopy(txt); });
+      } catch(err){ fallbackCopy(txt); }
+      function fallbackCopy(t){
+        var ta = document.createElement("textarea");
+        ta.value = t; ta.style.position = "fixed"; ta.style.opacity = "0";
+        document.body.appendChild(ta); ta.select();
+        try{ document.execCommand("copy"); } catch(e){}
+        document.body.removeChild(ta);
+        ovCopy.textContent = "Copied!";
+        setTimeout(function(){ ovCopy.textContent = "Copy"; }, 1500);
+      }
+    });
+    // Auto-close when PA modals close
+    ["paBackdrop","arrPaBackdrop"].forEach(function(id){
+      var bd = document.getElementById(id);
+      if(!bd) return;
+      var obs = new MutationObserver(function(){
+        if(!bd.classList.contains("show")) closeOv();
+      });
+      obs.observe(bd, {attributes:true, attributeFilter:["class"]});
+    });
+  })();
+  </script>
 </body>
 </html>
