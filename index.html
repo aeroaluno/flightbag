@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="pt-BR">
 <head>
   <meta charset="utf-8" />
@@ -2396,6 +2396,86 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     body.day-theme .rvsm-ov-val{ color:var(--txt); }
     body.day-theme .rvsmTable tbody tr.rvsm-active{ background:rgba(10,111,182,.15) !important; }
     body.day-theme .rvsmTable tbody tr.rvsm-active td{ color:var(--cyan); }
+    /* â”€â”€ PA Text Overlay (top of screen on Generate) â”€â”€ */
+    #paTextOverlay{
+      display:none;
+      position:fixed;
+      top:var(--stripH);
+      left:0; right:0;
+      z-index:10500;
+      max-height:56vh;
+      flex-direction:column;
+      background:rgba(5,6,7,.97);
+      border-bottom:1px solid rgba(40,195,255,.22);
+      box-shadow:0 6px 40px rgba(0,0,0,.65);
+      backdrop-filter:blur(4px);
+      -webkit-backdrop-filter:blur(4px);
+    }
+    #paTextOverlay.show{
+      display:flex;
+      animation:paOvIn .22s cubic-bezier(.22,1,.36,1);
+    }
+    @keyframes paOvIn{
+      from{transform:translateY(-100%);opacity:0;}
+      to  {transform:translateY(0);opacity:1;}
+    }
+    #paOvHeader{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:8px 16px 6px;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      flex-shrink:0;
+    }
+    #paOvLabel{
+      font-size:10px;
+      font-weight:900;
+      letter-spacing:.14em;
+      text-transform:uppercase;
+      color:rgba(40,195,255,.7);
+    }
+    #paOvActions{ display:flex; gap:8px; align-items:center; }
+    #paOvCopyBtn{
+      padding:4px 12px;
+      border-radius:6px;
+      background:rgba(40,195,255,.12);
+      border:1px solid rgba(40,195,255,.3);
+      color:var(--cyan);
+      font-size:11px;
+      font-weight:800;
+      cursor:pointer;
+      transition:background .15s;
+    }
+    #paOvCopyBtn:hover{ background:rgba(40,195,255,.22); }
+    #paOvCloseBtn{
+      padding:4px 10px;
+      border-radius:6px;
+      background:rgba(255,255,255,.06);
+      border:1px solid rgba(255,255,255,.10);
+      color:var(--muted);
+      font-size:11px;
+      font-weight:800;
+      cursor:pointer;
+      transition:background .15s;
+    }
+    #paOvCloseBtn:hover{ background:rgba(255,255,255,.10); }
+    #paOvContent{
+      flex:1;
+      overflow-y:auto;
+      -webkit-overflow-scrolling:touch;
+      padding:14px 20px 16px;
+      white-space:pre-wrap;
+      font-size:14px;
+      line-height:1.7;
+      color:var(--txt);
+      letter-spacing:.01em;
+    }
+    /* day theme */
+    body.day-theme #paTextOverlay{
+      background:rgba(244,246,249,.97);
+      border-bottom-color:rgba(10,111,182,.22);
+    }
+    body.day-theme #paOvContent{ color:var(--txt); }
     #briefBackdrop .depBriefScroll{
       overflow-y:auto;
       max-height:72vh;
@@ -2782,7 +2862,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.40</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.41</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -7437,6 +7517,13 @@ function parseDeckCrew(raw){
     }
 
     paOutput.textContent = lines.join("\n");
+    // Show PA text overlay at top of screen
+    (function(){
+      var ov=document.getElementById("paTextOverlay");
+      var oc=document.getElementById("paOvContent");
+      var ol=document.getElementById("paOvLabel");
+      if(ov&&oc){ oc.textContent=lines.join("\n"); if(ol) ol.textContent="P.A \u2014 Departure"; ov.classList.add("show"); ov.setAttribute("aria-hidden","false"); ov.scrollTop=0; oc.scrollTop=0; }
+    })();
   }
 
   async function copyPa(){
@@ -7659,6 +7746,13 @@ function parseDeckCrew(raw){
     out.push("");
     out.push("Thank you for choosing Qatar Airways, The World\u2019s Best Airline.");
     arrPaOutput.textContent = out.join("\n");
+    // Show PA text overlay at top of screen
+    (function(){
+      var ov=document.getElementById("paTextOverlay");
+      var oc=document.getElementById("paOvContent");
+      var ol=document.getElementById("paOvLabel");
+      if(ov&&oc){ oc.textContent=out.join("\n"); if(ol) ol.textContent="P.A \u2014 Arrival"; ov.classList.add("show"); ov.setAttribute("aria-hidden","false"); ov.scrollTop=0; oc.scrollTop=0; }
+    })();
   }
 
   async function copyArrPa() {
@@ -11387,5 +11481,16 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   }
 })();
 </script>
+  <!-- PA Text Overlay â€” slides down from top on Generate -->
+  <div id="paTextOverlay" role="region" aria-label="Generated PA text" aria-hidden="true">
+    <div id="paOvHeader">
+      <span id="paOvLabel">Generated P.A</span>
+      <div id="paOvActions">
+        <button id="paOvCopyBtn">Copy</button>
+        <button id="paOvCloseBtn">âœ• Close</button>
+      </div>
+    </div>
+    <div id="paOvContent"></div>
+  </div>
 </body>
 </html>
