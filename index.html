@@ -2401,6 +2401,29 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       transition:color .15s, border-color .15s;
     }
     .wx-tab.active{ color:var(--cyan); border-bottom-color:var(--cyan); }
+    #wxSummarizeBtn{
+      display:none; margin:0 18px 0; padding:10px 0;
+    }
+    #wxSummarizeBtn button{
+      width:100%; padding:10px 16px; border-radius:8px; border:1px solid rgba(168,85,247,.4);
+      background:linear-gradient(135deg,rgba(168,85,247,.15),rgba(236,72,153,.12));
+      color:#d8b4fe; font-size:13px; font-weight:800; letter-spacing:.06em;
+      cursor:pointer; transition:all .2s;
+    }
+    #wxSummarizeBtn button:hover{ background:linear-gradient(135deg,rgba(168,85,247,.28),rgba(236,72,153,.22)); }
+    #wxSummarizeBtn button:disabled{ opacity:.5; cursor:wait; }
+    .ai-summary{
+      background:linear-gradient(135deg,rgba(168,85,247,.08),rgba(236,72,153,.05));
+      border:1px solid rgba(168,85,247,.25); border-radius:10px;
+      padding:16px 18px; margin-bottom:16px;
+    }
+    .ai-summary-hdr{
+      font-size:11px; font-weight:900; letter-spacing:.12em; text-transform:uppercase;
+      color:#d8b4fe; margin-bottom:12px; display:flex; align-items:center; gap:8px;
+    }
+    .ai-summary-body{
+      font-size:12.5px; line-height:1.75; color:#e2e8f0; white-space:pre-wrap;
+    }
     #wxBody{
       flex:1; overflow-y:auto;
       -webkit-overflow-scrolling:touch;
@@ -3033,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.60</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.61</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3486,6 +3509,7 @@ body.day-theme .panel{
         <label style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;">To</label>
         <input id="wxDateTo" type="date" style="flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:6px;color:var(--txt);padding:6px 8px;font-size:12px;"/>
       </div>
+      <div id="wxSummarizeBtn"><button id="wxAiBtn">&#10024; AI Summary &#8212; Analyze NOTAMs</button></div>
       <div id="wxBody">
         <div class="wx-msg">Enter an ICAO code and tap Fetch</div>
       </div>
@@ -3512,6 +3536,9 @@ body.day-theme .panel{
     var dateFrom  = document.getElementById('wxDateFrom');
     var dateTo    = document.getElementById('wxDateTo');
     var iataInp   = document.getElementById('wxIataInput');
+    var aiBtn     = document.getElementById('wxAiBtn');
+    var sumRow    = document.getElementById('wxSummarizeBtn');
+    var WORKER_URL= 'https://notam-proxy.qr-flightbag.workers.dev';
 
     // Set default NOTAM date range: today − 7d → today + 30d
     (function initDates(){
@@ -3531,6 +3558,7 @@ body.day-theme .panel{
 
     function toggleDateRow(){
       if(dateRow) dateRow.style.display = wxTab==='wx-notam' ? 'flex' : 'none';
+      if(sumRow) sumRow.style.display = wxTab==='wx-notam' ? 'block' : 'none';
     }
     tabs.forEach(function(t){
       t.addEventListener('click', function(){
@@ -3768,8 +3796,54 @@ body.day-theme .panel{
         h += '</div>';
       });
       body.innerHTML = h;
+      if(sumRow) sumRow.style.display = 'block';
     }
 
+    // -- AI NOTAM Summarizer --
+    if(aiBtn) aiBtn.addEventListener('click', function(){
+      if(!wxData || !wxData.notam) return;
+      var wrapper = wxData.notam;
+      var raw = wrapper.data;
+      var list = Array.isArray(raw) ? raw : (raw && Array.isArray(raw.data) ? raw.data : []);
+      if(!list.length){ alert('No NOTAMs to summarize'); return; }
+      var icao = inp ? inp.value.trim().toUpperCase() : '';
+      aiBtn.disabled = true;
+      aiBtn.innerHTML = '&#9889; Analyzing with AI...';
+      window.fetch(WORKER_URL + '/summarize', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ notams: list, icao: icao })
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(data){
+        aiBtn.disabled = false;
+        aiBtn.innerHTML = '&#10024; AI Summary &#8212; Analyze NOTAMs';
+        if(data.error){
+          alert('AI Error: ' + (data.detail || data.error));
+          return;
+        }
+        var s = data.summary || '';
+        var lines = s.split('\n');
+        var html = '';
+        for(var i=0;i<lines.length;i++){
+          var ln = lines[i];
+          if(!ln.trim()) { html += '<br>'; continue; }
+          var escaped = esc(ln);
+          html += escaped + '<br>';
+        }
+        var sumHtml = '<div class="ai-summary">';
+        sumHtml += '<div class="ai-summary-hdr">&#129302; AI NOTAM BRIEFING &#8212; ' + esc(icao) + '</div>';
+        sumHtml += '<div class="ai-summary-body">' + html + '</div>';
+        sumHtml += '</div>';
+        body.innerHTML = sumHtml + body.innerHTML;
+        body.scrollTop = 0;
+      })
+      .catch(function(e){
+        aiBtn.disabled = false;
+        aiBtn.innerHTML = '&#10024; AI Summary &#8212; Analyze NOTAMs';
+        alert('AI Error: ' + e.message);
+      });
+    });
     function cell(lbl, val){
       return '<div class="wx-cell"><div class="wx-cell-lbl">'+lbl+'</div><div class="wx-cell-val">'+val+'</div></div>';
     }
