@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.69</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.70</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -10127,6 +10127,7 @@ function ofpSaveData(obj){
   }
 
   async function ofpAutoScan() {
+    alert("DEBUG: ofpAutoScan called. imgLoaded=" + !!ofpImgLoaded);
     if(!ofpImgLoaded) {
       alert("Upload an OFP image first.");
       return;
@@ -10134,7 +10135,9 @@ function ofpSaveData(obj){
     try {
       // OCR runs fully offline — all engine files are served locally
       setOcrStatus("OCR: starting…");
+      alert("DEBUG: starting OCR...");
       const text = await runOcrOnImage(ofpImg);
+      alert("DEBUG: OCR done. text length=" + (text||"").length);
 
       const extractors = loadExtractors();
       const parsed = parseWithExtractors(text, extractors);
