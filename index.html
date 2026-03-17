@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.49</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.50</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3536,7 +3536,9 @@ body.day-theme .panel{
         window.fetch(mUrl).then(function(r){ return r.json(); }),
         window.fetch(tUrl).then(function(r){ return r.json(); }),
         window.fetch(aUrl).then(function(r){ return r.json(); }).catch(function(){ return null; }),
-        window.fetch(nUrl).then(function(r){ return r.json(); }).catch(function(){ return null; })
+        window.fetch(nUrl).then(function(r){
+          return r.json().then(function(j){ return {ok:r.ok, status:r.status, data:j}; });
+        }).catch(function(e){ return {ok:false, status:0, err:e.message||'Network/CORS error'}; })
       ]).then(function(res){
         wxData = { ts:Date.now(), metar:res[0], taf:res[1], airmet:res[2], notam:res[3] };
         wxCache[icao] = wxData;
@@ -3677,12 +3679,20 @@ body.day-theme .panel{
     }
 
     function renderNotam(){
-      var raw = wxData && wxData.notam;
-      // Handle error or empty
-      if(!raw || (Array.isArray(raw) && !raw.length) || raw.error){
+      var wrapper = wxData && wxData.notam;
+      // Show fetch error details for debugging
+      if(!wrapper){
+        body.innerHTML='<div class="wx-err">&#9888; NOTAM fetch returned null.</div>'; return;
+      }
+      if(wrapper.err || !wrapper.ok){
+        var msg = wrapper.err || ('HTTP '+wrapper.status);
+        body.innerHTML='<div class="wx-err">&#9888; NOTAM error: '+esc(msg)+'<br><small style="opacity:.6;font-size:10px;">URL: '+esc(AE_BASE+'/notam?key=***&icaoCode=...')+'</small></div>'; return;
+      }
+      var raw = wrapper.data;
+      if(!raw || (Array.isArray(raw) && !raw.length)){
         body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
       }
-      var list = Array.isArray(raw) ? raw : (raw.data || []);
+      var list = Array.isArray(raw) ? raw : [];
       if(!list.length){
         body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
       }
