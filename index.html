@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.67</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.68</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -10223,7 +10223,24 @@ function ofpSaveData(obj){
         }
       }
       if(_finl && _altn) parsed.planReq = String(_finl + _altn);
-      console.log("[OCR] altnFuel=", _altn, " finlFuel=", _finl, " planReq=", parsed.planReq);
+
+      // ══ DEBUG: show OCR results on screen (iPad has no console) ══
+      const _dbg = "═══ OCR DEBUG ═══\n\n"
+        + "ETOPS: " + (parsed.etops||"—") + "\n"
+        + "depRwy: " + (parsed.depRwy||"—") + "\n"
+        + "SID: " + (parsed.sid||"—") + "\n"
+        + "STAR: " + (parsed.star||"—") + "\n"
+        + "arrRwy: " + (parsed.arrRwy||"—") + "\n"
+        + "cruiseFL: " + (parsed.cruiseLevel||"—") + "\n"
+        + "ALTN fuel: " + _altn + "\n"
+        + "FINL fuel: " + _finl + "\n"
+        + "PLAN REQ: " + (parsed.planReq||"—") + "\n"
+        + "acType: " + (parsed.acType||"—") + "\n"
+        + "acReg: " + (parsed.acReg||"—") + "\n"
+        + "MEL: " + (parsed.melItems||"—") + "\n"
+        + "\n═══ RAW OCR TEXT (first 800 chars) ═══\n\n"
+        + text.substring(0, 800);
+      alert(_dbg);
 
       const data = ofpLoadData();
       for(const k of Object.keys(parsed)) data[k] = parsed[k];
