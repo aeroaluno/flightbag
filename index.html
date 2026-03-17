@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.62</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.63</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -4312,6 +4312,15 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
               <div class="row2"><div class="tag">BLK</div><button class="btn small" data-ofp-field="blk">Capture</button><div class="muted" id="ofpVal_blk">—</div></div>
               <div class="row2"><div class="tag">STA</div><button class="btn small" data-ofp-field="sta">Capture</button><div class="muted" id="ofpVal_sta">—</div></div>
               <div class="row2"><div class="tag">DEST Alternate</div><button class="btn small" data-ofp-field="destAltn">Capture</button><div class="muted" id="ofpVal_destAltn">—</div></div>
+              <div class="row2"><div class="tag">A/C Type</div><button class="btn small" data-ofp-field="acType">Capture</button><div class="muted" id="ofpVal_acType">—</div></div>
+              <div class="row2"><div class="tag">ETOPS</div><button class="btn small" data-ofp-field="etops">Capture</button><div class="muted" id="ofpVal_etops">—</div></div>
+              <div class="row2"><div class="tag">MEL Items</div><button class="btn small" data-ofp-field="melItems">Capture</button><div class="muted" id="ofpVal_melItems">—</div></div>
+              <div class="row2"><div class="tag">DEP RWY</div><button class="btn small" data-ofp-field="depRwy">Capture</button><div class="muted" id="ofpVal_depRwy">—</div></div>
+              <div class="row2"><div class="tag">SID</div><button class="btn small" data-ofp-field="sid">Capture</button><div class="muted" id="ofpVal_sid">—</div></div>
+              <div class="row2"><div class="tag">STAR</div><button class="btn small" data-ofp-field="star">Capture</button><div class="muted" id="ofpVal_star">—</div></div>
+              <div class="row2"><div class="tag">ARR RWY</div><button class="btn small" data-ofp-field="arrRwy">Capture</button><div class="muted" id="ofpVal_arrRwy">—</div></div>
+              <div class="row2"><div class="tag">Cruise FL</div><button class="btn small" data-ofp-field="cruiseLevel">Capture</button><div class="muted" id="ofpVal_cruiseLevel">—</div></div>
+              <div class="row2"><div class="tag">PLAN REQ</div><button class="btn small" data-ofp-field="planReq">Capture</button><div class="muted" id="ofpVal_planReq">—</div></div>
             </div>
 
             <div style="height:12px;"></div>
@@ -9199,6 +9208,15 @@ function parseDeckCrew(raw){
     { key:"blk", label:"BLK", placeholder:"e.g. 0735" },
     { key:"sta", label:"STA", placeholder:"e.g. 23/0720" },
     { key:"destAltn", label:"DEST Alternate", placeholder:"e.g. EGSS" },
+    { key:"acType", label:"Aircraft Type", placeholder:"e.g. B77L" },
+    { key:"etops", label:"ETOPS", placeholder:"e.g. ETOPS 180MIN" },
+    { key:"melItems", label:"MEL/CDL Items", placeholder:"e.g. 46-11-02-03" },
+    { key:"depRwy", label:"Departure Runway", placeholder:"e.g. 34R" },
+    { key:"sid", label:"SID", placeholder:"e.g. DATRI" },
+    { key:"star", label:"STAR", placeholder:"e.g. OKPIT1C" },
+    { key:"arrRwy", label:"Arrival Runway", placeholder:"e.g. 03R" },
+    { key:"cruiseLevel", label:"Cruise Level", placeholder:"e.g. FL280" },
+    { key:"planReq", label:"PLAN REQ (FINL+ALTN)", placeholder:"e.g. 10234" },
   ];
 
   function ofpOpen(){ if(ofpBackdrop){ ofpBackdrop.style.display="flex"; ofpBackdrop.setAttribute("aria-hidden","false"); document.body.style.overflow="hidden"; } }
@@ -9784,6 +9802,86 @@ function ofpSaveData(obj){
     "flags": "i",
     "group": 1,
     "post": "upper"
+  },
+  {
+    "key": "acType",
+    "label": "Aircraft Type (e.g. B77L, A359)",
+    "pattern": "[PM]\\d{4}\\s+([A-Z]\\d{2,3}[A-Z]?)\\s+[A-Z]\\d[A-Z]{3}\\b",
+    "flags": "i",
+    "group": 1,
+    "post": "upper"
+  },
+  {
+    "key": "etops",
+    "label": "ETOPS flag and minutes",
+    "pattern": "\\bETOPS[:\\s]*(\\d+)\\s*MIN",
+    "flags": "i",
+    "group": 0,
+    "post": "upper"
+  },
+  {
+    "key": "melItems",
+    "label": "MEL/CDL Items number",
+    "pattern": "\\bMEL/?CDL\\s+ITEMS?\\s+([\\d][\\d\\s-]+[\\d])",
+    "flags": "i",
+    "group": 1,
+    "post": "upper"
+  },
+  {
+    "key": "depRwy",
+    "label": "Departure Runway (after DEP ICAO on route line)",
+    "pattern": ":[A-Z]{4}\\s+(\\d{2}[LCR]?)\\s+[A-Z]{3,8}\\s",
+    "flags": "i",
+    "group": 1,
+    "post": "upper"
+  },
+  {
+    "key": "sid",
+    "label": "SID (after DEP RWY on route line)",
+    "pattern": ":[A-Z]{4}\\s+\\d{2}[LCR]?\\s+([A-Z]{3,8})\\s",
+    "flags": "i",
+    "group": 1,
+    "post": "upper"
+  },
+  {
+    "key": "star",
+    "label": "STAR (alphanumeric with digit, before ARR ICAO+RWY)",
+    "pattern": "([A-Z][A-Z0-9]*\\d[A-Z0-9]*)\\s+[A-Z]{4}\\s+\\d{2}[LCR]?\\s*[\\r\\n]",
+    "flags": "",
+    "group": 1,
+    "post": "upper"
+  },
+  {
+    "key": "arrRwy",
+    "label": "Arrival Runway (after ARR ICAO at end of route block)",
+    "pattern": "[A-Z][A-Z0-9]*\\d[A-Z0-9]*\\s+[A-Z]{4}\\s+(\\d{2}[LCR]?)\\s*[\\r\\n]",
+    "flags": "",
+    "group": 1,
+    "post": "upper"
+  },
+  {
+    "key": "cruiseLevel",
+    "label": "Cruise Level (first FL on its own line)",
+    "pattern": "(?:^|\\n)\\s*FL(\\d{3})\\b",
+    "flags": "",
+    "group": 0,
+    "post": "upper"
+  },
+  {
+    "key": "altnFuel",
+    "label": "Alternate Fuel (ALTN row)",
+    "pattern": "\\bALTN\\s+[A-Z]{0,4}\\s*(\\d{3,6})\\s+\\d{4}\\b",
+    "flags": "i",
+    "group": 1,
+    "post": "num"
+  },
+  {
+    "key": "finlFuel",
+    "label": "Final Reserve Fuel (FINL row)",
+    "pattern": "\\bFINL\\s+(\\d{3,6})\\s+\\d{4}\\b",
+    "flags": "i",
+    "group": 1,
+    "post": "num"
   }
 ];
 
@@ -10063,6 +10161,27 @@ function ofpSaveData(obj){
       if(_dep){ parsed.depUtcOffsetMinutes = _dep.minutes; parsed.depUtcOffsetText = _dep.text; }
       if(_arr){ parsed.arrUtcOffsetMinutes = _arr.minutes; parsed.arrUtcOffsetText = _arr.text; }
 
+      // ── Compute PLAN REQ = FINL fuel + ALTN fuel ──
+      const _finl = parseInt(parsed.finlFuel, 10) || 0;
+      const _altn = parseInt(parsed.altnFuel, 10) || 0;
+      if(_finl && _altn) parsed.planReq = String(_finl + _altn);
+
+      // ── Format ETOPS: show "YES — 180 MIN" or just flag ──
+      if(parsed.etops) {
+        const em = /(\d+)\s*MIN/i.exec(parsed.etops);
+        parsed.etops = em ? ("YES — " + em[1] + " MIN") : "YES";
+      }
+
+      // ── Format MEL: show "⚠ MEL ACTIVE — Items: 46-11-02-03" ──
+      if(parsed.melItems) {
+        parsed.melItems = "⚠ " + parsed.melItems;
+      }
+
+      // ── Format Cruise Level: keep FL prefix ──
+      if(parsed.cruiseLevel) {
+        const cl = parsed.cruiseLevel.replace(/[^A-Z0-9]/gi,"");
+        parsed.cruiseLevel = cl.startsWith("FL") ? cl : ("FL" + cl);
+      }
 
       const data = ofpLoadData();
       for(const k of Object.keys(parsed)) data[k] = parsed[k];
