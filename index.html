@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.61</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.62</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3509,7 +3509,7 @@ body.day-theme .panel{
         <label style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;">To</label>
         <input id="wxDateTo" type="date" style="flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:6px;color:var(--txt);padding:6px 8px;font-size:12px;"/>
       </div>
-      <div id="wxSummarizeBtn"><button id="wxAiBtn">&#10024; AI Summary &#8212; Analyze NOTAMs</button></div>
+      <div id="wxSummarizeBtn"><button id="wxAiBtn">&#10024; Smart NOTAM</button></div>
       <div id="wxBody">
         <div class="wx-msg">Enter an ICAO code and tap Fetch</div>
       </div>
@@ -3817,7 +3817,7 @@ body.day-theme .panel{
       .then(function(r){ return r.json(); })
       .then(function(data){
         aiBtn.disabled = false;
-        aiBtn.innerHTML = '&#10024; AI Summary &#8212; Analyze NOTAMs';
+        aiBtn.innerHTML = '&#10024; Smart NOTAM';
         if(data.error){
           alert('AI Error: ' + (data.detail || data.error));
           return;
@@ -3832,7 +3832,7 @@ body.day-theme .panel{
           html += escaped + '<br>';
         }
         var sumHtml = '<div class="ai-summary">';
-        sumHtml += '<div class="ai-summary-hdr">&#129302; AI NOTAM BRIEFING &#8212; ' + esc(icao) + '</div>';
+        sumHtml += '<div class="ai-summary-hdr">&#129302; SMART NOTAM &#8212;' + esc(icao) + '</div>';
         sumHtml += '<div class="ai-summary-body">' + html + '</div>';
         sumHtml += '</div>';
         body.innerHTML = sumHtml + body.innerHTML;
@@ -3840,7 +3840,7 @@ body.day-theme .panel{
       })
       .catch(function(e){
         aiBtn.disabled = false;
-        aiBtn.innerHTML = '&#10024; AI Summary &#8212; Analyze NOTAMs';
+        aiBtn.innerHTML = '&#10024; Smart NOTAM';
         alert('AI Error: ' + e.message);
       });
     });
