@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.65</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.66</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -9657,11 +9657,12 @@ function ofpSaveData(obj){
   const ofpSaveExtractorsBtn = document.getElementById("ofpSaveExtractorsBtn");
   const ofpResetExtractorsBtn = document.getElementById("ofpResetExtractorsBtn");
 
-  const OFP_EXTRACTORS_KEY = "flightbag_ofp_extractors_v3";
+  const OFP_EXTRACTORS_KEY = "flightbag_ofp_extractors_v4";
   const OFP_OCR_TEXT_KEY = "flightbag_ofp_ocr_text_v1";
-  // v3: acReg, fixed STAR/arrRwy/altn/finl patterns, ETOPS=NO default
+  // v4: removed colon dependency, robust fallback post-processing
   try { localStorage.removeItem("flightbag_ofp_extractors_v1"); } catch(e){}
   try { localStorage.removeItem("flightbag_ofp_extractors_v2"); } catch(e){}
+  try { localStorage.removeItem("flightbag_ofp_extractors_v3"); } catch(e){}
 
   const DEFAULT_OFP_EXTRACTORS = [
   {
@@ -9826,8 +9827,8 @@ function ofpSaveData(obj){
   },
   {
     "key": "etops",
-    "label": "ETOPS flag and minutes",
-    "pattern": "\\bETOPS[:\\s]*(\\d+)\\s*MIN",
+    "label": "ETOPS flag (just detect presence)",
+    "pattern": "\\bETOPS\\b",
     "flags": "i",
     "group": 0,
     "post": "upper"
@@ -9835,24 +9836,24 @@ function ofpSaveData(obj){
   {
     "key": "melItems",
     "label": "MEL/CDL Items number",
-    "pattern": "\\bMEL/?CDL\\s+ITEMS?\\s+([\\d][\\d\\s-]+[\\d])",
+    "pattern": "MEL.?CDL\\s+ITEMS?\\s+([\\d][\\d\\s-]+[\\d])",
     "flags": "i",
     "group": 1,
     "post": "upper"
   },
   {
     "key": "depRwy",
-    "label": "Departure Runway (after DEP ICAO on route line)",
-    "pattern": ":[A-Z]{4}\\s+(\\d{2}[LCR]?)\\s+[A-Z]{3,8}\\s",
-    "flags": "i",
+    "label": "Departure Runway (ICAO + RWY + SID on route line)",
+    "pattern": "\\b[A-Z]{4}\\s+(\\d{2}[LCR])\\s+[A-Z]{3,8}\\s",
+    "flags": "",
     "group": 1,
     "post": "upper"
   },
   {
     "key": "sid",
-    "label": "SID (after DEP RWY on route line)",
-    "pattern": ":[A-Z]{4}\\s+\\d{2}[LCR]?\\s+([A-Z]{3,8})\\s",
-    "flags": "i",
+    "label": "SID (word after DEP RWY on route line)",
+    "pattern": "\\b[A-Z]{4}\\s+\\d{2}[LCR]\\s+([A-Z]{3,8})\\s",
+    "flags": "",
     "group": 1,
     "post": "upper"
   },
@@ -10160,34 +10161,61 @@ function ofpSaveData(obj){
       if(_dep){ parsed.depUtcOffsetMinutes = _dep.minutes; parsed.depUtcOffsetText = _dep.text; }
       if(_arr){ parsed.arrUtcOffsetMinutes = _arr.minutes; parsed.arrUtcOffsetText = _arr.text; }
 
-      // ── Compute PLAN REQ = FINL fuel + ALTN fuel ──
-      const _finl = parseInt(parsed.finlFuel, 10) || 0;
-      const _altn = parseInt(parsed.altnFuel, 10) || 0;
-      if(_finl && _altn) parsed.planReq = String(_finl + _altn);
+      // ══════ ROBUST POST-PROCESSING (fallback to raw OCR text) ══════
+      console.log("[OCR] raw text sample:", text.substring(0, 500));
 
-      // ── Format ETOPS: show "YES — 180 MIN" or "NO" ──
-      if(parsed.etops) {
-        const em = /(\d+)\s*MIN/i.exec(parsed.etops);
+      // ── ETOPS: search full text for ETOPS + minutes ──
+      if(parsed.etops || /\bETOPS\b/i.test(text)) {
+        const em = /ETOPS[:\s.]*(\d{2,3})\s*MIN/i.exec(text);
         parsed.etops = em ? ("YES — " + em[1] + " MIN") : "YES";
       } else {
         parsed.etops = "NO";
       }
 
-      // ── Format MEL: show "⚠ Items: 46-11-02-03" or "NONE" ──
+      // ── DEP RWY + SID: fallback with multiple patterns on raw text ──
+      if(!parsed.depRwy) {
+        // Pattern 1: after colon (DEFRTE:OTHH 34R DATRI)
+        let m = /[:.][A-Z]{4}\s+(\d{2}[LCR])\s+([A-Z]{3,8})\s/i.exec(text);
+        // Pattern 2: ICAO + RWY(with L/C/R) + word (no colon needed)
+        if(!m) m = /\b[A-Z]{4}\s+(\d{2}[LCR])\s+([A-Z]{3,8})\s/.exec(text);
+        // Pattern 3: looser — optional L/C/R but require route context
+        if(!m) m = /[:.][A-Z]{4}\s+(\d{2}[LCR]?)\s+([A-Z]{3,8})\s/i.exec(text);
+        if(m) {
+          parsed.depRwy = m[1].toUpperCase();
+          if(!parsed.sid) parsed.sid = m[2].toUpperCase();
+          console.log("[OCR] depRwy fallback:", parsed.depRwy, "SID:", parsed.sid);
+        }
+      }
+
+      // ── MEL: format or set NONE ──
       if(parsed.melItems) {
         parsed.melItems = "⚠ " + parsed.melItems;
       } else {
-        parsed.melItems = "NONE";
+        // Fallback: search text directly
+        const melM = /MEL.?CDL\s+ITEMS?\s+([\d][\d\s-]+[\d])/i.exec(text);
+        if(melM) parsed.melItems = "⚠ " + melM[1].trim();
+        else parsed.melItems = "NONE";
       }
 
-      // ── Format Cruise Level: keep FL prefix ──
+      // ── Cruise Level: keep FL prefix ──
       if(parsed.cruiseLevel) {
         const cl = parsed.cruiseLevel.replace(/[^A-Z0-9]/gi,"");
         parsed.cruiseLevel = cl.startsWith("FL") ? cl : ("FL" + cl);
       }
 
-      // ── Compute PLAN REQ with fallback logging ──
-      console.log("[OCR] altnFuel=", parsed.altnFuel, " finlFuel=", parsed.finlFuel);
+      // ── PLAN REQ = FINL + ALTN (with fallback to raw text) ──
+      let _finl = parseInt(parsed.finlFuel, 10) || 0;
+      let _altn = parseInt(parsed.altnFuel, 10) || 0;
+      if(!_altn) {
+        const am = /\bALTN\s+[A-Z]{0,5}\s+(\d{3,6})\s+\d{4}/i.exec(text);
+        if(am) _altn = parseInt(am[1], 10) || 0;
+      }
+      if(!_finl) {
+        const fm = /\bFINL\s+(\d{2,6})\s+\d{4}/i.exec(text);
+        if(fm) _finl = parseInt(fm[1], 10) || 0;
+      }
+      if(_finl && _altn) parsed.planReq = String(_finl + _altn);
+      console.log("[OCR] altnFuel=", _altn, " finlFuel=", _finl, " planReq=", parsed.planReq);
 
       const data = ofpLoadData();
       for(const k of Object.keys(parsed)) data[k] = parsed[k];
