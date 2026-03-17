@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.56</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.57</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3536,7 +3536,12 @@ body.day-theme .panel{
         window.fetch(tUrl).then(function(r){ return r.json(); }),
         window.fetch(aUrl).then(function(r){ return r.json(); }).catch(function(){ return null; }),
         window.fetch(nUrl).then(function(r){
-          return r.json().then(function(j){ return {ok:r.ok, status:r.status, data:j}; });
+          return r.text().then(function(txt){
+            var parsed;
+            try{ parsed = JSON.parse(txt); }
+            catch(e){ parsed = {_raw: txt.slice(0,500)}; }
+            return {ok:r.ok, status:r.status, data:parsed};
+          });
         }).catch(function(e){ return {ok:false, status:0, err:e.message||'Network error'}; })
       ]).then(function(res){
         wxData = { ts:Date.now(), metar:res[0], taf:res[1], airmet:res[2], notam:res[3] };
@@ -3686,6 +3691,10 @@ body.day-theme .panel{
         body.innerHTML='<div class="wx-err">&#9888; NOTAM error: '+esc(wrapper.err||'HTTP '+wrapper.status)+'</div>'; return;
       }
       var raw = wrapper.data;
+      // Show raw response for debugging if JSON parse failed
+      if(raw && raw._raw !== undefined){
+        body.innerHTML='<div class="wx-err">&#9888; Response not JSON (HTTP '+wrapper.status+'):<br><pre style="font-size:10px;white-space:pre-wrap;margin-top:8px;color:var(--muted);">'+esc(raw._raw)+'</pre></div>'; return;
+      }
       // Aviation Edge returns a direct array: [{location,number,class,startdateutc,enddateutc,condition}]
       var list = [];
       if(Array.isArray(raw)){
