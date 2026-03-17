@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.59</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.60</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3477,6 +3477,12 @@ body.day-theme .panel{
         <div class="wx-tab" data-wx-tab="wx-airmet">AIRMET</div>
         <div class="wx-tab" data-wx-tab="wx-notam">NOTAM</div>
       </div>
+      <div id="wxNotamDates" style="display:none;padding:8px 16px 4px;gap:8px;align-items:center;">
+        <label style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;">From</label>
+        <input id="wxDateFrom" type="date" style="flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:6px;color:var(--txt);padding:6px 8px;font-size:12px;"/>
+        <label style="font-size:10px;font-weight:700;letter-spacing:.1em;color:var(--muted);text-transform:uppercase;">To</label>
+        <input id="wxDateTo" type="date" style="flex:1;background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:6px;color:var(--txt);padding:6px 8px;font-size:12px;"/>
+      </div>
       <div id="wxBody">
         <div class="wx-msg">Enter an ICAO code and tap Fetch</div>
       </div>
@@ -3492,13 +3498,25 @@ body.day-theme .panel{
     var wxTab   = 'wx-metar';
     var wxData  = null;
 
-    var bd       = document.getElementById('wxBackdrop');
-    var btn      = document.getElementById('wxBtn');
-    var cls      = document.getElementById('wxClose');
-    var inp      = document.getElementById('wxIcaoInput');
-    var fetchBtn = document.getElementById('wxFetchBtn');
-    var body     = document.getElementById('wxBody');
-    var tabs     = document.querySelectorAll('.wx-tab');
+    var bd        = document.getElementById('wxBackdrop');
+    var btn       = document.getElementById('wxBtn');
+    var cls       = document.getElementById('wxClose');
+    var inp       = document.getElementById('wxIcaoInput');
+    var fetchBtn  = document.getElementById('wxFetchBtn');
+    var body      = document.getElementById('wxBody');
+    var tabs      = document.querySelectorAll('.wx-tab');
+    var dateRow   = document.getElementById('wxNotamDates');
+    var dateFrom  = document.getElementById('wxDateFrom');
+    var dateTo    = document.getElementById('wxDateTo');
+
+    // Set default NOTAM date range: today − 7d → today + 30d
+    (function initDates(){
+      var now = new Date();
+      var df  = new Date(now.getTime() -  7*24*60*60*1000);
+      var dt  = new Date(now.getTime() + 30*24*60*60*1000);
+      if(dateFrom) dateFrom.value = df.toISOString().slice(0,10);
+      if(dateTo)   dateTo.value   = dt.toISOString().slice(0,10);
+    })();
 
     function openWx(){ bd.classList.add('show'); bd.setAttribute('aria-hidden','false'); setTimeout(function(){ if(inp) inp.focus(); },120); }
     function closeWx(){ bd.classList.remove('show'); bd.setAttribute('aria-hidden','true'); }
@@ -3507,17 +3525,24 @@ body.day-theme .panel{
     if(cls) cls.addEventListener('click', closeWx);
     if(bd)  bd.addEventListener('click', function(e){ if(e.target===bd) closeWx(); });
 
+    function toggleDateRow(){
+      if(dateRow) dateRow.style.display = wxTab==='wx-notam' ? 'flex' : 'none';
+    }
     tabs.forEach(function(t){
       t.addEventListener('click', function(){
         tabs.forEach(function(x){ x.classList.remove('active'); });
         t.classList.add('active');
         wxTab = t.getAttribute('data-wx-tab');
+        toggleDateRow();
         if(wxData) renderTab();
       });
     });
 
     if(fetchBtn) fetchBtn.addEventListener('click', doFetch);
     if(inp) inp.addEventListener('keydown', function(e){ if(e.key==='Enter') doFetch(); });
+    // Clear cache when NOTAM dates change so next Fetch is fresh
+    if(dateFrom) dateFrom.addEventListener('change', function(){ wxCache = {}; });
+    if(dateTo)   dateTo.addEventListener('change',   function(){ wxCache = {}; });
 
     function doFetch(){
       var icao = inp ? inp.value.trim().toUpperCase() : '';
@@ -3531,10 +3556,9 @@ body.day-theme .panel{
       var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
       var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
       var aUrl = WX_BASE+'/gairmet/'+icao+'/decoded?x-api-key='+WX_KEY;
-      var _now  = new Date();
-      var _df   = new Date(_now.getTime() -  7*24*60*60*1000).toISOString().slice(0,10);
-      var _dt   = new Date(_now.getTime() + 30*24*60*60*1000).toISOString().slice(0,10);
-      var nUrl  = AE_BASE+'/notams?key='+AE_KEY+'&icao='+icao+'&date_from='+_df+'&date_to='+_dt;
+      var _df = dateFrom ? dateFrom.value : '';
+      var _dt = dateTo   ? dateTo.value   : '';
+      var nUrl = AE_BASE+'/notams?key='+AE_KEY+'&icao='+icao+(_df?'&date_from='+_df:'')+(_dt?'&date_to='+_dt:'');
       Promise.all([
         window.fetch(mUrl).then(function(r){ return r.json(); }),
         window.fetch(tUrl).then(function(r){ return r.json(); }),
