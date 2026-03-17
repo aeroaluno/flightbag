@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.72</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.73</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -8609,6 +8609,122 @@ function parseDeckCrew(raw){
     return Promise.race([Promise.resolve(p).finally(()=>clearTimeout(t)), timeout]);
   }
 
+  // ══════════════════════════════════════════════════════════════
+  //  ocrPostProcess — shared robust post-processing for OCR results
+  //  Called from both Pre-flight Upload and OFP Capture Auto Scan
+  // ══════════════════════════════════════════════════════════════
+  function ocrPostProcess(parsed, text) {
+    console.log("[OCR] ocrPostProcess running, text length:", text.length);
+
+    // Helper: make ICAO pattern OCR-flexible (O↔0, I↔1↔l)
+    function ocrFlex(icao) {
+      return icao.split("").map(function(c) {
+        if(c === "O" || c === "0") return "[O0]";
+        if(c === "I" || c === "1" || c === "l") return "[I1l]";
+        return c;
+      }).join("");
+    }
+
+    // ── ETOPS: search full text for ETOPS + minutes ──
+    if(parsed.etops || /ETOPS/i.test(text)) {
+      var em = /ETOPS[:\s.]*(\d{2,3})\s*MIN/i.exec(text);
+      parsed.etops = em ? ("YES \u2014 " + em[1] + " MIN") : "YES";
+    } else {
+      parsed.etops = "NO";
+    }
+
+    // ── DEP RWY + SID: use dep ICAO from PAGE line for precise match ──
+    if(!parsed.depRwy) {
+      // 1) Extract departure ICAO from PAGE line (e.g. "P0300 OTHH/EHAM")
+      var pageIcaoM = /P\d{4}\s+([A-Z]{4})\/[A-Z]{4}/i.exec(text);
+      var depIcao = pageIcaoM ? pageIcaoM[1].toUpperCase() : null;
+      console.log("[OCR] depIcao from PAGE:", depIcao);
+
+      if(depIcao) {
+        // 2) Build OCR-flexible pattern: e.g. OTHH → [O0]THH
+        var flexIcao = ocrFlex(depIcao);
+        var rwyPat = new RegExp(flexIcao + '\\s+(\\d{2}[LCRlcr]?)\\s+([A-Z]{3,8})\\s', 'i');
+        console.log("[OCR] depRwy pattern:", rwyPat.source);
+        var rm = rwyPat.exec(text);
+        if(rm) {
+          parsed.depRwy = rm[1].toUpperCase();
+          if(!parsed.sid) parsed.sid = rm[2].toUpperCase();
+          console.log("[OCR] depRwy via depIcao match:", parsed.depRwy, parsed.sid);
+        }
+      }
+
+      // 3) Generic fallback if ICAO method failed
+      if(!parsed.depRwy) {
+        var depPatterns = [
+          /[:.][A-Z0-9]{4}\s+(\d{2}[LCRlcr]?)\s+([A-Z]{3,8})\s/i,
+          /\b[A-Z0-9]{4}\s+(\d{2}[LCRlcr])\s+([A-Z]{3,8})\s/i,
+        ];
+        for(var di=0; di<depPatterns.length; di++) {
+          var dm = depPatterns[di].exec(text);
+          if(dm) {
+            parsed.depRwy = dm[1].toUpperCase();
+            if(!parsed.sid) parsed.sid = dm[2].toUpperCase();
+            console.log("[OCR] depRwy fallback:", depPatterns[di].source, "→", parsed.depRwy, parsed.sid);
+            break;
+          }
+        }
+      }
+    }
+
+    // ── MEL: format or set NONE ──
+    if(parsed.melItems) {
+      parsed.melItems = "\u26a0 " + parsed.melItems;
+    } else {
+      var melM = /MEL.?CDL\s+ITEMS?\s+([\d][\d\s.\-]+[\d])/i.exec(text);
+      if(melM) parsed.melItems = "\u26a0 " + melM[1].trim();
+      else parsed.melItems = "NONE";
+    }
+
+    // ── Cruise Level: keep FL prefix ──
+    if(parsed.cruiseLevel) {
+      var cl = parsed.cruiseLevel.replace(/[^A-Z0-9]/gi,"");
+      parsed.cruiseLevel = cl.startsWith("FL") ? cl : ("FL" + cl);
+    }
+
+    // ── PLAN REQ = FINL + ALTN (line-by-line fallback) ──
+    var _finl = parseInt(parsed.finlFuel, 10) || 0;
+    var _altn = parseInt(parsed.altnFuel, 10) || 0;
+    if(!_finl || !_altn) {
+      var lines = text.split(/\r?\n/);
+      for(var li=0; li<lines.length; li++) {
+        if(!_altn && /^\s*ALTN\b/i.test(lines[li])) {
+          var anums = lines[li].match(/\d{3,6}/g);
+          if(anums && anums.length >= 1) { _altn = parseInt(anums[0], 10) || 0; }
+        }
+        if(!_finl && /^\s*FINL\b/i.test(lines[li])) {
+          var fnums = lines[li].match(/\d{3,6}/g);
+          if(fnums && fnums.length >= 1) { _finl = parseInt(fnums[0], 10) || 0; }
+        }
+      }
+    }
+    if(_finl && _altn) parsed.planReq = String(_finl + _altn);
+
+    // ══ DEBUG: show OCR results on screen (iPad has no console) ══
+    var _depIcaoDbg = /P\d{4}\s+([A-Z]{4})\/[A-Z]{4}/i.exec(text);
+    var _dbg = "\u2550\u2550\u2550 OCR DEBUG \u2550\u2550\u2550\n\n"
+      + "depIcao: " + (_depIcaoDbg ? _depIcaoDbg[1] : "?") + "\n"
+      + "ETOPS: " + (parsed.etops||"\u2014") + "\n"
+      + "depRwy: " + (parsed.depRwy||"\u2014") + "\n"
+      + "SID: " + (parsed.sid||"\u2014") + "\n"
+      + "STAR: " + (parsed.star||"\u2014") + "\n"
+      + "arrRwy: " + (parsed.arrRwy||"\u2014") + "\n"
+      + "cruiseFL: " + (parsed.cruiseLevel||"\u2014") + "\n"
+      + "ALTN fuel: " + _altn + "\n"
+      + "FINL fuel: " + _finl + "\n"
+      + "PLAN REQ: " + (parsed.planReq||"\u2014") + "\n"
+      + "acType: " + (parsed.acType||"\u2014") + "\n"
+      + "acReg: " + (parsed.acReg||"\u2014") + "\n"
+      + "MEL: " + (parsed.melItems||"\u2014") + "\n"
+      + "\n\u2550\u2550\u2550 RAW OCR (first 2000 chars) \u2550\u2550\u2550\n\n"
+      + text.substring(0, 2000);
+    alert(_dbg);
+  }
+
   async function autoScanPinnedFlightPlan(){
     try{
       // OCR engine is local — works fully offline
@@ -8665,6 +8781,9 @@ function parseDeckCrew(raw){
       const _arr = _parseTok(parsed.arrOffsetToken);
       if(_dep){ parsed.depUtcOffsetMinutes = _dep.minutes; parsed.depUtcOffsetText = _dep.text; }
       if(_arr){ parsed.arrUtcOffsetMinutes = _arr.minutes; parsed.arrUtcOffsetText = _arr.text; }
+
+      // ══════ ROBUST POST-PROCESSING (shared with OFP Capture) ══════
+      ocrPostProcess(parsed, text);
 
       const data = ofpLoadData();
       for(const k of Object.keys(parsed)) data[k] = parsed[k];
@@ -10165,117 +10284,8 @@ function ofpSaveData(obj){
       if(_dep){ parsed.depUtcOffsetMinutes = _dep.minutes; parsed.depUtcOffsetText = _dep.text; }
       if(_arr){ parsed.arrUtcOffsetMinutes = _arr.minutes; parsed.arrUtcOffsetText = _arr.text; }
 
-      // ══════ ROBUST POST-PROCESSING (fallback to raw OCR text) ══════
-      console.log("[OCR] full text:\n", text);
-
-      // ── ETOPS: search full text for ETOPS + minutes ──
-      if(parsed.etops || /ETOPS/i.test(text)) {
-        const em = /ETOPS[:\s.]*(\d{2,3})\s*MIN/i.exec(text);
-        parsed.etops = em ? ("YES — " + em[1] + " MIN") : "YES";
-      } else {
-        parsed.etops = "NO";
-      }
-
-      // ── DEP RWY + SID: use dep ICAO from PAGE line for precise match ──
-      if(!parsed.depRwy) {
-        // Helper: make ICAO pattern OCR-flexible (O↔0, I↔1↔l)
-        function ocrFlex(icao) {
-          return icao.split("").map(function(c) {
-            if(c === "O" || c === "0") return "[O0]";
-            if(c === "I" || c === "1" || c === "l") return "[I1l]";
-            return c;
-          }).join("");
-        }
-
-        // 1) Extract departure ICAO from PAGE line (e.g. "P0300 OTHH/EHAM")
-        const pageIcaoM = /P\d{4}\s+([A-Z]{4})\/[A-Z]{4}/i.exec(text);
-        const depIcao = pageIcaoM ? pageIcaoM[1].toUpperCase() : null;
-        console.log("[OCR] depIcao from PAGE:", depIcao);
-
-        if(depIcao) {
-          // 2) Build OCR-flexible pattern: e.g. OTHH → [O0]THH
-          const flexIcao = ocrFlex(depIcao);
-          const rwyPat = new RegExp(flexIcao + '\\s+(\\d{2}[LCRlcr]?)\\s+([A-Z]{3,8})\\s', 'i');
-          console.log("[OCR] depRwy pattern:", rwyPat.source);
-          const rm = rwyPat.exec(text);
-          if(rm) {
-            parsed.depRwy = rm[1].toUpperCase();
-            if(!parsed.sid) parsed.sid = rm[2].toUpperCase();
-            console.log("[OCR] depRwy via depIcao match:", parsed.depRwy, parsed.sid);
-          }
-        }
-
-        // 3) Generic fallback if ICAO method failed
-        if(!parsed.depRwy) {
-          const depPatterns = [
-            /[:.][A-Z0-9]{4}\s+(\d{2}[LCRlcr]?)\s+([A-Z]{3,8})\s/i,
-            /\b[A-Z0-9]{4}\s+(\d{2}[LCRlcr])\s+([A-Z]{3,8})\s/i,
-          ];
-          for(const re of depPatterns) {
-            const m = re.exec(text);
-            if(m) {
-              parsed.depRwy = m[1].toUpperCase();
-              if(!parsed.sid) parsed.sid = m[2].toUpperCase();
-              console.log("[OCR] depRwy fallback:", re.source, "→", parsed.depRwy, parsed.sid);
-              break;
-            }
-          }
-        }
-      }
-
-      // ── MEL: format or set NONE ──
-      if(parsed.melItems) {
-        parsed.melItems = "⚠ " + parsed.melItems;
-      } else {
-        const melM = /MEL.?CDL\s+ITEMS?\s+([\d][\d\s.-]+[\d])/i.exec(text);
-        if(melM) parsed.melItems = "⚠ " + melM[1].trim();
-        else parsed.melItems = "NONE";
-      }
-
-      // ── Cruise Level: keep FL prefix ──
-      if(parsed.cruiseLevel) {
-        const cl = parsed.cruiseLevel.replace(/[^A-Z0-9]/gi,"");
-        parsed.cruiseLevel = cl.startsWith("FL") ? cl : ("FL" + cl);
-      }
-
-      // ── PLAN REQ = FINL + ALTN (line-by-line fallback) ──
-      let _finl = parseInt(parsed.finlFuel, 10) || 0;
-      let _altn = parseInt(parsed.altnFuel, 10) || 0;
-      if(!_finl || !_altn) {
-        const lines = text.split(/\r?\n/);
-        for(const line of lines) {
-          if(!_altn && /^\s*ALTN\b/i.test(line)) {
-            const nums = line.match(/\d{3,6}/g);
-            if(nums && nums.length >= 1) { _altn = parseInt(nums[0], 10) || 0; }
-          }
-          if(!_finl && /^\s*FINL\b/i.test(line)) {
-            const nums = line.match(/\d{3,6}/g);
-            if(nums && nums.length >= 1) { _finl = parseInt(nums[0], 10) || 0; }
-          }
-        }
-      }
-      if(_finl && _altn) parsed.planReq = String(_finl + _altn);
-
-      // ══ DEBUG: show OCR results on screen (iPad has no console) ══
-      // Extract depIcao for debug display
-      const _depIcaoDbg = /P\d{4}\s+([A-Z]{4})\/[A-Z]{4}/i.exec(text);
-      const _dbg = "═══ OCR DEBUG ═══\n\n"
-        + "depIcao: " + (_depIcaoDbg ? _depIcaoDbg[1] : "?") + "\n"
-        + "ETOPS: " + (parsed.etops||"—") + "\n"
-        + "depRwy: " + (parsed.depRwy||"—") + "\n"
-        + "SID: " + (parsed.sid||"—") + "\n"
-        + "STAR: " + (parsed.star||"—") + "\n"
-        + "arrRwy: " + (parsed.arrRwy||"—") + "\n"
-        + "cruiseFL: " + (parsed.cruiseLevel||"—") + "\n"
-        + "ALTN fuel: " + _altn + "\n"
-        + "FINL fuel: " + _finl + "\n"
-        + "PLAN REQ: " + (parsed.planReq||"—") + "\n"
-        + "acType: " + (parsed.acType||"—") + "\n"
-        + "acReg: " + (parsed.acReg||"—") + "\n"
-        + "MEL: " + (parsed.melItems||"—") + "\n"
-        + "\n═══ RAW OCR TEXT (first 2000 chars) ═══\n\n"
-        + text.substring(0, 2000);
-      alert(_dbg);
+      // ══════ ROBUST POST-PROCESSING (shared with Pre-flight upload) ══════
+      ocrPostProcess(parsed, text);
 
       const data = ofpLoadData();
       for(const k of Object.keys(parsed)) data[k] = parsed[k];
