@@ -1,7 +1,6 @@
 // sw.js — FlightBag
-// v1.10.35 — iOS offline: skipWaiting dentro do waitUntil, recupera cache antigo,
-//             múltiplos fallbacks de URL, ignoreVary no match
-const CACHE_NAME = "flightbag-cache-v1.10.35";
+// v1.10.68 — bump cache for new OCR extractors + AI NOTAM features
+const CACHE_NAME = "flightbag-cache-v1.10.68";
 
 const CORE = [
     "./",
