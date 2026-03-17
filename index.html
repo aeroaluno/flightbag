@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.48</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.49</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3475,6 +3475,7 @@ body.day-theme .panel{
         <div class="wx-tab active" data-wx-tab="wx-metar">METAR</div>
         <div class="wx-tab" data-wx-tab="wx-taf">TAF</div>
         <div class="wx-tab" data-wx-tab="wx-airmet">AIRMET</div>
+        <div class="wx-tab" data-wx-tab="wx-notam">NOTAM</div>
       </div>
       <div id="wxBody">
         <div class="wx-msg">Enter an ICAO code and tap Fetch</div>
@@ -3483,8 +3484,10 @@ body.day-theme .panel{
   </div>
   <script>
   (function(){
-    var WX_KEY  = '15af4320fca64d3dac7936dcb9cb9d22';
-    var WX_BASE = 'https://api.checkwx.com/v2';
+    var WX_KEY    = '15af4320fca64d3dac7936dcb9cb9d22';
+    var WX_BASE   = 'https://api.checkwx.com/v2';
+    var AE_KEY    = '7d40b1-ee4fb9';
+    var AE_BASE   = 'https://aviation-edge.com/v2/public';
     var wxCache = {};
     var wxTab   = 'wx-metar';
     var wxData  = null;
@@ -3528,12 +3531,14 @@ body.day-theme .panel{
       var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
       var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
       var aUrl = WX_BASE+'/gairmet/'+icao+'/decoded?x-api-key='+WX_KEY;
+      var nUrl = AE_BASE+'/notam?key='+AE_KEY+'&icaoCode='+icao;
       Promise.all([
         window.fetch(mUrl).then(function(r){ return r.json(); }),
         window.fetch(tUrl).then(function(r){ return r.json(); }),
-        window.fetch(aUrl).then(function(r){ return r.json(); }).catch(function(){ return null; })
+        window.fetch(aUrl).then(function(r){ return r.json(); }).catch(function(){ return null; }),
+        window.fetch(nUrl).then(function(r){ return r.json(); }).catch(function(){ return null; })
       ]).then(function(res){
-        wxData = { ts:Date.now(), metar:res[0], taf:res[1], airmet:res[2] };
+        wxData = { ts:Date.now(), metar:res[0], taf:res[1], airmet:res[2], notam:res[3] };
         wxCache[icao] = wxData;
         renderTab();
       }).catch(function(err){
@@ -3548,7 +3553,8 @@ body.day-theme .panel{
     function renderTab(){
       if(wxTab==='wx-metar') renderMetar();
       else if(wxTab==='wx-taf') renderTaf();
-      else renderAirmet();
+      else if(wxTab==='wx-airmet') renderAirmet();
+      else renderNotam();
     }
 
     function renderMetar(){
@@ -3666,6 +3672,44 @@ body.day-theme .panel{
           }
           h += '</div>';
         });
+      });
+      body.innerHTML = h;
+    }
+
+    function renderNotam(){
+      var raw = wxData && wxData.notam;
+      // Handle error or empty
+      if(!raw || (Array.isArray(raw) && !raw.length) || raw.error){
+        body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
+      }
+      var list = Array.isArray(raw) ? raw : (raw.data || []);
+      if(!list.length){
+        body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
+      }
+      // Sort by start date descending
+      list.sort(function(a,b){ return (b.startdateutc||'').localeCompare(a.startdateutc||''); });
+      var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+list.length+' NOTAM'+(list.length>1?'s':'')+' found</div>';
+      list.forEach(function(n, idx){
+        var cls   = (n.class||'').toUpperCase();
+        var num   = (n.number||'NOTAM '+(idx+1)).toUpperCase();
+        var start = n.startdateutc ? utcStr(n.startdateutc) : '—';
+        var end   = n.enddateutc   ? utcStr(n.enddateutc)   : 'PERM';
+        var text  = n.condition || n.text || '';
+        var clsColor = cls==='INTERNATIONAL' ? 'rgba(40,195,255,.15)' : 'rgba(255,180,0,.12)';
+        h += '<div class="taf-period" style="border-left:3px solid rgba(40,195,255,.4);margin-bottom:10px;">';
+        h += '<div class="taf-period-hdr" style="margin-bottom:6px;">';
+        h += '<span style="font-size:13px;font-weight:900;color:var(--cyan);letter-spacing:.04em;">'+esc(num)+'</span>';
+        if(cls) h += '<span class="taf-change-badge" style="background:'+clsColor+';color:var(--txt);font-size:9px;letter-spacing:.1em;">'+esc(cls)+'</span>';
+        h += '</div>';
+        h += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">&#128346; '+esc(start)+' &#8594; '+esc(end)+'</div>';
+        if(text){
+          var preview = text.length > 300 ? text.slice(0,300)+'…' : text;
+          h += '<div style="font-size:12px;color:#c8d4e0;line-height:1.65;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;">'+esc(preview)+'</div>';
+          if(text.length > 300){
+            h += '<button onclick="this.previousElementSibling.textContent='+JSON.stringify(esc(text))+';this.remove();" style="margin-top:6px;font-size:11px;color:var(--cyan);background:none;border:none;cursor:pointer;padding:0;">Show full ▾</button>';
+          }
+        }
+        h += '</div>';
       });
       body.innerHTML = h;
     }
