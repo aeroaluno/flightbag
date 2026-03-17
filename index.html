@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.73</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.74</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -8704,25 +8704,6 @@ function parseDeckCrew(raw){
     }
     if(_finl && _altn) parsed.planReq = String(_finl + _altn);
 
-    // ══ DEBUG: show OCR results on screen (iPad has no console) ══
-    var _depIcaoDbg = /P\d{4}\s+([A-Z]{4})\/[A-Z]{4}/i.exec(text);
-    var _dbg = "\u2550\u2550\u2550 OCR DEBUG \u2550\u2550\u2550\n\n"
-      + "depIcao: " + (_depIcaoDbg ? _depIcaoDbg[1] : "?") + "\n"
-      + "ETOPS: " + (parsed.etops||"\u2014") + "\n"
-      + "depRwy: " + (parsed.depRwy||"\u2014") + "\n"
-      + "SID: " + (parsed.sid||"\u2014") + "\n"
-      + "STAR: " + (parsed.star||"\u2014") + "\n"
-      + "arrRwy: " + (parsed.arrRwy||"\u2014") + "\n"
-      + "cruiseFL: " + (parsed.cruiseLevel||"\u2014") + "\n"
-      + "ALTN fuel: " + _altn + "\n"
-      + "FINL fuel: " + _finl + "\n"
-      + "PLAN REQ: " + (parsed.planReq||"\u2014") + "\n"
-      + "acType: " + (parsed.acType||"\u2014") + "\n"
-      + "acReg: " + (parsed.acReg||"\u2014") + "\n"
-      + "MEL: " + (parsed.melItems||"\u2014") + "\n"
-      + "\n\u2550\u2550\u2550 RAW OCR (first 2000 chars) \u2550\u2550\u2550\n\n"
-      + text.substring(0, 2000);
-    alert(_dbg);
   }
 
   async function autoScanPinnedFlightPlan(){
@@ -10246,7 +10227,6 @@ function ofpSaveData(obj){
   }
 
   async function ofpAutoScan() {
-    alert("DEBUG: ofpAutoScan called. imgLoaded=" + !!ofpImgLoaded);
     if(!ofpImgLoaded) {
       alert("Upload an OFP image first.");
       return;
@@ -10254,9 +10234,7 @@ function ofpSaveData(obj){
     try {
       // OCR runs fully offline — all engine files are served locally
       setOcrStatus("OCR: starting…");
-      alert("DEBUG: starting OCR...");
       const text = await runOcrOnImage(ofpImg);
-      alert("DEBUG: OCR done. text length=" + (text||"").length);
 
       const extractors = loadExtractors();
       const parsed = parseWithExtractors(text, extractors);
