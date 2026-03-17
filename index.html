@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.63</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.64</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -9655,8 +9655,10 @@ function ofpSaveData(obj){
   const ofpSaveExtractorsBtn = document.getElementById("ofpSaveExtractorsBtn");
   const ofpResetExtractorsBtn = document.getElementById("ofpResetExtractorsBtn");
 
-  const OFP_EXTRACTORS_KEY = "flightbag_ofp_extractors_v1";
+  const OFP_EXTRACTORS_KEY = "flightbag_ofp_extractors_v2";
   const OFP_OCR_TEXT_KEY = "flightbag_ofp_ocr_text_v1";
+  // v2: added acType, etops, melItems, depRwy, sid, star, arrRwy, cruiseLevel, altnFuel, finlFuel
+  try { localStorage.removeItem("flightbag_ofp_extractors_v1"); } catch(e){}
 
   const DEFAULT_OFP_EXTRACTORS = [
   {
@@ -9853,8 +9855,8 @@ function ofpSaveData(obj){
   },
   {
     "key": "arrRwy",
-    "label": "Arrival Runway (after ARR ICAO at end of route block)",
-    "pattern": "[A-Z][A-Z0-9]*\\d[A-Z0-9]*\\s+[A-Z]{4}\\s+(\\d{2}[LCR]?)\\s*[\\r\\n]",
+    "label": "Arrival Runway (RWY before FL line)",
+    "pattern": "\\b(\\d{2}[LCR]?)\\s*[\\r\\n]+\\s*FL\\d{3}\\b",
     "flags": "",
     "group": 1,
     "post": "upper"
@@ -9942,25 +9944,11 @@ function ofpSaveData(obj){
   function loadExtractors() {
     const ensureOcrFields = (arr)=>{
       if(!Array.isArray(arr)) return arr;
-      if(!arr.some(x => x && x.key === "taxiFuel")){
-        arr.push({
-          key: "taxiFuel",
-          label: "Taxi Fuel (from TAXI row fuel column)",
-          pattern: "\\bTAXI\\s+(\\d{2,6})\\s+\\d{4}\\b",
-          flags: "i",
-          group: 1,
-          post: "num"
-        });
-      }
-      if(!arr.some(x => x && x.key === "tripFuel")){
-        arr.push({
-          key: "tripFuel",
-          label: "Trip Fuel (first value on TRIP row)",
-          pattern: "\\bTRIP\\s+(\\d{2,6})\\s+\\d{4}\\b",
-          flags: "i",
-          group: 1,
-          post: "num"
-        });
+      // Auto-merge any missing extractors from DEFAULT into the user's cached set
+      for(const def of DEFAULT_OFP_EXTRACTORS){
+        if(def && def.key && !arr.some(x => x && x.key === def.key)){
+          arr.push(Object.assign({}, def));
+        }
       }
       return arr;
     };
