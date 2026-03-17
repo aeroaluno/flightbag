@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.51</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.52</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3486,8 +3486,7 @@ body.day-theme .panel{
   (function(){
     var WX_KEY    = '15af4320fca64d3dac7936dcb9cb9d22';
     var WX_BASE   = 'https://api.checkwx.com/v2';
-    var AE_KEY    = '7d40b1-ee4fb9';
-    var AE_BASE   = 'https://aviation-edge.com/v2/public';
+    var FAA_BASE  = 'https://aviationweather.gov/api/data';
     var wxCache = {};
     var wxTab   = 'wx-metar';
     var wxData  = null;
@@ -3531,15 +3530,14 @@ body.day-theme .panel{
       var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
       var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
       var aUrl = WX_BASE+'/gairmet/'+icao+'/decoded?x-api-key='+WX_KEY;
-      var nRaw = AE_BASE+'/notam?key='+AE_KEY+'&icaoCode='+icao;
-      var nUrl = 'https://corsproxy.io/?'+encodeURIComponent(nRaw);
+      var nUrl = FAA_BASE+'/notam?location='+icao+'&format=json';
       Promise.all([
         window.fetch(mUrl).then(function(r){ return r.json(); }),
         window.fetch(tUrl).then(function(r){ return r.json(); }),
         window.fetch(aUrl).then(function(r){ return r.json(); }).catch(function(){ return null; }),
         window.fetch(nUrl).then(function(r){
           return r.json().then(function(j){ return {ok:r.ok, status:r.status, data:j}; });
-        }).catch(function(e){ return {ok:false, status:0, err:e.message||'Network/CORS error'}; })
+        }).catch(function(e){ return {ok:false, status:0, err:e.message||'Network error'}; })
       ]).then(function(res){
         wxData = { ts:Date.now(), metar:res[0], taf:res[1], airmet:res[2], notam:res[3] };
         wxCache[icao] = wxData;
@@ -3681,43 +3679,51 @@ body.day-theme .panel{
 
     function renderNotam(){
       var wrapper = wxData && wxData.notam;
-      // Show fetch error details for debugging
       if(!wrapper){
-        body.innerHTML='<div class="wx-err">&#9888; NOTAM fetch returned null.</div>'; return;
+        body.innerHTML='<div class="wx-err">&#9888; NOTAM fetch failed.</div>'; return;
       }
       if(wrapper.err || !wrapper.ok){
-        var msg = wrapper.err || ('HTTP '+wrapper.status);
-        body.innerHTML='<div class="wx-err">&#9888; NOTAM error: '+esc(msg)+'<br><small style="opacity:.6;font-size:10px;">URL: '+esc(AE_BASE+'/notam?key=***&icaoCode=...')+'</small></div>'; return;
+        body.innerHTML='<div class="wx-err">&#9888; NOTAM error: '+esc(wrapper.err||'HTTP '+wrapper.status)+'</div>'; return;
       }
       var raw = wrapper.data;
-      if(!raw || (Array.isArray(raw) && !raw.length)){
+      // FAA returns GeoJSON FeatureCollection or array of features
+      var features = [];
+      if(raw && raw.type === 'FeatureCollection' && Array.isArray(raw.features)){
+        features = raw.features;
+      } else if(Array.isArray(raw)){
+        features = raw;
+      }
+      if(!features.length){
         body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
       }
-      var list = Array.isArray(raw) ? raw : [];
-      if(!list.length){
-        body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
-      }
-      // Sort by start date descending
-      list.sort(function(a,b){ return (b.startdateutc||'').localeCompare(a.startdateutc||''); });
-      var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+list.length+' NOTAM'+(list.length>1?'s':'')+' found</div>';
-      list.forEach(function(n, idx){
-        var cls   = (n.class||'').toUpperCase();
-        var num   = (n.number||'NOTAM '+(idx+1)).toUpperCase();
-        var start = n.startdateutc ? utcStr(n.startdateutc) : '—';
-        var end   = n.enddateutc   ? utcStr(n.enddateutc)   : 'PERM';
-        var text  = n.condition || n.text || '';
-        var clsColor = cls==='INTERNATIONAL' ? 'rgba(40,195,255,.15)' : 'rgba(255,180,0,.12)';
+      // Sort by effectiveStart descending
+      features.sort(function(a,b){
+        var da = (a.properties||a).effectiveStart||(a.properties||a).startdateutc||'';
+        var db = (b.properties||b).effectiveStart||(b.properties||b).startdateutc||'';
+        return db.localeCompare(da);
+      });
+      var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+features.length+' NOTAM'+(features.length!==1?'s':'')+' — source: FAA / ICAO</div>';
+      features.forEach(function(feat, idx){
+        var p    = feat.properties || feat;
+        var num  = (p.notamNumber || p.number || 'NOTAM '+(idx+1)).toUpperCase();
+        var cls  = (p.classification || p.class || p.type || '').toUpperCase();
+        var start= p.effectiveStart || p.startdateutc || '';
+        var end  = p.effectiveEnd   || p.enddateutc   || '';
+        // Full NOTAM text — prefer icaoMessage or traditionalMessage or notamText
+        var text = p.icaoMessage || p.traditionalMessage || p.notamText || p.condition || p.text || '';
+        text = text.replace(/\\n/g,'\n').trim();
+        var clsColor = cls.indexOf('INT') >= 0 ? 'rgba(40,195,255,.15)' : 'rgba(255,180,0,.12)';
         h += '<div class="taf-period" style="border-left:3px solid rgba(40,195,255,.4);margin-bottom:10px;">';
         h += '<div class="taf-period-hdr" style="margin-bottom:6px;">';
         h += '<span style="font-size:13px;font-weight:900;color:var(--cyan);letter-spacing:.04em;">'+esc(num)+'</span>';
         if(cls) h += '<span class="taf-change-badge" style="background:'+clsColor+';color:var(--txt);font-size:9px;letter-spacing:.1em;">'+esc(cls)+'</span>';
         h += '</div>';
-        h += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">&#128346; '+esc(start)+' &#8594; '+esc(end)+'</div>';
+        if(start||end) h += '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">&#128346; '+(start?utcStr(start):'—')+' &#8594; '+(end?utcStr(end):'PERM')+'</div>';
         if(text){
-          var preview = text.length > 300 ? text.slice(0,300)+'…' : text;
-          h += '<div style="font-size:12px;color:#c8d4e0;line-height:1.65;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;">'+esc(preview)+'</div>';
-          if(text.length > 300){
-            h += '<button onclick="this.previousElementSibling.textContent='+JSON.stringify(esc(text))+';this.remove();" style="margin-top:6px;font-size:11px;color:var(--cyan);background:none;border:none;cursor:pointer;padding:0;">Show full ▾</button>';
+          var preview = text.length > 320 ? text.slice(0,320)+'…' : text;
+          h += '<div id="nt'+idx+'" style="font-size:12px;color:#c8d4e0;line-height:1.65;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;">'+esc(preview)+'</div>';
+          if(text.length > 320){
+            h += '<button onclick="document.getElementById(\'nt'+idx+'\').textContent='+JSON.stringify(text)+';this.remove();" style="margin-top:5px;font-size:11px;color:var(--cyan);background:none;border:none;cursor:pointer;padding:0;text-align:left;">Show full ▾</button>';
           }
         }
         h += '</div>';
