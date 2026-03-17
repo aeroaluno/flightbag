@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.53</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.54</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3530,7 +3530,7 @@ body.day-theme .panel{
       var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
       var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
       var aUrl = WX_BASE+'/gairmet/'+icao+'/decoded?x-api-key='+WX_KEY;
-      var nUrl = 'https://corsproxy.io/?'+encodeURIComponent(FAA_BASE+'/notam?location='+icao+'&format=json');
+      var nUrl = 'https://api.allorigins.win/raw?url='+encodeURIComponent(FAA_BASE+'/notam?location='+icao+'&format=json');
       Promise.all([
         window.fetch(mUrl).then(function(r){ return r.json(); }),
         window.fetch(tUrl).then(function(r){ return r.json(); }),
