@@ -3056,7 +3056,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.71</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.72</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -10178,14 +10178,25 @@ function ofpSaveData(obj){
 
       // ── DEP RWY + SID: use dep ICAO from PAGE line for precise match ──
       if(!parsed.depRwy) {
+        // Helper: make ICAO pattern OCR-flexible (O↔0, I↔1↔l)
+        function ocrFlex(icao) {
+          return icao.split("").map(function(c) {
+            if(c === "O" || c === "0") return "[O0]";
+            if(c === "I" || c === "1" || c === "l") return "[I1l]";
+            return c;
+          }).join("");
+        }
+
         // 1) Extract departure ICAO from PAGE line (e.g. "P0300 OTHH/EHAM")
         const pageIcaoM = /P\d{4}\s+([A-Z]{4})\/[A-Z]{4}/i.exec(text);
         const depIcao = pageIcaoM ? pageIcaoM[1].toUpperCase() : null;
         console.log("[OCR] depIcao from PAGE:", depIcao);
 
         if(depIcao) {
-          // 2) Search for: DEPICAO  RWY  SID  (runway with or without L/C/R)
-          const rwyPat = new RegExp(depIcao + '\\s+(\\d{2}[LCRlcr]?)\\s+([A-Z]{3,8})\\s', 'i');
+          // 2) Build OCR-flexible pattern: e.g. OTHH → [O0]THH
+          const flexIcao = ocrFlex(depIcao);
+          const rwyPat = new RegExp(flexIcao + '\\s+(\\d{2}[LCRlcr]?)\\s+([A-Z]{3,8})\\s', 'i');
+          console.log("[OCR] depRwy pattern:", rwyPat.source);
           const rm = rwyPat.exec(text);
           if(rm) {
             parsed.depRwy = rm[1].toUpperCase();
@@ -10197,8 +10208,8 @@ function ofpSaveData(obj){
         // 3) Generic fallback if ICAO method failed
         if(!parsed.depRwy) {
           const depPatterns = [
-            /[:.][A-Z]{4}\s+(\d{2}[LCRlcr]?)\s+([A-Z]{3,8})\s/i,
-            /\b[A-Z]{4}\s+(\d{2}[LCRlcr])\s+([A-Z]{3,8})\s/i,
+            /[:.][A-Z0-9]{4}\s+(\d{2}[LCRlcr]?)\s+([A-Z]{3,8})\s/i,
+            /\b[A-Z0-9]{4}\s+(\d{2}[LCRlcr])\s+([A-Z]{3,8})\s/i,
           ];
           for(const re of depPatterns) {
             const m = re.exec(text);
