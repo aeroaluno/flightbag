@@ -3033,7 +3033,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.55</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.10.56</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3486,8 +3486,7 @@ body.day-theme .panel{
   (function(){
     var WX_KEY    = '15af4320fca64d3dac7936dcb9cb9d22';
     var WX_BASE   = 'https://api.checkwx.com/v2';
-    var AE_KEY    = '7d40b1-ee4fb9';
-    var AE_BASE   = 'https://aviation-edge.com/v2/public';
+    var NOTAM_WORKER = 'https://notam-proxy.qr-flightbag.workers.dev';
     var wxCache = {};
     var wxTab   = 'wx-metar';
     var wxData  = null;
@@ -3531,8 +3530,7 @@ body.day-theme .panel{
       var mUrl = WX_BASE+'/metar/'+icao+'/decoded?x-api-key='+WX_KEY;
       var tUrl = WX_BASE+'/taf/'+icao+'/decoded?x-api-key='+WX_KEY;
       var aUrl = WX_BASE+'/gairmet/'+icao+'/decoded?x-api-key='+WX_KEY;
-      var nRaw = AE_BASE+'/notam?key='+AE_KEY+'&icaoCode='+icao;
-      var nUrl = 'https://proxy.cors.sh/'+nRaw;
+      var nUrl = NOTAM_WORKER+'?icao='+icao;
       Promise.all([
         window.fetch(mUrl).then(function(r){ return r.json(); }),
         window.fetch(tUrl).then(function(r){ return r.json(); }),
@@ -3688,31 +3686,28 @@ body.day-theme .panel{
         body.innerHTML='<div class="wx-err">&#9888; NOTAM error: '+esc(wrapper.err||'HTTP '+wrapper.status)+'</div>'; return;
       }
       var raw = wrapper.data;
-      // FAA returns GeoJSON FeatureCollection or array of features
-      var features = [];
-      if(raw && raw.type === 'FeatureCollection' && Array.isArray(raw.features)){
-        features = raw.features;
-      } else if(Array.isArray(raw)){
-        features = raw;
+      // Aviation Edge returns a direct array: [{location,number,class,startdateutc,enddateutc,condition}]
+      var list = [];
+      if(Array.isArray(raw)){
+        list = raw;
+      } else if(raw && Array.isArray(raw.data)){
+        list = raw.data;
       }
-      if(!features.length){
+      if(!list.length){
         body.innerHTML='<div class="wx-msg">No active NOTAMs found for this station.</div>'; return;
       }
-      // Sort by effectiveStart descending
-      features.sort(function(a,b){
-        var da = (a.properties||a).effectiveStart||(a.properties||a).startdateutc||'';
-        var db = (b.properties||b).effectiveStart||(b.properties||b).startdateutc||'';
-        return db.localeCompare(da);
+      // Sort by startdateutc descending
+      list.sort(function(a,b){
+        return (b.startdateutc||'').localeCompare(a.startdateutc||'');
       });
-      var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+features.length+' NOTAM'+(features.length!==1?'s':'')+' — source: FAA / ICAO</div>';
-      features.forEach(function(feat, idx){
+      var h = '<div style="font-size:11px;color:var(--muted);margin-bottom:12px;">'+list.length+' NOTAM'+(list.length!==1?'s':'')+' active</div>';
+      list.forEach(function(feat, idx){
         var p    = feat.properties || feat;
-        var num  = (p.notamNumber || p.number || 'NOTAM '+(idx+1)).toUpperCase();
-        var cls  = (p.classification || p.class || p.type || '').toUpperCase();
-        var start= p.effectiveStart || p.startdateutc || '';
-        var end  = p.effectiveEnd   || p.enddateutc   || '';
-        // Full NOTAM text — prefer icaoMessage or traditionalMessage or notamText
-        var text = p.icaoMessage || p.traditionalMessage || p.notamText || p.condition || p.text || '';
+        var num  = (p.number  || p.notamNumber  || 'NOTAM '+(idx+1)).toUpperCase();
+        var cls  = (p.class   || p.classification || '').toUpperCase();
+        var start= p.startdateutc || p.effectiveStart || '';
+        var end  = p.enddateutc   || p.effectiveEnd   || '';
+        var text = p.condition || p.icaoMessage || p.notamText || p.text || '';
         text = text.replace(/\\n/g,'\n').trim();
         var clsColor = cls.indexOf('INT') >= 0 ? 'rgba(40,195,255,.15)' : 'rgba(255,180,0,.12)';
         h += '<div class="taf-period" style="border-left:3px solid rgba(40,195,255,.4);margin-bottom:10px;">';
