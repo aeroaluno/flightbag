@@ -1131,31 +1131,34 @@
 
     /* ===== Pre-Flight Briefing Layout C ===== */
     .pf-wrap{
-      display:flex; flex-direction:column; gap:8px;
+      display:flex; flex-direction:column; gap:6px;
       height:100%; padding:6px; box-sizing:border-box;
       overflow-y:auto;
     }
-    /* Scan button row */
-    .pf-scan-row{
-      display:flex; justify-content:center; padding:6px 0;
+    /* Top row: scan + OFP + badges inline */
+    .pf-top-row{
+      display:flex; align-items:stretch; gap:6px;
     }
     .pf-scan-btn{
       background:var(--btn); color:var(--cyan); border:1px dashed var(--cyan);
-      border-radius:14px; padding:12px 32px; font-size:15px; font-weight:700;
-      cursor:pointer; letter-spacing:.5px; min-height:48px;
-      display:flex; align-items:center; gap:8px;
+      border-radius:12px; padding:6px 16px; font-size:13px; font-weight:700;
+      cursor:pointer; letter-spacing:.4px; min-height:42px;
+      display:flex; align-items:center; gap:6px; white-space:nowrap;
     }
     .pf-scan-btn:hover{ background:rgba(40,195,255,.08); }
-    .pf-scan-btn svg{ width:20px; height:20px; fill:var(--cyan); }
-
-    /* Top badges row */
-    .pf-badges{
-      display:grid; grid-template-columns: repeat(5,1fr); gap:6px;
+    .pf-scan-btn svg{ width:16px; height:16px; fill:var(--cyan); }
+    .pf-view-btn{
+      background:var(--btn); color:var(--cyan); border:1px solid var(--line);
+      border-radius:12px; padding:6px 14px; font-size:13px; font-weight:700;
+      cursor:pointer; display:flex; align-items:center; gap:5px; white-space:nowrap;
     }
+    .pf-view-btn:hover{ background:rgba(40,195,255,.08); }
+    .btn-tiny{ padding:6px 10px; min-height:30px; border-radius:10px; font-size:12px; align-self:center; }
     .pf-badge{
-      border:1px solid var(--line); border-radius:12px; padding:8px 10px;
+      border:1px solid var(--line); border-radius:12px; padding:6px 8px;
       background:rgba(255,255,255,.02); text-align:center;
-      display:flex; flex-direction:column; align-items:center; gap:2px;
+      display:flex; flex-direction:column; align-items:center; gap:1px;
+      flex:1; min-width:0;
     }
     .pf-badge .pf-lbl{ font-size:10px; color:var(--muted); text-transform:uppercase; letter-spacing:1px; font-weight:700; }
     .pf-badge .pf-val{ font-size:16px; font-weight:900; color:var(--txt); letter-spacing:.5px; }
@@ -1206,7 +1209,7 @@
     .pf-footer{
       display:grid; grid-template-columns: repeat(4,1fr); gap:6px;
       border:1px solid var(--line); border-radius:12px; padding:8px 12px;
-      background:rgba(255,255,255,.02);
+      background:rgba(255,255,255,.02); margin-bottom:12px; flex-shrink:0;
     }
     body.day-theme .pf-footer{ background:rgba(0,0,0,.03); }
     .pf-foot-item{ text-align:center; }
@@ -3161,7 +3164,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.0</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.1</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3288,25 +3291,20 @@ body.day-theme .panel{
 <!-- PRE-FLIGHT -->
       <section class="view" id="view-preflight">
         <div class="pf-wrap">
-
-          <!-- Scan FPL button -->
-          <div class="pf-scan-row">
-            <input id="fpFile" type="file" accept="image/*" style="display:none" />
-            <button class="pf-scan-btn" id="fpUploadBtn">
-              <svg viewBox="0 0 24 24"><path d="M9 3L7.17 5H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.17L15 3H9zm3 15a5 5 0 110-10 5 5 0 010 10zm0-2a3 3 0 100-6 3 3 0 000 6z"/></svg>
-              Scan Flight Plan
-            </button>
-            <button class="btn danger btn.small" id="fpRemoveBtn" style="display:none; margin-left:8px; font-size:12px; padding:8px 14px; border-radius:10px;">✕ Remove</button>
-          </div>
-          <!-- OCR progress -->
-          <div class="pf-prog" id="pfProgWrap">
-            <div class="pf-prog-bar-wrap"><div class="pf-prog-bar" id="pfProgBar"></div></div>
-            <div class="pf-prog-txt" id="pfProgText">Auto Scan: idle</div>
-          </div>
+          <input id="fpFile" type="file" accept="image/*" style="display:none" />
           <span id="fpStatus" style="display:none;"></span>
 
-          <!-- Top badges: REG | TYPE | ETOPS | MEL | CREW -->
-          <div class="pf-badges">
+          <!-- Top row: Scan + badges inline -->
+          <div class="pf-top-row">
+            <button class="pf-scan-btn" id="fpUploadBtn">
+              <svg viewBox="0 0 24 24"><path d="M9 3L7.17 5H4a2 2 0 00-2 2v12a2 2 0 002 2h16a2 2 0 002-2V7a2 2 0 00-2-2h-3.17L15 3H9zm3 15a5 5 0 110-10 5 5 0 010 10zm0-2a3 3 0 100-6 3 3 0 000 6z"/></svg>
+              Scan
+            </button>
+            <button class="pf-view-btn" id="ofpBtnBriefing">
+              <svg viewBox="0 0 24 24" style="width:16px;height:16px;fill:var(--cyan);"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6zm-1 7V3.5L18.5 9H13zM6 20V4h5v7h7v9H6z"/></svg>
+              OFP
+            </button>
+            <button class="btn danger btn-tiny" id="fpRemoveBtn" style="display:none;">✕</button>
             <div class="pf-badge">
               <span class="pf-lbl">Reg</span>
               <span class="pf-val" id="pfReg">—</span>
@@ -3327,6 +3325,11 @@ body.day-theme .panel{
               <span class="pf-lbl">Crew</span>
               <span class="pf-val" id="pfCrew">✏️</span>
             </div>
+          </div>
+          <!-- OCR progress -->
+          <div class="pf-prog" id="pfProgWrap">
+            <div class="pf-prog-bar-wrap"><div class="pf-prog-bar" id="pfProgBar"></div></div>
+            <div class="pf-prog-txt" id="pfProgText">Auto Scan: idle</div>
           </div>
 
           <!-- Main 2-column: DEP | ARR -->
