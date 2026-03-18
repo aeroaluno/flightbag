@@ -1205,11 +1205,11 @@
     }
     .pf-notam-btn:hover{ background:rgba(40,195,255,.15); }
 
-    /* Bottom bar */
+    /* Data bar (below badges) */
     .pf-footer{
       display:grid; grid-template-columns: repeat(4,1fr); gap:6px;
-      border:1px solid var(--line); border-radius:12px; padding:8px 12px;
-      background:rgba(255,255,255,.02); margin-bottom:12px; flex-shrink:0;
+      border:1px solid var(--line); border-radius:12px; padding:6px 12px;
+      background:rgba(255,255,255,.02); flex-shrink:0;
     }
     body.day-theme .pf-footer{ background:rgba(0,0,0,.03); }
     .pf-foot-item{ text-align:center; }
@@ -3164,7 +3164,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.1</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.2</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3332,6 +3332,14 @@ body.day-theme .panel{
             <div class="pf-prog-txt" id="pfProgText">Auto Scan: idle</div>
           </div>
 
+          <!-- Data bar: FLT | BLK | FL | PLAN REM/REQ -->
+          <div class="pf-footer">
+            <div class="pf-foot-item"><div class="pf-fk">FLT Time</div><div class="pf-fv" id="pfFlt">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">BLK Time</div><div class="pf-fv" id="pfBlk">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">Cruise FL</div><div class="pf-fv" id="pfCruise">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">Plan Rem/Req</div><div class="pf-fv" id="pfPlanReq">—</div></div>
+          </div>
+
           <!-- Main 2-column: DEP | ARR -->
           <div class="pf-main">
             <!-- DEPARTURE column -->
@@ -3371,14 +3379,6 @@ body.day-theme .panel{
               </div>
               <button class="pf-notam-btn" id="pfArrNotam">✨ Smart NOTAM</button>
             </div>
-          </div>
-
-          <!-- Footer bar: FLT | BLK | FL | PLAN REQ -->
-          <div class="pf-footer">
-            <div class="pf-foot-item"><div class="pf-fk">FLT Time</div><div class="pf-fv" id="pfFlt">—</div></div>
-            <div class="pf-foot-item"><div class="pf-fk">BLK Time</div><div class="pf-fv" id="pfBlk">—</div></div>
-            <div class="pf-foot-item"><div class="pf-fk">Cruise FL</div><div class="pf-fv" id="pfCruise">—</div></div>
-            <div class="pf-foot-item"><div class="pf-fk">Plan Req</div><div class="pf-fv" id="pfPlanReq">—</div></div>
           </div>
 
         </div>
@@ -3424,16 +3424,20 @@ body.day-theme .panel{
 
           /* ETOPS */
           var isEtops = d.etops && d.etops.indexOf('YES')>=0;
-          if(pfEtops) pfEtops.textContent = isEtops ? d.etops.replace('YES — ','').replace('YES','YES') : 'NO';
+          if(pfEtops) pfEtops.textContent = isEtops ? 'YES' : 'NO';
           if(pfEtopsBadge){
-            if(isEtops){ pfEtopsBadge.classList.add('active'); pfEtops.textContent = d.etops.replace('YES — ',''); }
+            if(isEtops) pfEtopsBadge.classList.add('active');
             else pfEtopsBadge.classList.remove('active');
           }
 
-          /* MEL */
+          /* MEL — separate multiple items with " | " */
           if(pfMel){
             var mel = d.melItems || '';
-            pfMel.textContent = (mel && mel!=='NONE') ? mel : 'NONE';
+            if(mel && mel!=='NONE'){
+              pfMel.textContent = mel.replace(/,\s*/g, ' | ');
+            } else {
+              pfMel.textContent = 'NONE';
+            }
           }
 
           /* Crew */
@@ -3455,11 +3459,20 @@ body.day-theme .panel{
           if(pfArrRwy) pfArrRwy.textContent = d.arrRwy || '—';
           if(pfArrStar) pfArrStar.textContent = d.star || '—';
 
-          /* Footer */
+          /* Data bar */
           if(pfFlt) pfFlt.textContent = d.tripTime || d.flt || '—';
           if(pfBlk) pfBlk.textContent = d.blk || '—';
           if(pfCruise) pfCruise.textContent = d.cruiseLevel || '—';
-          if(pfPlanReq) pfPlanReq.textContent = d.planReq ? d.planReq+' kg' : '—';
+          /* PLAN REQ: show as decimal tons rounded UP, e.g. 5391 → 5.4, 10234 → 10.3 */
+          if(pfPlanReq){
+            var pr = parseInt(d.planReq, 10);
+            if(pr && pr > 0){
+              var tons = Math.ceil(pr / 100) / 10;
+              pfPlanReq.textContent = tons.toFixed(1) + ' t';
+            } else {
+              pfPlanReq.textContent = '—';
+            }
+          }
 
           /* Auto-fetch METAR/TAF if we have ICAOs */
           if(depIcao && depIcao.length===4) fetchWx(depIcao, 'metar', pfDepMetar);
@@ -3502,18 +3515,24 @@ body.day-theme .panel{
         /* ── Smart NOTAM buttons ── */
         var depNotamBtn=$('pfDepNotam'), arrNotamBtn=$('pfArrNotam');
         function openWxNotam(icao){
-          /* Trigger the WX modal on NOTAM tab */
-          var wxBtn = document.querySelector('.fsRight button[title*="WX"], .fsRight button[aria-label*="WX"], #wxBtn');
           var inp = document.getElementById('wxIcaoInput');
           var backdrop = document.getElementById('wxBackdrop');
           var tabs = document.querySelectorAll('.wx-tab');
+          var dateFrom = document.getElementById('wxDateFrom');
+          var dateTo = document.getElementById('wxDateTo');
           if(inp) inp.value = icao;
-          if(backdrop) backdrop.style.display='flex';
+          /* Use classList.add('show') — same mechanism as the WX button */
+          if(backdrop){ backdrop.classList.add('show'); backdrop.setAttribute('aria-hidden','false'); }
+          /* Pre-set NOTAM dates: today → today+1 */
+          var now = new Date();
+          var tomorrow = new Date(now.getTime() + 1*24*60*60*1000);
+          if(dateFrom) dateFrom.value = now.toISOString().slice(0,10);
+          if(dateTo) dateTo.value = tomorrow.toISOString().slice(0,10);
           /* Click NOTAM tab */
           tabs.forEach(function(t){ if(t.getAttribute('data-wx-tab')==='wx-notam') t.click(); });
           /* Auto fetch */
           var fetchBtn = document.getElementById('wxFetchBtn');
-          if(fetchBtn) setTimeout(function(){ fetchBtn.click(); }, 200);
+          if(fetchBtn) setTimeout(function(){ fetchBtn.click(); }, 300);
         }
         if(depNotamBtn) depNotamBtn.addEventListener('click', function(){
           var d; try{ d=ofpLoadData(); }catch(e){ d={}; }
@@ -8973,7 +8992,7 @@ function parseDeckCrew(raw){
     if(parsed.melItems) {
       parsed.melItems = "\u26a0 " + parsed.melItems;
     } else {
-      var melM = /MEL.?CDL\s+ITEMS?\s+([\d][\d\s.\-]+[\d])/i.exec(text);
+      var melM = /MEL.?CDL\s+ITEMS?\s+([\d][\d\s.,\-]+[\d])/i.exec(text);
       if(melM) parsed.melItems = "\u26a0 " + melM[1].trim();
       else parsed.melItems = "NONE";
     }
@@ -10237,7 +10256,7 @@ function ofpSaveData(obj){
   {
     "key": "melItems",
     "label": "MEL/CDL Items number",
-    "pattern": "MEL.?CDL\\s+ITEMS?\\s+([\\d][\\d\\s-]+[\\d])",
+    "pattern": "MEL.?CDL\\s+ITEMS?\\s+([\\d][\\d\\s.,-]+[\\d])",
     "flags": "i",
     "group": 1,
     "post": "upper"
