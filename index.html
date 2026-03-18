@@ -1197,7 +1197,9 @@
       color:var(--muted); min-height:36px; line-height:1.5; word-break:break-all;
     }
     body.day-theme .pf-wx-box{ background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.08); }
-    .pf-wx-lbl{ font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:1px; }
+    .pf-wx-lbl{ font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:6px; }
+    .pf-wx-refresh{ background:none; border:1px solid var(--line); color:var(--cyan); font-size:14px; width:24px; height:24px; border-radius:50%; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; transition:transform .3s; }
+    .pf-wx-refresh:active{ transform:rotate(360deg); }
     .pf-notam-btn{
       background:rgba(40,195,255,.08); color:var(--cyan); border:1px solid rgba(40,195,255,.25);
       border-radius:10px; padding:8px 14px; font-size:13px; font-weight:700;
@@ -3164,7 +3166,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.2</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.3</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3355,7 +3357,7 @@ body.day-theme .panel{
               <div class="pf-field"><span class="pf-fk">RWY</span><span class="pf-fv" id="pfDepRwy">—</span></div>
               <div class="pf-field"><span class="pf-fk">SID</span><span class="pf-fv" id="pfDepSid">—</span></div>
               <div style="margin-top:auto;">
-                <div class="pf-wx-lbl">METAR</div>
+                <div class="pf-wx-lbl">METAR <button class="pf-wx-refresh" id="pfDepMetarRefresh" title="Refresh METAR">&#x21bb;</button></div>
                 <div class="pf-wx-box" id="pfDepMetar">—</div>
               </div>
               <button class="pf-notam-btn" id="pfDepNotam">✨ Smart NOTAM</button>
@@ -3374,7 +3376,7 @@ body.day-theme .panel{
               <div class="pf-field"><span class="pf-fk">RWY</span><span class="pf-fv" id="pfArrRwy">—</span></div>
               <div class="pf-field"><span class="pf-fk">STAR</span><span class="pf-fv" id="pfArrStar">—</span></div>
               <div style="margin-top:auto;">
-                <div class="pf-wx-lbl">TAF</div>
+                <div class="pf-wx-lbl">TAF <button class="pf-wx-refresh" id="pfArrTafRefresh" title="Refresh TAF">&#x21bb;</button></div>
                 <div class="pf-wx-box" id="pfArrTaf">—</div>
               </div>
               <button class="pf-notam-btn" id="pfArrNotam">✨ Smart NOTAM</button>
@@ -3432,9 +3434,9 @@ body.day-theme .panel{
 
           /* MEL — separate multiple items with " | " */
           if(pfMel){
-            var mel = d.melItems || '';
+            var mel = (d.melItems || '').replace(/^[\u26a0\s]+/,'').trim();
             if(mel && mel!=='NONE'){
-              pfMel.textContent = mel.replace(/,\s*/g, ' | ');
+              pfMel.textContent = mel.replace(/[,;]\s*/g, ' | ').replace(/\s{2,}/g,' ');
             } else {
               pfMel.textContent = 'NONE';
             }
@@ -3443,7 +3445,7 @@ body.day-theme .panel{
           /* Crew */
           var fd = localStorage.getItem('pf_crew_fd')||'';
           var cc = localStorage.getItem('pf_crew_cc')||'';
-          if(pfCrew) pfCrew.textContent = (fd||cc) ? (fd||'?')+'FD / '+(cc||'?')+'CC' : '✏️';
+          if(pfCrew) pfCrew.textContent = (fd||cc) ? (fd||'?')+' / '+(cc||'?') : '✏️';
 
           /* Departure */
           var depIcao = d.dep || d.depIcao || '';
@@ -3463,15 +3465,18 @@ body.day-theme .panel{
           if(pfFlt) pfFlt.textContent = d.tripTime || d.flt || '—';
           if(pfBlk) pfBlk.textContent = d.blk || '—';
           if(pfCruise) pfCruise.textContent = d.cruiseLevel || '—';
-          /* PLAN REQ: show as decimal tons rounded UP, e.g. 5391 → 5.4, 10234 → 10.3 */
+          /* PLAN REM / PLAN REQ: both as decimal tons rounded UP */
           if(pfPlanReq){
             var pr = parseInt(d.planReq, 10);
-            if(pr && pr > 0){
-              var tons = Math.ceil(pr / 100) / 10;
-              pfPlanReq.textContent = tons.toFixed(1) + ' t';
-            } else {
-              pfPlanReq.textContent = '—';
-            }
+            var rampF = parseInt(d.rampFuel, 10) || 0;
+            var tripF = parseInt(d.tripFuel, 10) || 0;
+            var planRem = (rampF && tripF) ? (rampF - tripF) : 0;
+            var parts = [];
+            if(planRem > 0) parts.push((Math.ceil(planRem / 100) / 10).toFixed(1));
+            else parts.push('—');
+            if(pr > 0) parts.push((Math.ceil(pr / 100) / 10).toFixed(1));
+            else parts.push('—');
+            pfPlanReq.textContent = parts[0] + ' / ' + parts[1];
           }
 
           /* Auto-fetch METAR/TAF if we have ICAOs */
@@ -3512,37 +3517,86 @@ body.day-theme .panel{
         });
         if(crewBD) crewBD.addEventListener('click', function(e){ if(e.target===crewBD) crewBD.style.display='none'; });
 
-        /* ── Smart NOTAM buttons ── */
+        /* ── Smart NOTAM — fetch NOTAMs + AI summarize directly ── */
         var depNotamBtn=$('pfDepNotam'), arrNotamBtn=$('pfArrNotam');
-        function openWxNotam(icao){
-          var inp = document.getElementById('wxIcaoInput');
-          var backdrop = document.getElementById('wxBackdrop');
-          var tabs = document.querySelectorAll('.wx-tab');
-          var dateFrom = document.getElementById('wxDateFrom');
-          var dateTo = document.getElementById('wxDateTo');
-          if(inp) inp.value = icao;
-          /* Use classList.add('show') — same mechanism as the WX button */
-          if(backdrop){ backdrop.classList.add('show'); backdrop.setAttribute('aria-hidden','false'); }
-          /* Pre-set NOTAM dates: today → today+1 */
+        var AE_KEY='7d40b1-ee4fb9';
+        var AE_BASE='https://aviation-edge.com/v2/public';
+        var WORKER_URL='https://notam-proxy.qr-flightbag.workers.dev';
+
+        function smartNotam(icao, btn){
+          if(!icao || icao.length<3){ alert('Scan FPL first'); return; }
+          var origText = btn.textContent;
+          btn.textContent = 'Loading NOTAMs...';
+          btn.disabled = true;
+
           var now = new Date();
           var tomorrow = new Date(now.getTime() + 1*24*60*60*1000);
-          if(dateFrom) dateFrom.value = now.toISOString().slice(0,10);
-          if(dateTo) dateTo.value = tomorrow.toISOString().slice(0,10);
-          /* Click NOTAM tab */
-          tabs.forEach(function(t){ if(t.getAttribute('data-wx-tab')==='wx-notam') t.click(); });
-          /* Auto fetch */
-          var fetchBtn = document.getElementById('wxFetchBtn');
-          if(fetchBtn) setTimeout(function(){ fetchBtn.click(); }, 300);
+          var df = now.toISOString().slice(0,10);
+          var dt = tomorrow.toISOString().slice(0,10);
+          var nUrl = AE_BASE+'/notams?key='+AE_KEY+'&icao='+icao+'&date_from='+df+'&date_to='+dt;
+
+          fetch(nUrl).then(function(r){ return r.json(); }).then(function(notams){
+            if(!Array.isArray(notams) || !notams.length){
+              btn.textContent = origText; btn.disabled = false;
+              alert('No NOTAMs found for '+icao); return;
+            }
+            /* Call AI summarizer */
+            btn.textContent = 'AI analyzing '+notams.length+' NOTAMs...';
+            return fetch(WORKER_URL+'/summarize',{
+              method:'POST',
+              headers:{'Content-Type':'application/json'},
+              body:JSON.stringify({notams:notams, icao:icao})
+            }).then(function(r){ return r.json(); }).then(function(j){
+              btn.textContent = origText; btn.disabled = false;
+              if(j.error){ alert('AI error: '+(j.detail||j.error)); return; }
+              /* Show summary in a modal overlay */
+              showSmartNotamResult(icao, j.summary);
+            });
+          }).catch(function(e){
+            btn.textContent = origText; btn.disabled = false;
+            alert('Error: '+e.message);
+          });
         }
+
+        function showSmartNotamResult(icao, summary){
+          var existing = document.getElementById('smartNotamOverlay');
+          if(existing) existing.remove();
+          var overlay = document.createElement('div');
+          overlay.id = 'smartNotamOverlay';
+          overlay.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.85);display:flex;align-items:center;justify-content:center;padding:20px;';
+          var box = document.createElement('div');
+          box.style.cssText = 'background:var(--panel,#0b0d0f);border:1px solid var(--line,#20262c);border-radius:16px;max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:24px;color:#e8eaed;font-size:14px;line-height:1.6;white-space:pre-wrap;';
+          box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;"><span style="font-size:16px;font-weight:700;color:var(--cyan,#28c3ff);">✨ Smart NOTAM — '+icao+'</span><button id="smartNotamClose" style="background:none;border:1px solid var(--line,#20262c);color:var(--cyan,#28c3ff);padding:4px 14px;border-radius:8px;cursor:pointer;font-size:13px;">Close</button></div><div>'+summary.replace(/\n/g,'<br>')+'</div>';
+          overlay.appendChild(box);
+          document.body.appendChild(overlay);
+          document.getElementById('smartNotamClose').addEventListener('click', function(){ overlay.remove(); });
+          overlay.addEventListener('click', function(e){ if(e.target===overlay) overlay.remove(); });
+        }
+
         if(depNotamBtn) depNotamBtn.addEventListener('click', function(){
           var d; try{ d=ofpLoadData(); }catch(e){ d={}; }
           var icao = d.dep || d.depIcao || '';
-          if(icao) openWxNotam(icao); else alert('Scan FPL first');
+          smartNotam(icao, depNotamBtn);
         });
         if(arrNotamBtn) arrNotamBtn.addEventListener('click', function(){
           var d; try{ d=ofpLoadData(); }catch(e){ d={}; }
           var icao = d.dest || d.arrIcao || '';
-          if(icao) openWxNotam(icao); else alert('Scan FPL first');
+          smartNotam(icao, arrNotamBtn);
+        });
+
+        /* ── METAR/TAF refresh buttons ── */
+        var depMetarRefresh=$('pfDepMetarRefresh'), arrTafRefresh=$('pfArrTafRefresh');
+        if(depMetarRefresh) depMetarRefresh.addEventListener('click', function(){
+          var d; try{ d=ofpLoadData(); }catch(e){ d={}; }
+          var icao = d.dep || d.depIcao || '';
+          if(icao && icao.length===4) fetchWx(icao, 'metar', pfDepMetar);
+          else alert('Scan FPL first');
+        });
+        if(arrTafRefresh) arrTafRefresh.addEventListener('click', function(){
+          var d; try{ d=ofpLoadData(); }catch(e){ d={}; }
+          var icao = d.dest || d.arrIcao || '';
+          if(icao && icao.length===4) fetchWx(icao, 'taf', pfArrTaf);
+          else alert('Scan FPL first');
         });
 
         /* ── Refresh on page load & when navigating to Pre-Flight ── */
