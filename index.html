@@ -3128,6 +3128,9 @@ body.day-theme .panel{
           <button class="toolBtnSide" id="melBtnSide">
             <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 22h20Z"/><line x1="12" y1="9" x2="12" y2="14"/><circle cx="12" cy="17.5" r=".9" fill="currentColor" stroke="none"/></svg></span><span class="lb">MEL</span>
           </button>
+          <button class="toolBtnSide" id="fplImgViewerBtn">
+            <span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span><span class="lb">FPL Image</span>
+          </button>
 
         </div>
       </section>
@@ -3166,7 +3169,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.6</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.7</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3548,6 +3551,17 @@ body.day-theme .panel{
             if(type==='dep' && j.dep) txt = j.dep;
             else if(type==='arr' && j.arr) txt = j.arr;
             if(txt){
+              /* Decode XML/HTML character references (&#xD; &#xA; &#x9; etc.) */
+              txt = txt.replace(/&#[xX]([0-9a-fA-F]+);/g, function(m,hex){
+                return String.fromCharCode(parseInt(hex,16));
+              });
+              txt = txt.replace(/&#(\d+);/g, function(m,dec){
+                return String.fromCharCode(parseInt(dec,10));
+              });
+              /* Decode named HTML entities via browser */
+              var _ta = document.createElement('textarea');
+              _ta.innerHTML = txt;
+              txt = _ta.value;
               el.textContent = txt;
               el.style.display='block';
               if(cb) cb(true);
@@ -3694,6 +3708,27 @@ body.day-theme .panel{
       <section class="view" id="view-departure">
         <div class="departureGrid">
 
+          <!-- TIME: Retractable time panel -->
+          <section class="panel collapsiblePanel closed" id="depTimePanel" style="box-shadow:none; min-height:auto; grid-column:1/-1; margin:0 10px;">
+            <header class="collapsibleHeader" id="depTimeHeader" style="padding:8px 12px; display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--line); border-radius:8px; cursor:pointer; user-select:none;">
+              <div class="title" style="pointer-events:none;">
+                <h1 style="font-size:14px; letter-spacing:.06em; text-transform:uppercase; font-weight:900; color:var(--cyan); margin:0;">Time</h1>
+              </div>
+              <div class="collapseChevron" aria-hidden="true" style="pointer-events:none;">▾</div>
+            </header>
+            <div class="collapsibleBody" id="depTimeBody" style="padding:10px 12px;">
+              <div style="display:flex; gap:20px; flex-wrap:wrap; align-items:end;">
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <label style="font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; color:var(--muted);">Block Off (UTC)</label>
+                  <input id="depBlockOff" type="text" placeholder="HH:MM" maxlength="5" style="width:90px; padding:6px 8px; font-size:14px; font-family:inherit; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:inherit; text-align:center; letter-spacing:.08em;" />
+                </div>
+                <div style="display:flex; flex-direction:column; gap:4px;">
+                  <label style="font-size:11px; letter-spacing:.06em; text-transform:uppercase; font-weight:700; color:var(--muted);">Take Off (UTC)</label>
+                  <input id="depTakeOff" type="text" placeholder="HH:MM" maxlength="5" style="width:90px; padding:6px 8px; font-size:14px; font-family:inherit; background:var(--panel); border:1px solid var(--line); border-radius:6px; color:inherit; text-align:center; letter-spacing:.08em;" />
+                </div>
+              </div>
+            </div>
+          </section>
 
           <!-- CENTER: Departure operational data -->
           <section class="panel" id="depCenterPanel">
@@ -3819,10 +3854,22 @@ body.day-theme .panel{
       <!-- ARRIVAL -->
       <section class="view" id="view-arrival">
         <!-- Arrival data bar -->
-        <div class="arr-data-bar" style="display:flex;gap:12px;padding:6px 16px;border-bottom:1px solid var(--line);align-items:center;">
+        <div class="arr-data-bar" style="display:flex;gap:12px;padding:6px 16px;border-bottom:1px solid var(--line);align-items:center;flex-wrap:wrap;">
           <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ELWT</div>
           <div style="font-size:15px;font-weight:700;color:var(--cyan);" id="arrElwt">—</div>
+          <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ETA (UTC)</div>
+          <input type="text" id="arrEta" placeholder="HH:MM" maxlength="5" style="width:64px;background:rgba(0,0,0,.15);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-size:15px;font-weight:700;padding:4px 8px;outline:none;font-family:inherit;text-align:center;">
+          <div id="arrEtaDerived" style="font-size:12px;color:var(--cyan);font-weight:600;letter-spacing:.3px;"></div>
         </div>
+
+        <!-- Arrival ATIS -->
+        <div style="padding:8px 16px;border-bottom:1px solid var(--line);">
+          <div class="pf-wx-lbl" style="margin-bottom:6px;">ARR ATIS <button class="pf-wx-refresh" id="arrAtisRefresh" title="Refresh ATIS">↻</button></div>
+          <div class="pf-wx-box" id="arrAtisBox" style="display:none;"></div>
+          <div id="arrAtisEmpty" style="font-size:12px;color:var(--muted);">No ATIS loaded</div>
+        </div>
+
         <div class="departureGrid">
                     <!-- CENTER -->
           <section class="panel">
@@ -5043,6 +5090,19 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
         var el = document.getElementById('arrElwt');
         if(el) el.textContent = (_elwt>0) ? (Math.ceil(_elwt/100)/10).toFixed(1)+' t' : '—';
       }catch(e){}
+      // Fetch Arrival ATIS
+      try{
+        var _arrIcao = _d.dest || _d.arrIcao || '';
+        if(_arrIcao && _arrIcao.length === 4){
+          window._arrAtisLoadIcao(_arrIcao);
+        }
+      }catch(e2){}
+      // Restore saved ETA
+      try{
+        var _savedEta = localStorage.getItem('pf_eta')||'';
+        var _etaInput = document.getElementById('arrEta');
+        if(_etaInput && _savedEta){ _etaInput.value = _savedEta; window._arrEtaCalc(_savedEta); }
+      }catch(e3){}
     }
 
     // Highlight top menu buttons
@@ -5073,6 +5133,74 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
     location.hash = saved || "#preflight";
   }
   setRoute(location.hash);
+
+  // ---------------- Arrival ETA + Derived Times ----------------
+  window._arrEtaCalc = function(val){
+    var el = document.getElementById('arrEtaDerived');
+    if(!el) return;
+    var m = val.match(/^(\d{2}):(\d{2})$/);
+    if(!m){ el.textContent=''; return; }
+    var h=parseInt(m[1],10), mn=parseInt(m[2],10);
+    if(h>23||mn>59){ el.textContent=''; return; }
+    var total = h*60+mn;
+    function fmt(t){ t=((t%1440)+1440)%1440; var hh=Math.floor(t/60), mm=t%60; return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+    el.textContent = 'CSD '+fmt(total-50)+' \u2502 PA '+fmt(total-40)+' \u2502 Seatbelt '+fmt(total-20);
+  };
+  (function(){
+    var inp = document.getElementById('arrEta');
+    if(!inp) return;
+    // Restore saved value
+    var saved = localStorage.getItem('pf_eta')||'';
+    if(saved){ inp.value = saved; window._arrEtaCalc(saved); }
+    inp.addEventListener('input', function(){
+      var v = inp.value.replace(/[^0-9]/g,'');
+      if(v.length >= 4 && inp.value.indexOf(':') === -1){
+        v = v.substring(0,4);
+        inp.value = v.substring(0,2)+':'+v.substring(2,4);
+      }
+      localStorage.setItem('pf_eta', inp.value);
+      window._arrEtaCalc(inp.value);
+    });
+  })();
+
+  // ---------------- Arrival ATIS fetch ----------------
+  window._arrAtisLoadIcao = function(icao){
+    var box = document.getElementById('arrAtisBox');
+    var empty = document.getElementById('arrAtisEmpty');
+    if(!box) return;
+    if(empty) empty.style.display='none';
+    box.style.display='block';
+    box.textContent='Loading ATIS...';
+    fetch('https://notam-proxy.qr-flightbag.workers.dev/atis?icao='+icao).then(function(r){ return r.json(); }).then(function(j){
+      var txt = j.arr || '';
+      if(txt){
+        txt = txt.replace(/&#[xX]([0-9a-fA-F]+);/g, function(m,hex){ return String.fromCharCode(parseInt(hex,16)); });
+        txt = txt.replace(/&#(\d+);/g, function(m,dec){ return String.fromCharCode(parseInt(dec,10)); });
+        var _ta = document.createElement('textarea'); _ta.innerHTML = txt; txt = _ta.value;
+        box.textContent = txt;
+        box.style.display='block';
+        if(empty) empty.style.display='none';
+      } else {
+        box.style.display='none';
+        if(empty){ empty.style.display='block'; empty.textContent='No ATIS available for '+icao; }
+      }
+    }).catch(function(e){
+      box.textContent='Error: '+e.message;
+      box.style.display='block';
+      if(empty) empty.style.display='none';
+    });
+  };
+  (function(){
+    var btn = document.getElementById('arrAtisRefresh');
+    if(!btn) return;
+    btn.addEventListener('click', function(){
+      try{
+        var d = (typeof ofpLoadData==='function') ? ofpLoadData() : JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+        var icao = d.dest || d.arrIcao || '';
+        if(icao && icao.length===4) window._arrAtisLoadIcao(icao);
+      }catch(e){}
+    });
+  })();
 
   // ---------------- Small UTC widget ----------------
   const utcMini = document.getElementById("utcMini");
@@ -12364,9 +12492,68 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
 
   setOpen('depDataPanel', state.depDataPanel !== false);
   setOpen('loadsheetPanel', state.loadsheetPanel !== false);
+
+  // Time panel collapsible
+  const timeHeader = document.getElementById('depTimeHeader');
+  if(timeHeader){
+    timeHeader.onclick = function(){ toggle('depTimePanel'); };
+  }
+  setOpen('depTimePanel', state.depTimePanel === true); // default collapsed
 })();
 </script>
 
+<!-- Time panel localStorage persistence -->
+<script>
+(function(){
+  const blockOffInput = document.getElementById('depBlockOff');
+  const takeOffInput = document.getElementById('depTakeOff');
+  if(blockOffInput){
+    blockOffInput.value = localStorage.getItem('pf_block_off') || '';
+    blockOffInput.addEventListener('input', function(){ localStorage.setItem('pf_block_off', this.value); });
+  }
+  if(takeOffInput){
+    takeOffInput.value = localStorage.getItem('pf_takeoff') || '';
+    takeOffInput.addEventListener('input', function(){ localStorage.setItem('pf_takeoff', this.value); });
+  }
+})();
+</script>
+
+<!-- FPL Image Viewer Modal -->
+<div id="fplImgModal" style="display:none; position:fixed; inset:0; z-index:99999; background:rgba(0,0,0,.92); flex-direction:column; align-items:center; justify-content:center;">
+  <div style="position:absolute; top:12px; right:16px; z-index:100000;">
+    <button id="fplImgModalClose" style="background:var(--panel); border:1px solid var(--line); color:inherit; font-size:16px; font-weight:900; padding:8px 18px; border-radius:8px; cursor:pointer; letter-spacing:.04em;">Close</button>
+  </div>
+  <div style="flex:1; width:100%; overflow:auto; -webkit-overflow-scrolling:touch; display:flex; align-items:center; justify-content:center; padding:20px;">
+    <img id="fplImgModalImg" style="max-width:100%; max-height:100%; object-fit:contain;" alt="FPL Image" />
+  </div>
+</div>
+<script>
+(function(){
+  const btn = document.getElementById('fplImgViewerBtn');
+  const modal = document.getElementById('fplImgModal');
+  const modalImg = document.getElementById('fplImgModalImg');
+  const closeBtn = document.getElementById('fplImgModalClose');
+  if(!btn || !modal) return;
+
+  btn.addEventListener('click', function(){
+    const ofpImg = document.getElementById('ofpImg');
+    if(!ofpImg || !ofpImg.src || ofpImg.style.display === 'none'){
+      alert('No FPL uploaded yet');
+      return;
+    }
+    modalImg.src = ofpImg.src;
+    modal.style.display = 'flex';
+  });
+
+  closeBtn.addEventListener('click', function(){
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', function(e){
+    if(e.target === modal) modal.style.display = 'none';
+  });
+})();
+</script>
 
 <script>
 (function(){
