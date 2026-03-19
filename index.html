@@ -3166,7 +3166,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.4</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.5</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3334,12 +3334,14 @@ body.day-theme .panel{
             <div class="pf-prog-txt" id="pfProgText">Auto Scan: idle</div>
           </div>
 
-          <!-- Data bar: FLT | BLK | FL | PLAN REM/REQ -->
-          <div class="pf-footer">
-            <div class="pf-foot-item"><div class="pf-fk">FLT Time</div><div class="pf-fv" id="pfFlt">—</div></div>
-            <div class="pf-foot-item"><div class="pf-fk">BLK Time</div><div class="pf-fv" id="pfBlk">—</div></div>
+          <!-- Data bar: BLK | Diff | FLT | Cruise FL | ETOW | Plan Rem/Req -->
+          <div class="pf-footer" style="grid-template-columns:repeat(6,1fr);">
+            <div class="pf-foot-item"><div class="pf-fk">BLK</div><div class="pf-fv" id="pfBlk">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">Diff</div><div class="pf-fv" id="pfDiff">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">FLT</div><div class="pf-fv" id="pfFlt">—</div></div>
             <div class="pf-foot-item"><div class="pf-fk">Cruise FL</div><div class="pf-fv" id="pfCruise">—</div></div>
-            <div class="pf-foot-item"><div class="pf-fk">Plan Rem/Req</div><div class="pf-fv" id="pfPlanReq">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">ETOW</div><div class="pf-fv" id="pfEtow">—</div></div>
+            <div class="pf-foot-item"><div class="pf-fk">Rem/Req</div><div class="pf-fv" id="pfPlanReq">—</div></div>
           </div>
 
           <!-- Main 2-column: DEP | ARR -->
@@ -3416,11 +3418,18 @@ body.day-theme .panel{
         var pfArrIcao=$('pfArrIcao'), pfArrName=$('pfArrName'), pfArrRwy=$('pfArrRwy'), pfArrStar=$('pfArrStar');
         var pfDepMetar=$('pfDepMetar'), pfArrTaf=$('pfArrTaf');
         var pfDepAtis=$('pfDepAtis'), pfArrAtis=$('pfArrAtis');
-        var pfFlt=$('pfFlt'), pfBlk=$('pfBlk'), pfCruise=$('pfCruise'), pfPlanReq=$('pfPlanReq');
+        var pfFlt=$('pfFlt'), pfBlk=$('pfBlk'), pfDiff=$('pfDiff'), pfCruise=$('pfCruise'), pfEtow=$('pfEtow'), pfPlanReq=$('pfPlanReq');
         var crewBD=$('pfCrewBackdrop'), crewFD=$('pfCrewFD'), crewCC=$('pfCrewCC');
 
         var WX_KEY='15af4320fca64d3dac7936dcb9cb9d22';
         var WORKER_BASE='https://notam-proxy.qr-flightbag.workers.dev';
+
+        /* Parse "HH:MM" or "HHMM" to total minutes */
+        function parseHHMM(s){
+          if(!s) return 0;
+          var m = s.match(/(\d{1,2})[:\s]?(\d{2})/);
+          return m ? (parseInt(m[1],10)*60 + parseInt(m[2],10)) : 0;
+        }
 
         /* ── Refresh all Pre-Flight fields from OFP data ── */
         window.pfRefresh = function(){
@@ -3468,9 +3477,26 @@ body.day-theme .panel{
           if(pfArrStar) pfArrStar.textContent = d.star || '—';
 
           /* Data bar */
-          if(pfFlt) pfFlt.textContent = d.tripTime || d.flt || '—';
-          if(pfBlk) pfBlk.textContent = d.blk || '—';
+          var fltStr = d.tripTime || d.flt || '';
+          var blkStr = d.blk || '';
+          if(pfFlt) pfFlt.textContent = fltStr || '—';
+          if(pfBlk) pfBlk.textContent = blkStr || '—';
+          /* Diff = BLK - FLT (in minutes, shown as H:MM) */
+          if(pfDiff){
+            var fltMin = parseHHMM(fltStr);
+            var blkMin = parseHHMM(blkStr);
+            if(fltMin>0 && blkMin>0 && blkMin>=fltMin){
+              var diff = blkMin - fltMin;
+              pfDiff.textContent = Math.floor(diff/60)+':'+('0'+(diff%60)).slice(-2);
+            } else { pfDiff.textContent = '—'; }
+          }
           if(pfCruise) pfCruise.textContent = d.cruiseLevel || '—';
+          /* ETOW */
+          if(pfEtow){
+            var ew = parseInt(d.etow, 10);
+            if(ew > 0) pfEtow.textContent = (Math.ceil(ew/100)/10).toFixed(1)+' t';
+            else pfEtow.textContent = '—';
+          }
           /* PLAN REM / PLAN REQ: both as decimal tons rounded UP */
           if(pfPlanReq){
             var pr = parseInt(d.planReq, 10);
@@ -3487,18 +3513,31 @@ body.day-theme .panel{
 
           /* Auto-fetch METAR/TAF/ATIS if we have ICAOs */
           if(depIcao && depIcao.length===4){
-            fetchWx(depIcao, 'metar', pfDepMetar);
-            fetchAtis(depIcao, 'dep', pfDepAtis);
+            /* Fetch DEP ATIS — if available, hide METAR; otherwise show METAR */
+            fetchAtis(depIcao, 'dep', pfDepAtis, function(hasAtis){
+              if(hasAtis){
+                if(pfDepMetar) pfDepMetar.parentElement.style.display='none';
+              } else {
+                if(pfDepMetar) pfDepMetar.parentElement.style.display='';
+                fetchWx(depIcao, 'metar', pfDepMetar);
+              }
+            });
           }
           if(arrIcao && arrIcao.length===4){
             fetchWx(arrIcao, 'taf', pfArrTaf);
-            fetchAtis(arrIcao, 'arr', pfArrAtis);
+            /* Only fetch ARR ATIS if flight time <= 3h */
+            var _fltMin = parseHHMM(fltStr);
+            if(_fltMin > 0 && _fltMin <= 180){
+              fetchAtis(arrIcao, 'arr', pfArrAtis);
+            } else {
+              if(pfArrAtis){ pfArrAtis.style.display='none'; pfArrAtis.textContent=''; }
+            }
           }
         };
 
         /* ── Fetch ATIS via Cloudflare Worker proxy ── */
-        function fetchAtis(icao, type, el){
-          if(!el) return;
+        function fetchAtis(icao, type, el, cb){
+          if(!el){ if(cb) cb(false); return; }
           el.style.display='none';
           el.textContent='';
           fetch(WORKER_BASE+'/atis?icao='+icao).then(function(r){ return r.json(); }).then(function(j){
@@ -3508,8 +3547,11 @@ body.day-theme .panel{
             if(txt){
               el.textContent = txt;
               el.style.display='block';
+              if(cb) cb(true);
+            } else {
+              if(cb) cb(false);
             }
-          }).catch(function(){ /* silently ignore — no ATIS message shown */ });
+          }).catch(function(){ if(cb) cb(false); });
         }
 
         /* ── Fetch METAR or TAF ── */
