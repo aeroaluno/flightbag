@@ -3166,7 +3166,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.5</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.6</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3512,13 +3512,16 @@ body.day-theme .panel{
           }
 
           /* Auto-fetch METAR/TAF/ATIS if we have ICAOs */
+          var metarLbl = pfDepMetar ? pfDepMetar.previousElementSibling : null;
           if(depIcao && depIcao.length===4){
             /* Fetch DEP ATIS — if available, hide METAR; otherwise show METAR */
             fetchAtis(depIcao, 'dep', pfDepAtis, function(hasAtis){
               if(hasAtis){
-                if(pfDepMetar) pfDepMetar.parentElement.style.display='none';
+                if(pfDepMetar) pfDepMetar.style.display='none';
+                if(metarLbl) metarLbl.style.display='none';
               } else {
-                if(pfDepMetar) pfDepMetar.parentElement.style.display='';
+                if(pfDepMetar) pfDepMetar.style.display='';
+                if(metarLbl) metarLbl.style.display='';
                 fetchWx(depIcao, 'metar', pfDepMetar);
               }
             });
@@ -3815,6 +3818,11 @@ body.day-theme .panel{
       
       <!-- ARRIVAL -->
       <section class="view" id="view-arrival">
+        <!-- Arrival data bar -->
+        <div class="arr-data-bar" style="display:flex;gap:12px;padding:6px 16px;border-bottom:1px solid var(--line);align-items:center;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ELWT</div>
+          <div style="font-size:15px;font-weight:700;color:var(--cyan);" id="arrElwt">—</div>
+        </div>
         <div class="departureGrid">
                     <!-- CENTER -->
           <section class="panel">
@@ -5024,6 +5032,18 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
     if(route === "#preflight" && typeof pfRefresh === "function"){
       try{ pfRefresh(); }catch(e){}
     }
+    // Arrival: compute ELWT = ETOW - TRIP - TAXI
+    if(route === "#arrival"){
+      try{
+        var _d = (typeof ofpLoadData==='function') ? ofpLoadData() : JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+        var _etow = parseInt(_d.etow,10)||0;
+        var _trip = parseInt(_d.tripFuel,10)||0;
+        var _taxi = parseInt(_d.taxiFuel,10)||0;
+        var _elwt = _etow - _trip - _taxi;
+        var el = document.getElementById('arrElwt');
+        if(el) el.textContent = (_elwt>0) ? (Math.ceil(_elwt/100)/10).toFixed(1)+' t' : '—';
+      }catch(e){}
+    }
 
     // Highlight top menu buttons
     document.querySelectorAll(".topNavBtn").forEach(b => {
@@ -5630,7 +5650,7 @@ listEl.appendChild(row);
       return;
     }
 
-    const view = [...arrItems].sort((a,b)=> (a.done===b.done)?0:(a.done?1:-1));
+    const view = [...arrItems]; /* keep original order — no sort by done */
 
     for(const it of view){
       const row = document.createElement("div");
@@ -5775,7 +5795,7 @@ listEl.appendChild(row);
     const total = cruItems.length;
     setReadyChip(cruReadyChip, total>0 && cruItems.every(x=>x.done));
     if(total===0){ const e=document.createElement("div"); e.className="muted"; e.style.padding="16px"; e.textContent="No items. Tap Add."; cruListEl.appendChild(e); return; }
-    const view=[...cruItems].sort((a,b)=>(a.done===b.done)?0:(a.done?1:-1));
+    const view=[...cruItems]; /* keep original order — no sort by done */
     for(const it of view){
       const row=document.createElement("div"); row.className="item"+(it.done?" done":"");
       const check=document.createElement("div"); check.className="check"+(it.done?" done":"");
@@ -5786,7 +5806,7 @@ listEl.appendChild(row);
       const nameEl=document.createElement("div"); nameEl.className="item-name"; nameEl.textContent=it.name;
       const meta=document.createElement("div"); meta.className="item-meta";
       if(it.note){ const nd=document.createElement("div"); nd.textContent=it.note; meta.appendChild(nd); }
-      if(it.color&&it.color!=="green"){ const ct=document.createElement("span"); ct.className="tag"; ct.textContent=it.color; meta.appendChild(ct); }
+      /* color tag removed — no longer show color name text */
       main.appendChild(nameEl); main.appendChild(meta);
       if(cruEditMode){
         const btns=document.createElement("div"); btns.className="reorderBtns";
