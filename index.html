@@ -5825,8 +5825,9 @@ listEl.appendChild(row);
   }
   function closeModalFn(){
     backdrop.classList.remove("show");
+    backdrop.style.display = "";
     backdrop.setAttribute("aria-hidden","true");
-  
+
     if(backdrop && backdrop.dataset) backdrop.dataset.mode = "departure";
 }
 
