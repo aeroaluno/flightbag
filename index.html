@@ -3715,15 +3715,15 @@ body.day-theme .panel{
                   <div class="title"><h1>Time</h1></div>
                   <div class="collapseChevron" aria-hidden="true">▾</div>
                 </header>
-                <div class="modal-body collapsibleBody" id="depTimeBody" style="padding:10px;">
-                  <div class="depDataGrid">
-                    <div class="depField">
-                      <label>Block Off (UTC)</label>
-                      <input id="depBlockOff" type="time" />
+                <div class="modal-body collapsibleBody" id="depTimeBody" style="padding:6px 10px;">
+                  <div style="display:flex;gap:12px;align-items:center;">
+                    <div class="depField" style="flex:1;">
+                      <label style="font-size:10px;">Block Off (UTC)</label>
+                      <input id="depBlockOff" type="time" style="width:100%;padding:4px 6px;font-size:14px;" />
                     </div>
-                    <div class="depField">
-                      <label>Take Off (UTC)</label>
-                      <input id="depTakeOff" type="time" />
+                    <div class="depField" style="flex:1;">
+                      <label style="font-size:10px;">Take Off (UTC)</label>
+                      <input id="depTakeOff" type="time" style="width:100%;padding:4px 6px;font-size:14px;" />
                     </div>
                   </div>
                 </div>
@@ -5177,6 +5177,24 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
       localStorage.setItem('pf_eta', inp.value);
       window._arrEtaCalc(inp.value);
       window._etaNotifSchedule(inp.value);
+    });
+
+    /* Re-populate ETA when OFP data is updated (after OCR scan) */
+    window.addEventListener('ofpDataUpdated', function(){
+      if(inp.value) return; /* don't overwrite if already set */
+      try{
+        var d2 = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+        var std2 = toHHMM(d2.stdTime || d2.std || '');
+        var trip2 = toHHMM(d2.tripTime || d2.flt || '');
+        if(std2 && trip2){
+          var tripMin2 = parseInt(trip2.split(':')[0],10)*60 + parseInt(trip2.split(':')[1],10);
+          var eta2 = addMin(std2, tripMin2);
+          inp.value = eta2;
+          localStorage.setItem('pf_eta', eta2);
+          window._arrEtaCalc(eta2);
+          if(window._etaNotifSchedule) window._etaNotifSchedule(eta2);
+        }
+      }catch(e){}
     });
   })();
 
@@ -12663,6 +12681,18 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
 
   blockOffInput.addEventListener('change', function(){ localStorage.setItem('pf_block_off', this.value); });
   takeOffInput.addEventListener('change', function(){ localStorage.setItem('pf_takeoff', this.value); });
+
+  /* Re-populate when OFP data is updated (after OCR scan) */
+  window.addEventListener('ofpDataUpdated', function(){
+    try{
+      var d2 = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+      var std2 = toHHMM(d2.stdTime || d2.std || '');
+      if(std2){
+        if(!blockOffInput.value){ blockOffInput.value = std2; localStorage.setItem('pf_block_off', std2); }
+        if(!takeOffInput.value){ var to2 = addMin(std2, 15); takeOffInput.value = to2; localStorage.setItem('pf_takeoff', to2); }
+      }
+    }catch(e){}
+  });
 })();
 </script>
 
@@ -12683,17 +12713,30 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   const closeBtn = document.getElementById('fplImgModalClose');
   if(!btn || !modal) return;
 
-  btn.addEventListener('click', function(){
-    /* Check both image sources: Pre-Flight (fpImg) and Departure (ofpImg) */
-    var fpImg = document.getElementById('fpImg');
-    var ofpImg = document.getElementById('ofpImg');
+  btn.addEventListener('click', async function(){
     var src = '';
-    if(fpImg && fpImg.src && fpImg.naturalWidth > 0) src = fpImg.src;
-    else if(ofpImg && ofpImg.src && ofpImg.style.display !== 'none') src = ofpImg.src;
+    /* Try IndexedDB first (Pre-Flight pinned image) */
+    try{
+      var db = await new Promise(function(resolve, reject){
+        var req = indexedDB.open('flightbag_fp', 1);
+        req.onupgradeneeded = function(){ req.result.createObjectStore('files'); };
+        req.onsuccess = function(){ resolve(req.result); };
+        req.onerror = function(){ reject(req.error); };
+      });
+      var blob = await new Promise(function(resolve, reject){
+        var tx = db.transaction('files', 'readonly');
+        var r = tx.objectStore('files').get('flightplan_image');
+        r.onsuccess = function(){ db.close(); resolve(r.result || null); };
+        r.onerror = function(){ db.close(); resolve(null); };
+      });
+      if(blob && blob instanceof Blob) src = URL.createObjectURL(blob);
+    }catch(e){}
+    /* Fallback: Departure OFP image */
     if(!src){
-      alert('No FPL uploaded yet');
-      return;
+      var ofpImg = document.getElementById('ofpImg');
+      if(ofpImg && ofpImg.src && ofpImg.style.display !== 'none' && ofpImg.naturalWidth > 0) src = ofpImg.src;
     }
+    if(!src){ alert('No FPL uploaded yet'); return; }
     modalImg.src = src;
     modal.style.display = 'flex';
   });
