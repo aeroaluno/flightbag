@@ -13081,36 +13081,79 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   // Auto-fill from METAR button
   if(metarBtn){
     metarBtn.addEventListener('click', function(){
-      // Try to get METAR text from Pre-Flight
+      // 1) Try DOM first (Pre-Flight METAR already loaded)
       var metarBox = document.getElementById('pfDepMetar');
-      var metarTxt = metarBox ? metarBox.textContent : '';
-      if(!metarTxt){
-        alert('No METAR available. Fetch it first on Pre-Flight page.');
+      var metarTxt = (metarBox ? metarBox.textContent : '') || '';
+      if(metarTxt && metarTxt !== '—' && metarTxt !== '-'){
+        var m = metarTxt.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
+        if(m){
+          dirEl.value = parseInt(m[1], 10);
+          spdEl.value = parseInt(m[2], 10);
+          if(m[4] && gustEl) gustEl.value = parseInt(m[4], 10);
+          autoFillRwy();
+          calc();
+          return;
+        }
+      }
+      // 2) Fallback: fetch METAR from CheckWX API
+      var ofpData;
+      try{ ofpData = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}'); }catch(e){ ofpData={}; }
+      var icao = ofpData.dep || ofpData.depIcao || '';
+      if(!icao || icao.length !== 4){
+        alert('Scan FPL first to identify departure airport.');
         return;
       }
-      // Parse wind from METAR: dddssKT or dddssGggKT
-      var m = metarTxt.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
-      if(!m){
-        alert('Could not parse wind from METAR');
-        return;
-      }
-      dirEl.value = parseInt(m[1], 10);
-      spdEl.value = parseInt(m[2], 10);
-      if(m[4] && gustEl) gustEl.value = parseInt(m[4], 10);
-
-      // Try to auto-fill RWY heading from dep runway in OFP
-      if(!rwyEl.value){
-        try{
-          var d = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
-          var rwy = d.depRwy || '';
-          var rwyNum = rwy.replace(/[^0-9]/g,'');
-          if(rwyNum){
-            rwyEl.value = parseInt(rwyNum, 10) * 10;
+      metarBtn.textContent = '...';
+      metarBtn.disabled = true;
+      fetch('https://api.checkwx.com/metar/' + icao + '/decoded', {
+        headers: { 'X-API-Key': '15af4320fca64d3dac7936dcb9cb9d22' }
+      })
+      .then(function(r){ return r.json(); })
+      .then(function(json){
+        metarBtn.textContent = 'METAR';
+        metarBtn.disabled = false;
+        if(!json.data || !json.data[0]){
+          alert('No METAR data for ' + icao);
+          return;
+        }
+        var wx = json.data[0];
+        // Try decoded wind object first
+        if(wx.wind){
+          if(wx.wind.degrees != null) dirEl.value = wx.wind.degrees;
+          if(wx.wind.speed_kts != null) spdEl.value = wx.wind.speed_kts;
+          if(wx.wind.gust_kts && gustEl) gustEl.value = wx.wind.gust_kts;
+        } else {
+          // Fallback: parse raw METAR string
+          var raw = wx.raw_text || '';
+          var m2 = raw.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
+          if(m2){
+            dirEl.value = parseInt(m2[1], 10);
+            spdEl.value = parseInt(m2[2], 10);
+            if(m2[4] && gustEl) gustEl.value = parseInt(m2[4], 10);
+          } else {
+            alert('Could not parse wind from METAR');
+            return;
           }
-        }catch(e){}
-      }
-      calc();
+        }
+        autoFillRwy();
+        calc();
+      })
+      .catch(function(err){
+        metarBtn.textContent = 'METAR';
+        metarBtn.disabled = false;
+        alert('METAR fetch failed: ' + (err.message || err));
+      });
     });
+  }
+
+  function autoFillRwy(){
+    if(rwyEl.value) return;
+    try{
+      var d = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+      var rwy = d.depRwy || '';
+      var rwyNum = rwy.replace(/[^0-9]/g,'');
+      if(rwyNum) rwyEl.value = parseInt(rwyNum, 10) * 10;
+    }catch(e){}
   }
 
   // Auto-populate RWY heading from OFP when available
