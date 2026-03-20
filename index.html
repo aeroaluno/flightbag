@@ -3361,7 +3361,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.3</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.4</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -4034,12 +4034,12 @@ body.day-theme .panel{
               <section class="panel collapsiblePanel open" id="xwindPanel" style="box-shadow:none; min-height:auto;">
                 <header class="collapsibleHeader" id="xwindHeader" style="padding:10px 12px;">
                   <div class="title"><h1>Wind Analysis</h1></div>
-                  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
-                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill from METAR">METAR</button>
-                    <div class="collapseChevron" aria-hidden="true">▾</div>
-                  </div>
+                  <div class="collapseChevron" aria-hidden="true">▾</div>
                 </header>
                 <div class="modal-body collapsibleBody" id="xwindBody" style="padding:10px;">
+                  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
+                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill wind from METAR">METAR</button>
+                  </div>
                   <div class="xw-inputs">
                     <div class="toField">
                       <label>RWY HDG</label>
@@ -12921,10 +12921,7 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   const xwHeader = document.getElementById('xwindHeader');
   const xwMetarBtn = document.getElementById('xwindMetarBtn');
   if(xwHeader){
-    xwHeader.onclick = function(e){
-      if(e.target && (e.target.id === 'xwindMetarBtn' || e.target.closest('#xwindMetarBtn'))) return;
-      toggle('xwindPanel');
-    };
+    xwHeader.onclick = function(){ toggle('xwindPanel'); };
   }
 
   setOpen('loadsheetPanel', state.loadsheetPanel !== false);
