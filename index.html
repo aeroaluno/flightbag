@@ -9181,7 +9181,7 @@ function parseDeckCrew(raw){
           const removeKeys = [];
           for(let i=0;i<localStorage.length;i++){ 
             const k = localStorage.key(i);
-            if(k && (k.startsWith(prefix) || k.startsWith("flightPlan") || k.startsWith("ofp") || k.startsWith("checklist") )) removeKeys.push(k);
+            if(k && (k.startsWith(prefix) || k.startsWith("flightPlan") || k.startsWith("ofp") || k.startsWith("checklist") || k.startsWith("pf_") )) removeKeys.push(k);
           }
           removeKeys.forEach(k=>localStorage.removeItem(k));
         }catch(e){}
@@ -12713,32 +12713,43 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   const closeBtn = document.getElementById('fplImgModalClose');
   if(!btn || !modal) return;
 
-  btn.addEventListener('click', async function(){
-    var src = '';
-    /* Try IndexedDB first (Pre-Flight pinned image) */
-    try{
-      var db = await new Promise(function(resolve, reject){
-        var req = indexedDB.open('flightbag_fp', 1);
-        req.onupgradeneeded = function(){ req.result.createObjectStore('files'); };
-        req.onsuccess = function(){ resolve(req.result); };
-        req.onerror = function(){ reject(req.error); };
-      });
-      var blob = await new Promise(function(resolve, reject){
-        var tx = db.transaction('files', 'readonly');
-        var r = tx.objectStore('files').get('flightplan_image');
-        r.onsuccess = function(){ db.close(); resolve(r.result || null); };
-        r.onerror = function(){ db.close(); resolve(null); };
-      });
-      if(blob && blob instanceof Blob) src = URL.createObjectURL(blob);
-    }catch(e){}
-    /* Fallback: Departure OFP image */
-    if(!src){
-      var ofpImg = document.getElementById('ofpImg');
-      if(ofpImg && ofpImg.src && ofpImg.style.display !== 'none' && ofpImg.naturalWidth > 0) src = ofpImg.src;
+  btn.addEventListener('click', function(){
+    /* Try to get image from IndexedDB (Pre-Flight pinned image) */
+    function showImg(src){
+      if(!src){ alert('No FPL uploaded yet'); return; }
+      modalImg.src = src;
+      modal.style.display = 'flex';
     }
-    if(!src){ alert('No FPL uploaded yet'); return; }
-    modalImg.src = src;
-    modal.style.display = 'flex';
+    function tryFallback(){
+      var ofpImg = document.getElementById('ofpImg');
+      if(ofpImg && ofpImg.src && ofpImg.style.display !== 'none' && ofpImg.naturalWidth > 0){
+        showImg(ofpImg.src);
+      } else {
+        showImg('');
+      }
+    }
+    try{
+      var req = indexedDB.open('flightbag_db_v1', 1);
+      req.onupgradeneeded = function(e){ if(!e.target.result.objectStoreNames.contains('kv')) e.target.result.createObjectStore('kv'); };
+      req.onsuccess = function(){
+        try{
+          var db = req.result;
+          var tx = db.transaction('kv', 'readonly');
+          var r = tx.objectStore('kv').get('flightplan_image');
+          r.onsuccess = function(){
+            db.close();
+            var blob = r.result;
+            if(blob && blob instanceof Blob){
+              showImg(URL.createObjectURL(blob));
+            } else {
+              tryFallback();
+            }
+          };
+          r.onerror = function(){ db.close(); tryFallback(); };
+        }catch(e){ tryFallback(); }
+      };
+      req.onerror = function(){ tryFallback(); };
+    }catch(e){ tryFallback(); }
   });
 
   closeBtn.addEventListener('click', function(){
