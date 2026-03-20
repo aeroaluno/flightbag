@@ -3361,7 +3361,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.2</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.3</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -12904,7 +12904,7 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
 
   if(lsHeader){
     lsHeader.onclick = function(e){
-      if(e.target && e.target.id === 'clearLoadsheetBtn') return;
+      if(e.target && (e.target.id === 'clearLoadsheetBtn' || e.target.closest('#clearLoadsheetBtn'))) return;
       toggle('loadsheetPanel');
     };
   }
@@ -12922,12 +12922,9 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   const xwMetarBtn = document.getElementById('xwindMetarBtn');
   if(xwHeader){
     xwHeader.onclick = function(e){
-      if(e.target && e.target.id === 'xwindMetarBtn') return;
+      if(e.target && (e.target.id === 'xwindMetarBtn' || e.target.closest('#xwindMetarBtn'))) return;
       toggle('xwindPanel');
     };
-  }
-  if(xwMetarBtn){
-    xwMetarBtn.addEventListener('click', function(e){ e.stopPropagation(); });
   }
 
   setOpen('loadsheetPanel', state.loadsheetPanel !== false);
