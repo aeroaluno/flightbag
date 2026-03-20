@@ -3160,13 +3160,13 @@ body.day-theme .panel{
         <div class="sideToolsTitle">Pre-Flight Tools</div>
         <div class="toolStack">
           <button class="toolBtnSide" id="fplImgViewerBtn">
-            <span class="ic">📄</span><span class="lb">FPL Image</span>
+            <span class="ic">📄</span><span class="lb">FPL</span>
           </button>
         </div>
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.8</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.9</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3709,21 +3709,21 @@ body.day-theme .panel{
           <section class="panel" id="depCenterPanel">
             <div style="padding:10px; display:grid; grid-template-columns: 0.9fr 1.1fr; gap:10px; min-height:0; overflow:auto; align-items:start;">
 
-              <!-- TIME panel (same style as Departure Data) -->
-              <section class="panel collapsiblePanel open" id="depTimePanel" style="box-shadow:none; min-height:auto; grid-column:1/-1;">
+              <!-- TIME panel (same column as Departure Data) -->
+              <section class="panel collapsiblePanel open" id="depTimePanel" style="box-shadow:none; min-height:auto;">
                 <header class="collapsibleHeader" id="depTimeHeader" style="padding:10px 12px;">
                   <div class="title"><h1>Time</h1></div>
                   <div class="collapseChevron" aria-hidden="true">▾</div>
                 </header>
                 <div class="modal-body collapsibleBody" id="depTimeBody" style="padding:10px;">
-                  <div style="display:flex; gap:16px; flex-wrap:wrap; align-items:end;">
-                    <div class="depField" style="flex:0 0 auto;">
+                  <div class="depDataGrid">
+                    <div class="depField">
                       <label>Block Off (UTC)</label>
-                      <input id="depBlockOff" type="time" style="width:100px;" />
+                      <input id="depBlockOff" type="time" />
                     </div>
-                    <div class="depField" style="flex:0 0 auto;">
+                    <div class="depField">
                       <label>Take Off (UTC)</label>
-                      <input id="depTakeOff" type="time" style="width:100px;" />
+                      <input id="depTakeOff" type="time" />
                     </div>
                   </div>
                 </div>
@@ -3856,11 +3856,13 @@ body.day-theme .panel{
           <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ETA (UTC)</div>
           <input type="time" id="arrEta" style="width:80px;background:rgba(0,0,0,.15);border:1px solid var(--line);border-radius:8px;color:var(--txt);font-size:14px;font-weight:700;padding:4px 6px;outline:none;font-family:inherit;">
           <div id="arrEtaDerived" style="font-size:12px;color:var(--cyan);font-weight:600;letter-spacing:.3px;"></div>
-          <div style="width:1px;height:20px;background:var(--line);margin:0 4px;"></div>
-          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ARR ATIS</div>
-          <button class="pf-wx-refresh" id="arrAtisRefresh" title="Refresh ATIS">&#x21bb;</button>
-          <div class="pf-wx-box" id="arrAtisBox" style="display:none;flex:1;max-height:60px;overflow-y:auto;font-size:11px;margin:0;"></div>
-          <div id="arrAtisEmpty" style="font-size:11px;color:var(--muted);">—</div>
+        </div>
+        <!-- Arrival ATIS row -->
+        <div style="display:flex;gap:8px;padding:4px 16px 6px;border-bottom:1px solid var(--line);align-items:flex-start;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;padding-top:3px;">ARR ATIS</div>
+          <button class="pf-wx-refresh" id="arrAtisRefresh" title="Refresh ATIS" style="flex-shrink:0;margin-top:1px;">&#x21bb;</button>
+          <div class="pf-wx-box" id="arrAtisBox" style="display:none;flex:1;max-height:80px;overflow-y:auto;font-size:12px;line-height:1.4;margin:0;padding:4px 8px;"></div>
+          <div id="arrAtisEmpty" style="font-size:12px;color:var(--muted);padding-top:3px;">—</div>
         </div>
 
         <div class="departureGrid">
@@ -5094,7 +5096,7 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
       try{
         var _savedEta = localStorage.getItem('pf_eta')||'';
         var _etaInput = document.getElementById('arrEta');
-        if(_etaInput && _savedEta){ _etaInput.value = _savedEta; window._arrEtaCalc(_savedEta); }
+        if(_etaInput && _savedEta){ _etaInput.value = _savedEta; window._arrEtaCalc(_savedEta); if(window._etaNotifSchedule) window._etaNotifSchedule(_savedEta); }
       }catch(e3){}
     }
 
@@ -5170,11 +5172,111 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
         }
       }catch(e){}
     }
-    if(saved){ inp.value = saved; window._arrEtaCalc(saved); }
+    if(saved){ inp.value = saved; window._arrEtaCalc(saved); window._etaNotifSchedule(saved); }
     inp.addEventListener('change', function(){
       localStorage.setItem('pf_eta', inp.value);
       window._arrEtaCalc(inp.value);
+      window._etaNotifSchedule(inp.value);
     });
+  })();
+
+  // ---------------- ETA Notifications (CSD-50, PA-40, Seatbelt-20) ----------------
+  (function(){
+    var _timers = [];
+    var _notifBar = null;
+
+    /* Create notification bar (fixed top banner) */
+    function getNotifBar(){
+      if(_notifBar) return _notifBar;
+      _notifBar = document.createElement('div');
+      _notifBar.id = 'etaNotifBar';
+      _notifBar.style.cssText = 'position:fixed;top:0;left:0;right:0;z-index:99999;display:none;flex-direction:column;align-items:center;gap:4px;padding:12px 16px;';
+      document.body.appendChild(_notifBar);
+      return _notifBar;
+    }
+
+    /* Show a notification */
+    function showNotif(label, timeStr){
+      var bar = getNotifBar();
+      bar.style.display = 'flex';
+      var card = document.createElement('div');
+      card.style.cssText = 'background:var(--cyan,#28c3ff);color:#000;font-weight:700;font-size:15px;padding:10px 20px;border-radius:10px;display:flex;align-items:center;gap:10px;box-shadow:0 4px 20px rgba(40,195,255,.4);animation:etaNotifPulse 1s ease-in-out 3;';
+      card.innerHTML = '<span style="font-size:20px;">\u23F0</span> ' + label + ' — ' + timeStr + ' UTC';
+      var closeBtn = document.createElement('button');
+      closeBtn.textContent = '\u2715';
+      closeBtn.style.cssText = 'background:none;border:none;color:#000;font-size:18px;font-weight:700;cursor:pointer;margin-left:8px;padding:0 4px;';
+      closeBtn.onclick = function(){ card.remove(); if(!bar.children.length) bar.style.display='none'; };
+      card.appendChild(closeBtn);
+      bar.appendChild(card);
+
+      /* Play beep sound */
+      try{
+        var actx = new (window.AudioContext || window.webkitAudioContext)();
+        var osc = actx.createOscillator();
+        var gain = actx.createGain();
+        osc.connect(gain); gain.connect(actx.destination);
+        osc.frequency.value = 880;
+        gain.gain.value = 0.3;
+        osc.start(); osc.stop(actx.currentTime + 0.3);
+        setTimeout(function(){
+          var osc2 = actx.createOscillator();
+          var gain2 = actx.createGain();
+          osc2.connect(gain2); gain2.connect(actx.destination);
+          osc2.frequency.value = 1100;
+          gain2.gain.value = 0.3;
+          osc2.start(); osc2.stop(actx.currentTime + 0.3);
+        }, 350);
+      }catch(e){}
+
+      /* Auto-dismiss after 60 seconds */
+      setTimeout(function(){ if(card.parentNode) card.remove(); if(bar.children && !bar.children.length) bar.style.display='none'; }, 60000);
+    }
+
+    /* Schedule notifications based on ETA */
+    window._etaNotifSchedule = function(etaVal){
+      /* Clear old timers */
+      _timers.forEach(function(t){ clearTimeout(t); });
+      _timers = [];
+
+      var m = (etaVal||'').match(/^(\d{2}):(\d{2})$/);
+      if(!m) return;
+      var etaH = parseInt(m[1],10), etaM = parseInt(m[2],10);
+      if(etaH>23||etaM>59) return;
+      var etaMin = etaH * 60 + etaM;
+
+      var now = new Date();
+      var nowMin = now.getUTCHours() * 60 + now.getUTCMinutes();
+      var nowSec = now.getUTCSeconds();
+
+      var alerts = [
+        { label: 'CSD', offset: 50 },
+        { label: 'PA', offset: 40 },
+        { label: 'Seatbelt Sign', offset: 20 }
+      ];
+
+      function fmt(t){ t=((t%1440)+1440)%1440; var hh=Math.floor(t/60), mm=t%60; return String(hh).padStart(2,'0')+':'+String(mm).padStart(2,'0'); }
+
+      alerts.forEach(function(a){
+        var targetMin = ((etaMin - a.offset) % 1440 + 1440) % 1440;
+        var diffSec = (targetMin - nowMin) * 60 - nowSec;
+        /* Handle wrap-around midnight */
+        if(diffSec < -60) diffSec += 1440 * 60;
+        /* Only schedule if in the future and within 24h */
+        if(diffSec > 0 && diffSec < 86400){
+          var tid = setTimeout(function(){
+            showNotif(a.label, fmt(targetMin));
+          }, diffSec * 1000);
+          _timers.push(tid);
+        }
+      });
+    };
+  })();
+
+  /* CSS animation for notification pulse */
+  (function(){
+    var st = document.createElement('style');
+    st.textContent = '@keyframes etaNotifPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}';
+    document.head.appendChild(st);
   })();
 
   // ---------------- Arrival ATIS fetch ----------------
@@ -5758,6 +5860,11 @@ listEl.appendChild(row);
   const arrAddBtn = document.getElementById("arrAddBtn");
   const arrResetBtn = document.getElementById("arrResetBtn");
   const arrReadyChip = document.getElementById("arrReadyChip");
+  /* Aliases for shared modal fields used by arrival checklist */
+  const nameIn = nameInput || document.getElementById("nameInput");
+  const colorIn = colorSelect || document.getElementById("colorSelect");
+  const noteIn = noteInput || document.getElementById("noteInput");
+  const delBtn = deleteBtn || document.getElementById("deleteBtn");
 
   function loadArrItems(){
     try{
@@ -12576,12 +12683,17 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   if(!btn || !modal) return;
 
   btn.addEventListener('click', function(){
-    const ofpImg = document.getElementById('ofpImg');
-    if(!ofpImg || !ofpImg.src || ofpImg.style.display === 'none'){
+    /* Check both image sources: Pre-Flight (fpImg) and Departure (ofpImg) */
+    var fpImg = document.getElementById('fpImg');
+    var ofpImg = document.getElementById('ofpImg');
+    var src = '';
+    if(fpImg && fpImg.src && fpImg.naturalWidth > 0) src = fpImg.src;
+    else if(ofpImg && ofpImg.src && ofpImg.style.display !== 'none') src = ofpImg.src;
+    if(!src){
       alert('No FPL uploaded yet');
       return;
     }
-    modalImg.src = ofpImg.src;
+    modalImg.src = src;
     modal.style.display = 'flex';
   });
 
