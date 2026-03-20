@@ -1656,6 +1656,201 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .lsDelta.red{ color:var(--danger); }
     .lsDelta.green{ color:var(--green); }
 
+    /* ===== Departure Data Bar ===== */
+    .dep-bar{
+      display:flex;
+      align-items:center;
+      gap:0;
+      padding:8px 16px;
+      border-bottom:1px solid var(--line);
+      flex-wrap:wrap;
+      background:rgba(0,0,0,.12);
+    }
+    .dep-bar-cell{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:2px;
+      padding:2px 10px;
+      min-width:0;
+    }
+    .dep-bar-label{
+      font-size:9px;
+      font-weight:800;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      white-space:nowrap;
+    }
+    .dep-bar-time{
+      width:72px;
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:8px;
+      color:var(--cyan);
+      font-size:15px;
+      font-weight:700;
+      padding:4px 6px;
+      text-align:center;
+      outline:none;
+      font-family:inherit;
+    }
+    .dep-bar-time:focus{
+      border-color:var(--cyan);
+      box-shadow:0 0 0 2px rgba(40,195,255,.15);
+    }
+    .dep-bar-input{
+      width:72px;
+      background:transparent;
+      border:1px solid transparent;
+      border-bottom:1px solid var(--line);
+      border-radius:0;
+      color:var(--txt);
+      font-size:14px;
+      font-weight:700;
+      padding:3px 4px;
+      text-align:center;
+      outline:none;
+      font-family:inherit;
+    }
+    .dep-bar-input:focus{
+      border-bottom-color:var(--cyan);
+    }
+    .dep-bar-input::placeholder{
+      color:var(--muted);
+      opacity:.5;
+    }
+    .dep-bar-sep{
+      width:1px;
+      height:28px;
+      background:var(--line);
+      flex-shrink:0;
+    }
+    body.day-theme .dep-bar{ background:rgba(0,0,0,.03); }
+    body.day-theme .dep-bar-time{ background:rgba(0,0,0,.04); color:var(--cyan); }
+    body.day-theme .dep-bar-input{ border-bottom-color:rgba(0,0,0,.12); }
+
+    /* ===== Takeoff Data Card ===== */
+    .toGrid{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr;
+      gap:8px 10px;
+    }
+    .toField{
+      display:flex;
+      flex-direction:column;
+      gap:3px;
+    }
+    .toField label{
+      font-size:9px;
+      font-weight:800;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.06em;
+    }
+    .toInput, .toSelect{
+      width:100%;
+      border-radius:8px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+      color:var(--txt);
+      padding:7px 8px;
+      font-size:14px;
+      font-weight:700;
+      text-align:center;
+      outline:none;
+      font-family:inherit;
+    }
+    .toInput:focus, .toSelect:focus{
+      border-color:var(--cyan);
+      box-shadow:0 0 0 2px rgba(40,195,255,.12);
+    }
+    .toSelect{
+      appearance:none;
+      -webkit-appearance:none;
+      cursor:pointer;
+    }
+    body.day-theme .toInput, body.day-theme .toSelect{
+      background:rgba(0,0,0,.03);
+    }
+
+    /* ===== Wind / Crosswind Card ===== */
+    .xw-inputs{
+      display:grid;
+      grid-template-columns:1fr 1fr 1fr 1fr;
+      gap:8px;
+    }
+    .xw-result{
+      margin-top:12px;
+      padding-top:10px;
+      border-top:1px solid var(--line);
+    }
+    .xw-result-row{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:0;
+    }
+    .xw-component{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:2px;
+      flex:1;
+    }
+    .xw-comp-label{
+      font-size:9px;
+      font-weight:800;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.08em;
+    }
+    .xw-comp-value{
+      font-size:22px;
+      font-weight:900;
+      font-variant-numeric:tabular-nums;
+    }
+    .xw-comp-value.green{ color:var(--green); }
+    .xw-comp-value.amber{ color:var(--orange); }
+    .xw-comp-value.red{ color:var(--danger); }
+    .xw-divider{
+      width:1px;
+      height:36px;
+      background:var(--line);
+      flex-shrink:0;
+    }
+    .xw-bar-wrap{
+      margin-top:8px;
+    }
+    .xw-bar-track{
+      height:8px;
+      border-radius:4px;
+      background:rgba(255,255,255,.06);
+      overflow:hidden;
+      position:relative;
+    }
+    body.day-theme .xw-bar-track{ background:rgba(0,0,0,.06); }
+    .xw-bar-fill{
+      height:100%;
+      border-radius:4px;
+      transition:width .3s, background .3s;
+      min-width:2px;
+    }
+    .xw-bar-labels{
+      display:flex;
+      justify-content:space-between;
+      font-size:8px;
+      color:var(--muted);
+      margin-top:2px;
+      padding:0 1px;
+    }
+    .xw-status{
+      text-align:center;
+      margin-top:6px;
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.04em;
+    }
 
     #depCenterPanel .panel header h1{ font-size:14px; }
     #depCenterPanel .panel header .sub{ font-size:11px; }
@@ -3166,7 +3361,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.11.9</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.0</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3703,61 +3898,47 @@ body.day-theme .panel{
 
       <!-- DEPARTURE -->
       <section class="view" id="view-departure">
+
+        <!-- ===== DEPARTURE DATA BAR (Time + Dep Data — horizontal, compact) ===== -->
+        <div class="dep-bar" id="depDataBar">
+          <div class="dep-bar-cell">
+            <span class="dep-bar-label">BLK OFF</span>
+            <input id="depBlockOff" type="time" class="dep-bar-time" />
+          </div>
+          <div class="dep-bar-sep"></div>
+          <div class="dep-bar-cell">
+            <span class="dep-bar-label">TAKE OFF</span>
+            <input id="depTakeOff" type="time" class="dep-bar-time" />
+          </div>
+          <div class="dep-bar-sep"></div>
+          <div class="dep-bar-cell">
+            <span class="dep-bar-label">ELEV</span>
+            <input id="depAirportElev" type="text" class="dep-bar-input" placeholder="—" />
+          </div>
+          <div class="dep-bar-sep"></div>
+          <div class="dep-bar-cell">
+            <span class="dep-bar-label">SID</span>
+            <input id="depSid" type="text" class="dep-bar-input" placeholder="—" />
+          </div>
+          <div class="dep-bar-sep"></div>
+          <div class="dep-bar-cell">
+            <span class="dep-bar-label">T/A</span>
+            <input id="depTransAlt" type="text" class="dep-bar-input" placeholder="—" />
+          </div>
+          <div class="dep-bar-sep"></div>
+          <div class="dep-bar-cell">
+            <span class="dep-bar-label">INIT CLB</span>
+            <input id="depInitialClimb" type="text" class="dep-bar-input" placeholder="—" />
+          </div>
+        </div>
+
         <div class="departureGrid">
 
-          <!-- CENTER: Departure operational data -->
+          <!-- CENTER: Stacked cards -->
           <section class="panel" id="depCenterPanel">
-            <div style="padding:10px; display:grid; grid-template-columns: 0.9fr 1.1fr; gap:10px; min-height:0; overflow:auto; align-items:start;">
+            <div style="padding:10px; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:10px;">
 
-              <!-- TIME panel (same column as Departure Data) -->
-              <section class="panel collapsiblePanel open" id="depTimePanel" style="box-shadow:none; min-height:auto;">
-                <header class="collapsibleHeader" id="depTimeHeader" style="padding:10px 12px;">
-                  <div class="title"><h1>Time</h1></div>
-                  <div class="collapseChevron" aria-hidden="true">▾</div>
-                </header>
-                <div class="modal-body collapsibleBody" id="depTimeBody" style="padding:6px 10px;">
-                  <div style="display:flex;gap:12px;align-items:center;">
-                    <div class="depField" style="flex:1;">
-                      <label style="font-size:10px;">Block Off (UTC)</label>
-                      <input id="depBlockOff" type="time" style="width:100%;padding:4px 6px;font-size:14px;" />
-                    </div>
-                    <div class="depField" style="flex:1;">
-                      <label style="font-size:10px;">Take Off (UTC)</label>
-                      <input id="depTakeOff" type="time" style="width:100%;padding:4px 6px;font-size:14px;" />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <section class="panel collapsiblePanel open" id="depDataPanel" style="box-shadow:none; min-height:auto;">
-                <header class="collapsibleHeader" id="depDataHeader" style="padding:10px 12px;">
-                  <div class="title">
-                    <h1>Departure Data</h1>
-                  </div>
-                  <div class="collapseChevron" aria-hidden="true">▾</div>
-                </header>
-                <div class="modal-body collapsibleBody" id="depDataBody" style="padding:10px;">
-                  <div class="depDataGrid">
-                    <div class="depField">
-                      <label>Airport Elevation</label>
-                      <input id="depAirportElev" type="text" placeholder="e.g. 136 ft" />
-                    </div>
-                    <div class="depField">
-                      <label>SID</label>
-                      <input id="depSid" type="text" placeholder="e.g. LUBET3R" />
-                    </div>
-                    <div class="depField">
-                      <label>Transition Altitude</label>
-                      <input id="depTransAlt" type="text" placeholder="e.g. 13000" />
-                    </div>
-                    <div class="depField">
-                      <label>Initial Climb</label>
-                      <input id="depInitialClimb" type="text" placeholder="e.g. 5000 ft" />
-                    </div>
-                  </div>
-                </div>
-              </section>
-
+              <!-- ── FINAL LOADSHEET ── -->
               <section class="panel collapsiblePanel open" id="loadsheetPanel" style="box-shadow:none; min-height:auto;">
                 <header class="collapsibleHeader" id="loadsheetHeader" style="padding:10px 12px;">
                   <div class="title">
@@ -3775,33 +3956,136 @@ body.day-theme .panel{
                     <div>LOADSHEET</div>
                     <div>Δ</div>
                   </div>
-
                   <div class="lsGrid">
                     <div class="lsName">ZFW</div>
                     <div class="lsFpl mono" id="lsFplZfw">—</div>
                     <div class="lsInputWrap"><button class="lsStep" type="button" data-step-target="lsZfw" data-step-dir="-1">−</button><input class="lsInput" id="lsZfw" type="number" step="0.1" inputmode="decimal" placeholder="0.0" /><button class="lsStep" type="button" data-step-target="lsZfw" data-step-dir="1">+</button></div>
                     <div class="lsDelta mono amber" id="lsDeltaZfw">—</div>
                   </div>
-
                   <div class="lsGrid">
                     <div class="lsName">TOW</div>
                     <div class="lsFpl mono" id="lsFplTow">—</div>
                     <div class="lsInputWrap"><button class="lsStep" type="button" data-step-target="lsTow" data-step-dir="-1">−</button><input class="lsInput" id="lsTow" type="number" step="0.1" inputmode="decimal" placeholder="0.0" /><button class="lsStep" type="button" data-step-target="lsTow" data-step-dir="1">+</button></div>
                     <div class="lsDelta mono" id="lsDeltaTow">—</div>
                   </div>
-
                   <div class="lsGrid lsSimple">
                     <div class="lsName">POB</div>
                     <div class="lsFpl mono">—</div>
                     <div class="lsInputWrap"><button class="lsStep" type="button" data-step-target="lsPob" data-step-dir="-1">−</button><input class="lsInput" id="lsPob" type="number" step="1" inputmode="numeric" placeholder="0" /><button class="lsStep" type="button" data-step-target="lsPob" data-step-dir="1">+</button></div>
                     <div class="lsDelta mono">—</div>
                   </div>
-
                   <div class="lsGrid lsSimple">
                     <div class="lsName">CG</div>
                     <div class="lsFpl mono">—</div>
                     <div class="lsInputWrap"><button class="lsStep" type="button" data-step-target="lsCg" data-step-dir="-1">−</button><input class="lsInput" id="lsCg" type="number" step="0.1" inputmode="decimal" placeholder="0.0" /><button class="lsStep" type="button" data-step-target="lsCg" data-step-dir="1">+</button></div>
                     <div class="lsDelta mono">—</div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ── TAKEOFF DATA ── -->
+              <section class="panel collapsiblePanel open" id="toDataPanel" style="box-shadow:none; min-height:auto;">
+                <header class="collapsibleHeader" id="toDataHeader" style="padding:10px 12px;">
+                  <div class="title"><h1>Takeoff Data</h1></div>
+                  <div class="collapseChevron" aria-hidden="true">▾</div>
+                </header>
+                <div class="modal-body collapsibleBody" id="toDataBody" style="padding:10px;">
+                  <!-- Row 1: TOW | FLAP | RWY -->
+                  <div class="toGrid">
+                    <div class="toField">
+                      <label>TAKEOFF WT</label>
+                      <input id="toTow" type="text" inputmode="decimal" placeholder="—" class="toInput" />
+                    </div>
+                    <div class="toField">
+                      <label>FLAP</label>
+                      <input id="toFlap" type="text" inputmode="numeric" placeholder="—" class="toInput" />
+                    </div>
+                    <div class="toField">
+                      <label>RWY</label>
+                      <input id="toRwy" type="text" placeholder="—" class="toInput" />
+                    </div>
+                  </div>
+                  <!-- Row 2: Full TO -->
+                  <div style="margin-top:8px;">
+                    <div class="toField">
+                      <label>FULL T/O</label>
+                      <input id="toFullTo" type="text" placeholder="—" class="toInput" style="width:100%;" />
+                    </div>
+                  </div>
+                  <!-- Row 3: V1 | VR | V2 -->
+                  <div class="toGrid" style="margin-top:8px;">
+                    <div class="toField">
+                      <label>V1</label>
+                      <input id="toV1" type="number" inputmode="numeric" placeholder="—" class="toInput" />
+                    </div>
+                    <div class="toField">
+                      <label>VR</label>
+                      <input id="toVr" type="number" inputmode="numeric" placeholder="—" class="toInput" />
+                    </div>
+                    <div class="toField">
+                      <label>V2</label>
+                      <input id="toV2" type="number" inputmode="numeric" placeholder="—" class="toInput" />
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              <!-- ── WIND / CROSSWIND ── -->
+              <section class="panel collapsiblePanel open" id="xwindPanel" style="box-shadow:none; min-height:auto;">
+                <header class="collapsibleHeader" id="xwindHeader" style="padding:10px 12px;">
+                  <div class="title"><h1>Wind Analysis</h1></div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill from METAR">METAR</button>
+                    <div class="collapseChevron" aria-hidden="true">▾</div>
+                  </div>
+                </header>
+                <div class="modal-body collapsibleBody" id="xwindBody" style="padding:10px;">
+                  <div class="xw-inputs">
+                    <div class="toField">
+                      <label>RWY HDG</label>
+                      <input id="xwRwyHdg" type="number" inputmode="numeric" placeholder="e.g. 340" class="toInput" min="1" max="360" />
+                    </div>
+                    <div class="toField">
+                      <label>WIND DIR</label>
+                      <input id="xwWindDir" type="number" inputmode="numeric" placeholder="e.g. 290" class="toInput" min="0" max="360" />
+                    </div>
+                    <div class="toField">
+                      <label>WIND SPD</label>
+                      <div style="display:flex;gap:4px;align-items:center;">
+                        <input id="xwWindSpd" type="number" inputmode="numeric" placeholder="—" class="toInput" style="flex:1;" min="0" />
+                        <span style="font-size:11px;color:var(--muted);">kt</span>
+                      </div>
+                    </div>
+                    <div class="toField">
+                      <label>GUST</label>
+                      <div style="display:flex;gap:4px;align-items:center;">
+                        <input id="xwGust" type="number" inputmode="numeric" placeholder="—" class="toInput" style="flex:1;" min="0" />
+                        <span style="font-size:11px;color:var(--muted);">kt</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- Result display -->
+                  <div class="xw-result" id="xwResult" style="display:none;">
+                    <div class="xw-result-row">
+                      <div class="xw-component">
+                        <span class="xw-comp-label">HEADWIND</span>
+                        <span class="xw-comp-value" id="xwHead">—</span>
+                      </div>
+                      <div class="xw-divider"></div>
+                      <div class="xw-component">
+                        <span class="xw-comp-label">CROSSWIND</span>
+                        <span class="xw-comp-value" id="xwCross">—</span>
+                      </div>
+                    </div>
+                    <div class="xw-bar-wrap">
+                      <div class="xw-bar-track">
+                        <div class="xw-bar-fill" id="xwBarFill"></div>
+                      </div>
+                      <div class="xw-bar-labels">
+                        <span>0</span><span>15</span><span>25</span><span>35</span>
+                      </div>
+                    </div>
+                    <div class="xw-status" id="xwStatus"></div>
                   </div>
                 </div>
               </section>
@@ -5984,7 +6268,8 @@ listEl.appendChild(row);
       noteIn.value = it.note || "";
       // mark that we're editing arrival, not departure
       backdrop.dataset.mode = "arrival";
-      backdrop.style.display = "flex";
+      backdrop.classList.add("show");
+      backdrop.setAttribute("aria-hidden","false");
       setTimeout(()=> nameIn.focus(), 0);
     }else{
       const newName = prompt("Edit item", it.name);
@@ -6008,7 +6293,8 @@ listEl.appendChild(row);
         colorIn.value = "green";
         noteIn.value = "";
         backdrop.dataset.mode = "arrival";
-        backdrop.style.display = "flex";
+        backdrop.classList.add("show");
+        backdrop.setAttribute("aria-hidden","false");
         setTimeout(()=> nameIn.focus(), 0);
       }else{
         const name = prompt("New arrival checklist item:");
@@ -12613,13 +12899,9 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
     saveState(state);
   }
 
-  const depHeader = document.getElementById('depDataHeader');
   const lsHeader = document.getElementById('loadsheetHeader');
   const clearBtn = document.getElementById('clearLoadsheetBtn');
 
-  if(depHeader){
-    depHeader.onclick = function(){ toggle('depDataPanel'); };
-  }
   if(lsHeader){
     lsHeader.onclick = function(e){
       if(e.target && e.target.id === 'clearLoadsheetBtn') return;
@@ -12630,15 +12912,217 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
     clearBtn.addEventListener('click', function(e){ e.stopPropagation(); });
   }
 
-  setOpen('depDataPanel', state.depDataPanel !== false);
-  setOpen('loadsheetPanel', state.loadsheetPanel !== false);
-
-  // Time panel collapsible
-  const timeHeader = document.getElementById('depTimeHeader');
-  if(timeHeader){
-    timeHeader.onclick = function(){ toggle('depTimePanel'); };
+  // Takeoff Data panel
+  const toHeader = document.getElementById('toDataHeader');
+  if(toHeader){
+    toHeader.onclick = function(){ toggle('toDataPanel'); };
   }
-  setOpen('depTimePanel', state.depTimePanel === true); // default collapsed
+  // Wind Analysis panel
+  const xwHeader = document.getElementById('xwindHeader');
+  const xwMetarBtn = document.getElementById('xwindMetarBtn');
+  if(xwHeader){
+    xwHeader.onclick = function(e){
+      if(e.target && e.target.id === 'xwindMetarBtn') return;
+      toggle('xwindPanel');
+    };
+  }
+  if(xwMetarBtn){
+    xwMetarBtn.addEventListener('click', function(e){ e.stopPropagation(); });
+  }
+
+  setOpen('loadsheetPanel', state.loadsheetPanel !== false);
+  setOpen('toDataPanel', state.toDataPanel !== false);
+  setOpen('xwindPanel', state.xwindPanel !== false);
+})();
+</script>
+
+<!-- Takeoff Data: persistence -->
+<script>
+(function(){
+  const TO_KEY = "flightbag_takeoff_data_v2";
+  const ids = ['toTow','toFlap','toRwy','toFullTo','toV1','toVr','toV2'];
+  const els = {};
+  ids.forEach(function(id){ els[id] = document.getElementById(id); });
+
+  function load(){
+    try{
+      var d = JSON.parse(localStorage.getItem(TO_KEY)||'{}');
+      ids.forEach(function(id){ if(els[id] && d[id] != null) els[id].value = d[id]; });
+    }catch(e){}
+  }
+  function save(){
+    var d = {};
+    ids.forEach(function(id){ d[id] = els[id] ? els[id].value : ''; });
+    try{ localStorage.setItem(TO_KEY, JSON.stringify(d)); }catch(e){}
+  }
+  ids.forEach(function(id){
+    if(els[id]){
+      els[id].addEventListener('input', save);
+      els[id].addEventListener('change', save);
+    }
+  });
+  load();
+})();
+</script>
+
+<!-- Wind / Crosswind Calculator -->
+<script>
+(function(){
+  const XW_KEY = "flightbag_xwind_v1";
+  const rwyEl = document.getElementById('xwRwyHdg');
+  const dirEl = document.getElementById('xwWindDir');
+  const spdEl = document.getElementById('xwWindSpd');
+  const gustEl = document.getElementById('xwGust');
+  const resultEl = document.getElementById('xwResult');
+  const headEl = document.getElementById('xwHead');
+  const crossEl = document.getElementById('xwCross');
+  const barFill = document.getElementById('xwBarFill');
+  const statusEl = document.getElementById('xwStatus');
+  const metarBtn = document.getElementById('xwindMetarBtn');
+  if(!rwyEl || !dirEl || !spdEl) return;
+
+  function calc(){
+    var rwy = parseInt(rwyEl.value, 10);
+    var dir = parseInt(dirEl.value, 10);
+    var spd = parseInt(spdEl.value, 10);
+    var gust = parseInt(gustEl.value, 10);
+
+    // Save inputs
+    try{ localStorage.setItem(XW_KEY, JSON.stringify({rwy:rwyEl.value, dir:dirEl.value, spd:spdEl.value, gust:gustEl.value})); }catch(e){}
+
+    if(isNaN(rwy) || isNaN(dir) || isNaN(spd)){
+      resultEl.style.display = 'none';
+      return;
+    }
+    resultEl.style.display = '';
+
+    var angle = (dir - rwy) * Math.PI / 180;
+    var headwind = Math.round(spd * Math.cos(angle));
+    var crosswind = Math.round(Math.abs(spd * Math.sin(angle)));
+
+    // Use gust for worst-case crosswind if available
+    var gustXw = crosswind;
+    if(!isNaN(gust) && gust > spd){
+      var gustCross = Math.round(Math.abs(gust * Math.sin(angle)));
+      gustXw = gustCross;
+    }
+
+    // Determine crosswind direction
+    var sinVal = Math.sin(angle);
+    var xwDir = sinVal > 0.01 ? 'R' : sinVal < -0.01 ? 'L' : '';
+
+    // Headwind display
+    if(headwind >= 0){
+      headEl.textContent = headwind + ' kt';
+      headEl.className = 'xw-comp-value green';
+    } else {
+      headEl.textContent = Math.abs(headwind) + ' kt TAIL';
+      headEl.className = 'xw-comp-value red';
+    }
+
+    // Crosswind display
+    var xwDisplay = crosswind + ' kt' + (xwDir ? ' ' + xwDir : '');
+    if(!isNaN(gust) && gust > spd && gustXw > crosswind){
+      xwDisplay += ' (G' + gustXw + ')';
+    }
+    crossEl.textContent = xwDisplay;
+
+    // Color based on crosswind limits (typical: 15 advisory, 25 caution, 35 limit)
+    var worstXw = Math.max(crosswind, gustXw);
+    if(worstXw <= 15){
+      crossEl.className = 'xw-comp-value green';
+    } else if(worstXw <= 25){
+      crossEl.className = 'xw-comp-value amber';
+    } else {
+      crossEl.className = 'xw-comp-value red';
+    }
+
+    // Bar fill (max 35kt scale)
+    var pct = Math.min(worstXw / 35 * 100, 100);
+    barFill.style.width = pct + '%';
+    barFill.style.background = worstXw <= 15 ? 'var(--green)' : worstXw <= 25 ? 'var(--orange)' : 'var(--danger)';
+
+    // Status text
+    if(headwind < 0 && Math.abs(headwind) > 10){
+      statusEl.textContent = '⚠ TAILWIND ' + Math.abs(headwind) + ' KT';
+      statusEl.style.color = 'var(--danger)';
+    } else if(worstXw > 35){
+      statusEl.textContent = '🔴 EXCEEDS LIMIT';
+      statusEl.style.color = 'var(--danger)';
+    } else if(worstXw > 25){
+      statusEl.textContent = '🟡 NEAR LIMIT — CAUTION';
+      statusEl.style.color = 'var(--orange)';
+    } else if(worstXw > 15){
+      statusEl.textContent = '🟡 MODERATE CROSSWIND';
+      statusEl.style.color = 'var(--orange)';
+    } else {
+      statusEl.textContent = '🟢 WITHIN LIMITS';
+      statusEl.style.color = 'var(--green)';
+    }
+  }
+
+  [rwyEl, dirEl, spdEl, gustEl].forEach(function(el){
+    if(el){
+      el.addEventListener('input', calc);
+      el.addEventListener('change', calc);
+    }
+  });
+
+  // Load saved values
+  try{
+    var saved = JSON.parse(localStorage.getItem(XW_KEY)||'{}');
+    if(saved.rwy) rwyEl.value = saved.rwy;
+    if(saved.dir) dirEl.value = saved.dir;
+    if(saved.spd) spdEl.value = saved.spd;
+    if(saved.gust && gustEl) gustEl.value = saved.gust;
+    calc();
+  }catch(e){}
+
+  // Auto-fill from METAR button
+  if(metarBtn){
+    metarBtn.addEventListener('click', function(){
+      // Try to get METAR text from Pre-Flight
+      var metarBox = document.getElementById('pfDepMetar');
+      var metarTxt = metarBox ? metarBox.textContent : '';
+      if(!metarTxt){
+        alert('No METAR available. Fetch it first on Pre-Flight page.');
+        return;
+      }
+      // Parse wind from METAR: dddssKT or dddssGggKT
+      var m = metarTxt.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
+      if(!m){
+        alert('Could not parse wind from METAR');
+        return;
+      }
+      dirEl.value = parseInt(m[1], 10);
+      spdEl.value = parseInt(m[2], 10);
+      if(m[4] && gustEl) gustEl.value = parseInt(m[4], 10);
+
+      // Try to auto-fill RWY heading from dep runway in OFP
+      if(!rwyEl.value){
+        try{
+          var d = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+          var rwy = d.depRwy || '';
+          var rwyNum = rwy.replace(/[^0-9]/g,'');
+          if(rwyNum){
+            rwyEl.value = parseInt(rwyNum, 10) * 10;
+          }
+        }catch(e){}
+      }
+      calc();
+    });
+  }
+
+  // Auto-populate RWY heading from OFP when available
+  window.addEventListener('ofpDataUpdated', function(){
+    if(rwyEl.value) return;
+    try{
+      var d = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+      var rwy = d.depRwy || '';
+      var rwyNum = rwy.replace(/[^0-9]/g,'');
+      if(rwyNum) rwyEl.value = parseInt(rwyNum, 10) * 10;
+    }catch(e){}
+  });
 })();
 </script>
 
