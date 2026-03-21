@@ -10,22 +10,21 @@
   <meta name="apple-mobile-web-app-title" content="FlightBag" />
   <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png" />
   <title>FlightBag</title>
-  <!-- Emergency SW cleanup — runs before anything else -->
   <script>
   (function(){
-    var CURRENT_VER = "v1.12.8";
-    var lastVer = "";
-    try{ lastVer = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
-    if(lastVer !== CURRENT_VER){
-      try{ localStorage.setItem("fb_sw_ver", CURRENT_VER); }catch(e){}
+    var CV = "v1.12.9";
+    var lv = "";
+    try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
+    if(lv !== CV){
+      try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
       if("serviceWorker" in navigator){
-        navigator.serviceWorker.getRegistrations().then(function(regs){
-          regs.forEach(function(r){ r.unregister(); });
+        navigator.serviceWorker.getRegistrations().then(function(r){
+          r.forEach(function(x){ x.unregister(); });
         }).catch(function(){});
       }
       if("caches" in window){
-        caches.keys().then(function(keys){
-          keys.forEach(function(k){ caches.delete(k); });
+        caches.keys().then(function(k){
+          k.forEach(function(c){ caches.delete(c); });
         }).catch(function(){});
       }
     }
@@ -608,14 +607,13 @@
 
     /* Departure layout */
     .departureGrid{
-      height: calc(100% - 46px);
+      height:100%;
       min-height:0;
       display:grid;
       grid-template-columns: 1fr 310px;  /* center reserved + right checklist */
       gap:8px;
       padding:4px;
       align-items:stretch;
-      overflow:hidden;
     }
 
     /* Flight plan viewer (center) */
@@ -3382,7 +3380,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.8</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.9</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3956,8 +3954,8 @@ body.day-theme .panel{
         <div class="departureGrid">
 
           <!-- CENTER: Stacked cards -->
-          <section class="panel" id="depCenterPanel" style="overflow:hidden;display:flex;flex-direction:column;">
-            <div style="padding:10px; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; flex:1;">
+          <section class="panel" id="depCenterPanel">
+            <div style="padding:10px; min-height:0; overflow:auto; display:flex; flex-direction:column; gap:10px;">
 
               <!-- ── FINAL LOADSHEET ── -->
               <section class="panel collapsiblePanel open" id="loadsheetPanel" style="box-shadow:none; min-height:auto;">
@@ -4055,12 +4053,12 @@ body.day-theme .panel{
               <section class="panel collapsiblePanel open" id="xwindPanel" style="box-shadow:none; min-height:auto;">
                 <header class="collapsibleHeader" id="xwindHeader" style="padding:10px 12px;">
                   <div class="title"><h1>Wind Analysis</h1></div>
-                  <div class="collapseChevron" aria-hidden="true">▾</div>
+                  <div style="display:flex;align-items:center;gap:8px;margin-left:auto;">
+                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill from METAR">METAR</button>
+                    <div class="collapseChevron" aria-hidden="true">▾</div>
+                  </div>
                 </header>
                 <div class="modal-body collapsibleBody" id="xwindBody" style="padding:10px;">
-                  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill wind from METAR">METAR</button>
-                  </div>
                   <div class="xw-inputs">
                     <div class="toField">
                       <label>RWY HDG</label>
@@ -9472,44 +9470,46 @@ function parseDeckCrew(raw){
   // ---- Clear Cache / Force SW Update ----
   const clearCacheBtn = document.getElementById("clearCacheBtn");
   if(clearCacheBtn){
-    clearCacheBtn.addEventListener(“click”, async ()=>{
-      clearCacheBtn.textContent = “Clearing…”;
+    clearCacheBtn.addEventListener("click", async ()=>{
+      clearCacheBtn.textContent = "Clearing…";
       clearCacheBtn.disabled = true;
       try{
-        // 1) Unregister ALL service workers (critical for iOS PWA)
-        if(“serviceWorker” in navigator){
-          const regs = await navigator.serviceWorker.getRegistrations();
-          for(const r of regs){
-            // Tell SW to clear its caches before unregistering
-            if(r.active) r.active.postMessage(“clearAll”);
-            await r.unregister();
-          }
-        }
-        // 2) Delete all caches from window side too
-        if(“caches” in window){
+        // 1) Delete all caches (SW kept registered â€” offline works after reload)
+        if("caches" in window){
           const keys = await caches.keys();
           await Promise.all(keys.map(k => caches.delete(k)));
         }
-        // 3) Wipe ALL localStorage (not just prefixed — full reset)
-        try{ localStorage.clear(); }catch(e){}
+        // 3) Wipe storage (this is where "resquícios" usually live)
+        try{
+          // Remove only FlightBag keys (safer)
+          const prefix = "flightbag_";
+          const removeKeys = [];
+          for(let i=0;i<localStorage.length;i++){ 
+            const k = localStorage.key(i);
+            if(k && (k.startsWith(prefix) || k.startsWith("flightPlan") || k.startsWith("ofp") || k.startsWith("checklist") || k.startsWith("pf_") )) removeKeys.push(k);
+          }
+          removeKeys.forEach(k=>localStorage.removeItem(k));
+        }catch(e){}
         try{ sessionStorage.clear(); }catch(e){}
-        // 4) IndexedDB
+        // 4) IndexedDB (if any)
         try{
           if(window.indexedDB && indexedDB.databases){
             const dbs = await indexedDB.databases();
-            await Promise.all((dbs||[]).map(db => db && db.name ? new Promise(res=>{
+            await Promise.all((dbs||[]).map(db => db && db.name ? new Promise(res=>{ 
               const req = indexedDB.deleteDatabase(db.name);
               req.onsuccess=req.onerror=req.onblocked=()=>res();
             }) : Promise.resolve()));
           }
         }catch(e){}
-        // 5) Force reload bypassing any remaining cache
-        window.location.href = window.location.pathname + “?v=” + Date.now();
+
+        // 5) Reload with cache-buster (avoids Safari/HTTP cache showing old index.html)
+        const base = window.location.pathname.replace(/\/[^\/]*$/, "/");
+        const target = base + "index.html?v=" + Date.now() + (window.location.hash || "");
+        window.location.href = target;
       } catch(err){
-        clearCacheBtn.textContent = “🔄 Clear Cache”;
+        clearCacheBtn.textContent = "🔄 Clear Cache";
         clearCacheBtn.disabled = false;
-        // Even if error, try to reload
-        window.location.reload();
+        alert("Could not clear cache: " + (err && err.message ? err.message : err));
       }
     });
   }
@@ -11630,23 +11630,7 @@ restoreEtops();
   if("serviceWorker" in navigator){
     navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
       .then(function(reg){
-        // Check for updates every 5 minutes
         setInterval(function(){ reg.update().catch(function(){}); }, 300000);
-        // When a new SW is found, show subtle update banner (no auto-reload)
-        reg.addEventListener("updatefound", function(){
-          var nw = reg.installing;
-          if(!nw) return;
-          nw.addEventListener("statechange", function(){
-            if(nw.state === "installed" && navigator.serviceWorker.controller){
-              // New version ready — show banner instead of auto-reload
-              var ban = document.createElement("div");
-              ban.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#28c3ff;color:#050607;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;z-index:99999;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);";
-              ban.textContent = "New version available — tap to update";
-              ban.onclick = function(){ window.location.reload(); };
-              document.body.appendChild(ban);
-            }
-          });
-        });
       }).catch(function(){});
   }
 
@@ -12942,7 +12926,7 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
 
   if(lsHeader){
     lsHeader.onclick = function(e){
-      if(e.target && (e.target.id === 'clearLoadsheetBtn' || e.target.closest('#clearLoadsheetBtn'))) return;
+      if(e.target && e.target.id === 'clearLoadsheetBtn') return;
       toggle('loadsheetPanel');
     };
   }
@@ -12959,7 +12943,13 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
   const xwHeader = document.getElementById('xwindHeader');
   const xwMetarBtn = document.getElementById('xwindMetarBtn');
   if(xwHeader){
-    xwHeader.onclick = function(){ toggle('xwindPanel'); };
+    xwHeader.onclick = function(e){
+      if(e.target && e.target.id === 'xwindMetarBtn') return;
+      toggle('xwindPanel');
+    };
+  }
+  if(xwMetarBtn){
+    xwMetarBtn.addEventListener('click', function(e){ e.stopPropagation(); });
   }
 
   setOpen('loadsheetPanel', state.loadsheetPanel !== false);
@@ -13001,102 +12991,16 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
 <script>
 (function(){
   const XW_KEY = "flightbag_xwind_v1";
-  var rwyEl = document.getElementById('xwRwyHdg');
-  var dirEl = document.getElementById('xwWindDir');
-  var spdEl = document.getElementById('xwWindSpd');
-  var gustEl = document.getElementById('xwGust');
-  var resultEl = document.getElementById('xwResult');
-  var headEl = document.getElementById('xwHead');
-  var crossEl = document.getElementById('xwCross');
-  var barFill = document.getElementById('xwBarFill');
-  var statusEl = document.getElementById('xwStatus');
-  var metarBtn = document.getElementById('xwindMetarBtn');
-
-  /* ── METAR button — register FIRST, independent of other elements ── */
-  if(metarBtn){
-    metarBtn.addEventListener('click', function(e){
-      e.preventDefault();
-      e.stopPropagation();
-      var _rwy = document.getElementById('xwRwyHdg');
-      var _dir = document.getElementById('xwWindDir');
-      var _spd = document.getElementById('xwWindSpd');
-      var _gust = document.getElementById('xwGust');
-
-      function _fillRwy(){
-        if(_rwy && _rwy.value) return;
-        try{
-          var d = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
-          var rwy = d.depRwy || '';
-          var rwyNum = rwy.replace(/[^0-9]/g,'');
-          if(rwyNum && _rwy) _rwy.value = parseInt(rwyNum, 10) * 10;
-        }catch(ex){}
-      }
-      function _done(){
-        _fillRwy();
-        if(_rwy) _rwy.dispatchEvent(new Event('input'));
-      }
-
-      // 1) Try DOM first (Pre-Flight METAR already loaded)
-      var metarBox = document.getElementById('pfDepMetar');
-      var metarTxt = (metarBox ? metarBox.textContent : '') || '';
-      if(metarTxt && metarTxt !== '\u2014' && metarTxt !== '-' && metarTxt.length > 5){
-        var m = metarTxt.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
-        if(m){
-          if(_dir) _dir.value = parseInt(m[1], 10);
-          if(_spd) _spd.value = parseInt(m[2], 10);
-          if(m[4] && _gust) _gust.value = parseInt(m[4], 10);
-          _done();
-          return;
-        }
-      }
-      // 2) Fallback: fetch METAR from CheckWX API
-      var ofpData;
-      try{ ofpData = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}'); }catch(ex){ ofpData={}; }
-      var icao = ofpData.dep || ofpData.depIcao || '';
-      if(!icao || icao.length !== 4){
-        alert('Scan FPL first to identify departure airport.');
-        return;
-      }
-      metarBtn.textContent = '...';
-      metarBtn.disabled = true;
-      fetch('https://api.checkwx.com/metar/' + icao + '/decoded', {
-        headers: { 'X-API-Key': '15af4320fca64d3dac7936dcb9cb9d22' }
-      })
-      .then(function(r){ return r.json(); })
-      .then(function(json){
-        metarBtn.textContent = 'METAR';
-        metarBtn.disabled = false;
-        if(!json.data || !json.data[0]){
-          alert('No METAR data for ' + icao);
-          return;
-        }
-        var wx = json.data[0];
-        if(wx.wind){
-          if(wx.wind.degrees != null && _dir) _dir.value = wx.wind.degrees;
-          if(wx.wind.speed_kts != null && _spd) _spd.value = wx.wind.speed_kts;
-          if(wx.wind.gust_kts && _gust) _gust.value = wx.wind.gust_kts;
-        } else {
-          var raw = wx.raw_text || '';
-          var m2 = raw.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
-          if(m2){
-            if(_dir) _dir.value = parseInt(m2[1], 10);
-            if(_spd) _spd.value = parseInt(m2[2], 10);
-            if(m2[4] && _gust) _gust.value = parseInt(m2[4], 10);
-          } else {
-            alert('Could not parse wind from METAR');
-            return;
-          }
-        }
-        _done();
-      })
-      .catch(function(err){
-        metarBtn.textContent = 'METAR';
-        metarBtn.disabled = false;
-        alert('METAR fetch failed: ' + (err.message || err));
-      });
-    });
-  }
-
+  const rwyEl = document.getElementById('xwRwyHdg');
+  const dirEl = document.getElementById('xwWindDir');
+  const spdEl = document.getElementById('xwWindSpd');
+  const gustEl = document.getElementById('xwGust');
+  const resultEl = document.getElementById('xwResult');
+  const headEl = document.getElementById('xwHead');
+  const crossEl = document.getElementById('xwCross');
+  const barFill = document.getElementById('xwBarFill');
+  const statusEl = document.getElementById('xwStatus');
+  const metarBtn = document.getElementById('xwindMetarBtn');
   if(!rwyEl || !dirEl || !spdEl) return;
 
   function calc(){
@@ -13196,7 +13100,40 @@ setTimeout(()=>{ resizeCanvas(false); loadPad(); }, 80);
     calc();
   }catch(e){}
 
-  /* METAR button handler is now registered above, before the guard */
+  // Auto-fill from METAR button
+  if(metarBtn){
+    metarBtn.addEventListener('click', function(){
+      // Try to get METAR text from Pre-Flight
+      var metarBox = document.getElementById('pfDepMetar');
+      var metarTxt = metarBox ? metarBox.textContent : '';
+      if(!metarTxt){
+        alert('No METAR available. Fetch it first on Pre-Flight page.');
+        return;
+      }
+      // Parse wind from METAR: dddssKT or dddssGggKT
+      var m = metarTxt.match(/\b(\d{3})(\d{2,3})(G(\d{2,3}))?KT\b/);
+      if(!m){
+        alert('Could not parse wind from METAR');
+        return;
+      }
+      dirEl.value = parseInt(m[1], 10);
+      spdEl.value = parseInt(m[2], 10);
+      if(m[4] && gustEl) gustEl.value = parseInt(m[4], 10);
+
+      // Try to auto-fill RWY heading from dep runway in OFP
+      if(!rwyEl.value){
+        try{
+          var d = JSON.parse(localStorage.getItem('flightbag_ofp_data_v1')||'{}');
+          var rwy = d.depRwy || '';
+          var rwyNum = rwy.replace(/[^0-9]/g,'');
+          if(rwyNum){
+            rwyEl.value = parseInt(rwyNum, 10) * 10;
+          }
+        }catch(e){}
+      }
+      calc();
+    });
+  }
 
   // Auto-populate RWY heading from OFP when available
   window.addEventListener('ofpDataUpdated', function(){
