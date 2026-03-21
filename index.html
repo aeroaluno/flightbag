@@ -3364,7 +3364,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.5</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.6</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -9454,46 +9454,44 @@ function parseDeckCrew(raw){
   // ---- Clear Cache / Force SW Update ----
   const clearCacheBtn = document.getElementById("clearCacheBtn");
   if(clearCacheBtn){
-    clearCacheBtn.addEventListener("click", async ()=>{
-      clearCacheBtn.textContent = "Clearing…";
+    clearCacheBtn.addEventListener(“click”, async ()=>{
+      clearCacheBtn.textContent = “Clearing…”;
       clearCacheBtn.disabled = true;
       try{
-        // 1) Delete all caches (SW kept registered â€” offline works after reload)
-        if("caches" in window){
+        // 1) Unregister ALL service workers (critical for iOS PWA)
+        if(“serviceWorker” in navigator){
+          const regs = await navigator.serviceWorker.getRegistrations();
+          for(const r of regs){
+            // Tell SW to clear its caches before unregistering
+            if(r.active) r.active.postMessage(“clearAll”);
+            await r.unregister();
+          }
+        }
+        // 2) Delete all caches from window side too
+        if(“caches” in window){
           const keys = await caches.keys();
           await Promise.all(keys.map(k => caches.delete(k)));
         }
-        // 3) Wipe storage (this is where "resquícios" usually live)
-        try{
-          // Remove only FlightBag keys (safer)
-          const prefix = "flightbag_";
-          const removeKeys = [];
-          for(let i=0;i<localStorage.length;i++){ 
-            const k = localStorage.key(i);
-            if(k && (k.startsWith(prefix) || k.startsWith("flightPlan") || k.startsWith("ofp") || k.startsWith("checklist") || k.startsWith("pf_") )) removeKeys.push(k);
-          }
-          removeKeys.forEach(k=>localStorage.removeItem(k));
-        }catch(e){}
+        // 3) Wipe ALL localStorage (not just prefixed — full reset)
+        try{ localStorage.clear(); }catch(e){}
         try{ sessionStorage.clear(); }catch(e){}
-        // 4) IndexedDB (if any)
+        // 4) IndexedDB
         try{
           if(window.indexedDB && indexedDB.databases){
             const dbs = await indexedDB.databases();
-            await Promise.all((dbs||[]).map(db => db && db.name ? new Promise(res=>{ 
+            await Promise.all((dbs||[]).map(db => db && db.name ? new Promise(res=>{
               const req = indexedDB.deleteDatabase(db.name);
               req.onsuccess=req.onerror=req.onblocked=()=>res();
             }) : Promise.resolve()));
           }
         }catch(e){}
-
-        // 5) Reload with cache-buster (avoids Safari/HTTP cache showing old index.html)
-        const base = window.location.pathname.replace(/\/[^\/]*$/, "/");
-        const target = base + "index.html?v=" + Date.now() + (window.location.hash || "");
-        window.location.href = target;
+        // 5) Force reload bypassing any remaining cache
+        window.location.href = window.location.pathname + “?v=” + Date.now();
       } catch(err){
-        clearCacheBtn.textContent = "🔄 Clear Cache";
+        clearCacheBtn.textContent = “🔄 Clear Cache”;
         clearCacheBtn.disabled = false;
-        alert("Could not clear cache: " + (err && err.message ? err.message : err));
+        // Even if error, try to reload
+        window.location.reload();
       }
     });
   }
@@ -11612,7 +11610,22 @@ restoreEtops();
   // Service Worker (GitHub Pages offline)
   // ==========================
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("./sw.js").catch(()=>{});
+    navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+      .then(function(reg){
+        // Check for updates every 60 seconds
+        setInterval(function(){ reg.update().catch(function(){}); }, 60000);
+        // When a new SW is found, tell it to activate immediately
+        reg.addEventListener("updatefound", function(){
+          var nw = reg.installing;
+          if(!nw) return;
+          nw.addEventListener("statechange", function(){
+            if(nw.state === "activated"){
+              // New version active — reload to get fresh HTML
+              window.location.reload();
+            }
+          });
+        });
+      }).catch(function(){});
   }
 
 

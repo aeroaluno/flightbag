@@ -1,14 +1,6 @@
 // sw.js — FlightBag
-// v1.10.68 — bump cache for new OCR extractors + AI NOTAM features
-const CACHE_NAME = "flightbag-cache-v1.10.68";
-
-const CORE = [
-    "./",
-    "./index.html",
-    "./sw.js",
-    "./manifest.json",
-    "./icon-180.png",
-];
+// v1.12.6 — network-first for HTML, auto-update support
+const CACHE_NAME = "flightbag-v1.12.6";
 
 const OCR_FILES = [
     "./tesseract.min.js",
@@ -17,104 +9,57 @@ const OCR_FILES = [
     "./eng.traineddata.gz",
 ];
 
-// ── INSTALL ────────────────────────────────────────────────────────────────
-// skipWaiting() DENTRO do waitUntil() — garante que o SW ativo imediatamente
-// Se a rede falhar (offline no momento do install), copia do cache antigo
+// ── INSTALL ──────────────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
-    event.waitUntil(
-        (async () => {
-            const cache = await caches.open(CACHE_NAME);
-
-            // Tenta cachear pela rede
-            let networkOk = false;
-            try {
-                await cache.addAll(CORE);
-                networkOk = true;
-                // OCR files: best-effort
-                await Promise.allSettled(
-                    OCR_FILES.map((url) =>
-                        cache.add(url).catch(() => {})
-                    )
-                );
-            } catch (e) {
-                // Rede indisponível durante install (ex: offline)
-                // Copia tudo dos caches anteriores como fallback
-                const oldKeys = await caches.keys();
-                for (const oldName of oldKeys) {
-                    if (oldName === CACHE_NAME) continue;
-                    try {
-                        const oldCache = await caches.open(oldName);
-                        const requests = await oldCache.keys();
-                        for (const req of requests) {
-                            const resp = await oldCache.match(req);
-                            if (resp) {
-                                await cache.put(req, resp).catch(() => {});
-                            }
-                        }
-                    } catch (e2) {}
-                }
-            }
-
-            // skipWaiting aqui dentro = SW ativa imediatamente, sem esperar tabs fecharem
-            await self.skipWaiting();
-        })()
-    );
+    // skipWaiting = activate immediately, don't wait for old tabs to close
+    self.skipWaiting();
 });
 
-// ── ACTIVATE ───────────────────────────────────────────────────────────────
-// clients.claim() = assume controle de todas as tabs abertas imediatamente
-// Só apaga caches antigos DEPOIS de verificar que o novo tem o conteúdo principal
+// ── ACTIVATE ─────────────────────────────────────────────────────────────
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         (async () => {
-            // Verifica se o cache novo tem index.html
-            const cache = await caches.open(CACHE_NAME);
-            const hasIndex = await cache.match("./index.html");
-
-            if (!hasIndex) {
-                // Cache novo vazio — copia de caches antigos antes de deletar
-                const oldKeys = await caches.keys();
-                for (const oldName of oldKeys) {
-                    if (oldName === CACHE_NAME) continue;
-                    try {
-                        const oldCache = await caches.open(oldName);
-                        const requests = await oldCache.keys();
-                        for (const req of requests) {
-                            const resp = await oldCache.match(req);
-                            if (resp) await cache.put(req, resp).catch(() => {});
-                        }
-                    } catch (e) {}
-                }
-            }
-
-            // Agora apaga os caches antigos
+            // Delete ALL old caches
             const allKeys = await caches.keys();
             await Promise.all(
                 allKeys.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))
             );
-
+            // Take control of all open tabs immediately
             await self.clients.claim();
         })()
     );
 });
 
-// ── FETCH ──────────────────────────────────────────────────────────────────
+// ── MESSAGE ──────────────────────────────────────────────────────────────
+// Listen for skip-waiting and cache-clear messages from the app
+self.addEventListener("message", (event) => {
+    if (event.data === "skipWaiting") {
+        self.skipWaiting();
+    }
+    if (event.data === "clearAll") {
+        event.waitUntil(
+            caches.keys().then((keys) =>
+                Promise.all(keys.map((k) => caches.delete(k)))
+            )
+        );
+    }
+});
+
+// ── FETCH ────────────────────────────────────────────────────────────────
 self.addEventListener("fetch", (event) => {
     const req = event.request;
 
-    // Ignora requisições non-GET
+    // Only handle GET requests from same origin
     if (req.method !== "GET") return;
-
-    // Ignora cross-origin (analytics, CDN externo, etc.)
     if (!req.url.startsWith(self.location.origin)) return;
 
-    // NAVEGAÇÃO: cache-first com múltiplos fallbacks de URL
+    // NAVIGATION (index.html): NETWORK-FIRST — always get latest
     if (req.mode === "navigate") {
-        event.respondWith(handleNavigation(req));
+        event.respondWith(networkFirst(req));
         return;
     }
 
-    // OCR engine: cache-first estrito (arquivos grandes)
+    // OCR engine: cache-first (large files, rarely change)
     if (
         req.url.includes("tesseract") ||
         req.url.includes("worker.min.js") ||
@@ -124,81 +69,55 @@ self.addEventListener("fetch", (event) => {
         return;
     }
 
-    // Demais assets: cache-first com fallback de rede
-    event.respondWith(cacheFirst(req));
+    // Other same-origin assets (manifest, icons): network-first
+    event.respondWith(networkFirst(req));
 });
 
-async function handleNavigation(req) {
+// ── STRATEGIES ───────────────────────────────────────────────────────────
+
+async function networkFirst(req) {
     const cache = await caches.open(CACHE_NAME);
-
-    // Tentativas em ordem: URL exata → sem query → index.html → raiz → qualquer cache
-    const opts = { ignoreSearch: true, ignoreVary: true };
-    const candidates = [
-        () => cache.match(req, opts),
-        () => cache.match(new URL("./index.html", self.location).href, opts),
-        () => cache.match(new URL("./", self.location).href, opts),
-        () => cache.match("./index.html", opts),
-        () => cache.match("./", opts),
-        () => caches.match(req, opts),
-        () => caches.match("./index.html", opts),
-    ];
-
-    for (const fn of candidates) {
-        try {
-            const cached = await fn();
-            if (cached) {
-                // Atualiza em background (stale-while-revalidate)
-                refreshInBackground(req, cache);
-                return cached;
-            }
-        } catch (e) {}
-    }
-
-    // Nada no cache — tenta rede
     try {
         const resp = await fetch(req);
         if (resp && resp.ok) {
-            // Guarda com múltiplas chaves para cobrir todas as variantes de URL
-            await Promise.allSettled([
-                cache.put(req, resp.clone()),
-                cache.put(new URL("./index.html", self.location).href, resp.clone()),
-                cache.put(new URL("./", self.location).href, resp.clone()),
-            ]);
+            // Store in cache for offline use
+            cache.put(req, resp.clone()).catch(() => {});
+            // Also store as index.html for navigation fallback
+            if (req.mode === "navigate") {
+                cache.put(
+                    new URL("./index.html", self.location).href,
+                    resp.clone()
+                ).catch(() => {});
+            }
         }
         return resp;
     } catch (e) {
-        return offlinePage();
+        // Network failed — try cache
+        const opts = { ignoreSearch: true, ignoreVary: true };
+        const cached =
+            (await cache.match(req, opts)) ||
+            (await cache.match("./index.html", opts)) ||
+            (await cache.match("./", opts));
+        if (cached) return cached;
+        // Nothing in cache either
+        if (req.mode === "navigate") return offlinePage();
+        return new Response("", { status: 408 });
     }
 }
 
 async function cacheFirst(req) {
     const cache = await caches.open(CACHE_NAME);
     const cached = await cache.match(req, { ignoreSearch: true, ignoreVary: true });
-    if (cached) {
-        refreshInBackground(req, cache);
-        return cached;
-    }
+    if (cached) return cached;
     try {
         const resp = await fetch(req);
         if (resp && resp.ok) {
-            await cache.put(req, resp.clone()).catch(() => {});
+            cache.put(req, resp.clone()).catch(() => {});
         }
         return resp;
     } catch (e) {
         return new Response("", { status: 408 });
     }
-}
-
-function refreshInBackground(req, cache) {
-    fetch(req).then((resp) => {
-        if (resp && resp.ok) {
-            cache.put(req, resp.clone()).catch(() => {});
-            // Para navegação, também actualiza index.html
-            if (req.mode === "navigate") {
-                cache.put(new URL("./index.html", self.location).href, resp.clone()).catch(() => {});
-            }
-        }
-    }).catch(() => {});
 }
 
 function offlinePage() {
