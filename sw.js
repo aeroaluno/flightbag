@@ -1,6 +1,6 @@
 // sw.js — FlightBag
 // v1.12.6 — network-first for HTML, auto-update support
-const CACHE_NAME = "flightbag-v1.12.9";
+const CACHE_NAME = "flightbag-v1.13.0";
 
 const OCR_FILES = [
     "./tesseract.min.js",

@@ -12,7 +12,7 @@
   <title>FlightBag</title>
   <script>
   (function(){
-    var CV = "v1.12.9";
+    var CV = "v1.13.0";
     var lv = "";
     try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
     if(lv !== CV){
@@ -3380,7 +3380,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.9</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.13.0</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -5475,11 +5475,11 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
         }
       }catch(e){}
     }
-    if(saved){ inp.value = saved; window._arrEtaCalc(saved); window._etaNotifSchedule(saved); }
+    if(saved){ inp.value = saved; window._arrEtaCalc(saved); if(window._etaNotifSchedule) window._etaNotifSchedule(saved); }
     inp.addEventListener('change', function(){
       localStorage.setItem('pf_eta', inp.value);
       window._arrEtaCalc(inp.value);
-      window._etaNotifSchedule(inp.value);
+      if(window._etaNotifSchedule) window._etaNotifSchedule(inp.value);
     });
 
     /* Re-populate ETA when OFP data is updated (after OCR scan) */
