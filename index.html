@@ -10,7 +10,27 @@
   <meta name="apple-mobile-web-app-title" content="FlightBag" />
   <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png" />
   <title>FlightBag</title>
-  
+  <!-- Emergency SW cleanup — runs before anything else -->
+  <script>
+  (function(){
+    var CURRENT_VER = "v1.12.8";
+    var lastVer = "";
+    try{ lastVer = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
+    if(lastVer !== CURRENT_VER){
+      try{ localStorage.setItem("fb_sw_ver", CURRENT_VER); }catch(e){}
+      if("serviceWorker" in navigator){
+        navigator.serviceWorker.getRegistrations().then(function(regs){
+          regs.forEach(function(r){ r.unregister(); });
+        }).catch(function(){});
+      }
+      if("caches" in window){
+        caches.keys().then(function(keys){
+          keys.forEach(function(k){ caches.delete(k); });
+        }).catch(function(){});
+      }
+    }
+  })();
+  </script>
 <style>
     :root{
       --stripH: 46px;
@@ -457,8 +477,6 @@
       flex:1;
     }
     .view.active{ display:block; }
-    #view-departure.active{ display:flex; flex-direction:column; }
-    #view-arrival.active{ display:flex; flex-direction:column; }
 
     /* Home */
     .home{
@@ -590,7 +608,7 @@
 
     /* Departure layout */
     .departureGrid{
-      flex:1;
+      height: calc(100% - 46px);
       min-height:0;
       display:grid;
       grid-template-columns: 1fr 310px;  /* center reserved + right checklist */
@@ -3364,7 +3382,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.7</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.8</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
