@@ -4,15 +4,18 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
   <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#050607" />
+  <meta name="theme-color" content="#040506" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="FlightBag" />
   <link rel="apple-touch-icon" sizes="180x180" href="./icon-180.png" />
   <title>FlightBag</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script>
   (function(){
-    var CV = "v1.13.4";
+    var CV = "v1.14.0";
     var lv = "";
     try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
     if(lv !== CV){
@@ -33,63 +36,72 @@
 <style>
     :root{
       --stripH: 46px;
-      --bg:#050607;
-      --panel:#0b0d0f;
-      --panel2:#0f1215;
-      --line:#20262c;
-      --txt:#e6eef7;
-      --muted:#9aa8b8;
-      --green:#29d36a;
-      --cyan:#28c3ff;
-      --orange:#ff9d2e;
-      --danger:#ff4d4d;
-      --btn:#151a20;
-      --btn2:#1b222a;
-      --shadow: 0 10px 30px rgba(0,0,0,.35);
+      /* Night mode — optimized for cockpit night vision (low blue emission) */
+      --bg:#040506;
+      --panel:#090b0e;
+      --panel2:#0d1014;
+      --line:#1c2228;
+      --txt:#dce4ed;
+      --muted:#8494a7;
+      --green:#22c55e;
+      --cyan:#38bdf8;
+      --orange:#f59e0b;
+      --danger:#ef4444;
+      --btn:#12161c;
+      --btn2:#181e26;
+      --shadow: 0 8px 24px rgba(0,0,0,.45);
 
-      --okBg: rgba(41,211,106,.14);
-      --okBd: rgba(41,211,106,.45);
+      --okBg: rgba(34,197,94,.12);
+      --okBd: rgba(34,197,94,.40);
 
-      --warnBg: rgba(255,157,46,.14);
-      --warnBd: rgba(255,157,46,.45);
-    
-      --glass1: rgba(10,12,14,.96);
-      --glass2: rgba(10,12,14,.85);
-      --chipBg: rgba(255,255,255,.05);
-      --chipBg2: rgba(255,255,255,.08);
+      --warnBg: rgba(245,158,11,.12);
+      --warnBd: rgba(245,158,11,.40);
 
+      --glass1: rgba(8,10,13,.96);
+      --glass2: rgba(8,10,13,.88);
+      --chipBg: rgba(255,255,255,.04);
+      --chipBg2: rgba(255,255,255,.07);
+
+      /* Aviation mono font for data displays */
+      --mono: 'B612 Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
     }
 
-    /* Day theme overrides (for bright cockpit/daylight) */
+    /* Day theme — high contrast for bright cockpit / daylight */
     body.day-theme{
-      --bg:#f4f6f9;
+      --bg:#f0f2f5;
       --panel:#ffffff;
-      --panel2:#f1f4f8;
-      --line:#d6dde6;
-      --txt:#0b1220;
-      --muted:#415266;
-      --green:#0b8f3f;
-      --cyan:#0a6fb6;
-      --orange:#c26c00;
-      --danger:#c3001a;
-      --btn:#eef2f6;
-      --btn2:#e3e9f0;
-      --shadow: 0 10px 24px rgba(0,0,0,.12);
+      --panel2:#f5f7fa;
+      --line:#cdd5e0;
+      --txt:#0f172a;
+      --muted:#475569;
+      --green:#16a34a;
+      --cyan:#0284c7;
+      --orange:#d97706;
+      --danger:#dc2626;
+      --btn:#e8ecf1;
+      --btn2:#dde3eb;
+      --shadow: 0 6px 18px rgba(15,23,42,.10);
 
-      --okBg: rgba(11,143,63,.12);
-      --okBd: rgba(11,143,63,.35);
-      --glass1: rgba(255,255,255,.92);
-      --glass2: rgba(245,248,252,.85);
-      --chipBg: rgba(0,0,0,.04);
-      --chipBg2: rgba(0,0,0,.07);
-
+      --okBg: rgba(22,163,74,.10);
+      --okBd: rgba(22,163,74,.32);
+      --warnBg: rgba(217,119,6,.10);
+      --warnBd: rgba(217,119,6,.32);
+      --glass1: rgba(255,255,255,.94);
+      --glass2: rgba(240,244,248,.88);
+      --chipBg: rgba(15,23,42,.04);
+      --chipBg2: rgba(15,23,42,.07);
     }
 
     *{box-sizing:border-box}
     html,body{height:100%;overflow:hidden;overscroll-behavior:none;}
     body{
       margin:0;
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      font-family: 'B612', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      letter-spacing: 0.01em;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
       background:var(--bg);
       color:var(--txt);
     }
@@ -1215,7 +1227,7 @@
     .pf-field .pf-fv{ font-size:16px; font-weight:700; color:var(--txt); }
     .pf-wx-box{
       border:1px solid rgba(40,195,255,.12); border-radius:8px; padding:10px 12px;
-      background:rgba(0,0,0,.25); font-family:'SF Mono','Menlo','Courier New',monospace;
+      background:rgba(0,0,0,.25); font-family:var(--mono);
       font-size:13px; color:#c8d6e5; min-height:36px; line-height:1.65;
       word-break:break-word; white-space:pre-wrap; letter-spacing:.02em;
       max-height:140px; overflow-y:auto; -webkit-overflow-scrolling:touch;
@@ -2185,35 +2197,33 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
 
     :root{
-      --bg:#09111f !important;
-      --panel:rgba(11,18,31,.92) !important;
-      --panel2:rgba(14,23,40,.96) !important;
-      --line:#22324d !important;
-      --txt:#edf4ff !important;
-      --muted:#9fb2d9 !important;
-      --green:#2ecc71 !important;
-      --cyan:#67b4ff !important;
-      --orange:#f3b34d !important;
-      --danger:#ff6b6b !important;
-      --btn:rgba(255,255,255,.04) !important;
-      --btn2:rgba(255,255,255,.08) !important;
-      --shadow: 0 18px 40px rgba(0,0,0,.32) !important;
-      --glass1: rgba(10,16,29,.96) !important;
-      --glass2: rgba(10,16,29,.82) !important;
+      --bg:#050709 !important;
+      --panel:rgba(9,12,16,.94) !important;
+      --panel2:rgba(12,15,20,.96) !important;
+      --line:#1a2030 !important;
+      --txt:#dce4ed !important;
+      --muted:#8494a7 !important;
+      --green:#22c55e !important;
+      --cyan:#38bdf8 !important;
+      --orange:#f59e0b !important;
+      --danger:#ef4444 !important;
+      --btn:rgba(255,255,255,.035) !important;
+      --btn2:rgba(255,255,255,.06) !important;
+      --shadow: 0 12px 32px rgba(0,0,0,.40) !important;
+      --glass1: rgba(6,8,12,.96) !important;
+      --glass2: rgba(6,8,12,.88) !important;
       --chipBg: rgba(255,255,255,.03) !important;
-      --chipBg2: rgba(255,255,255,.08) !important;
-      --okBg: rgba(46,204,113,.14) !important;
-      --okBd: rgba(46,204,113,.38) !important;
-      --warnBg: rgba(243,179,77,.14) !important;
-      --warnBd: rgba(243,179,77,.36) !important;
+      --chipBg2: rgba(255,255,255,.06) !important;
+      --okBg: rgba(34,197,94,.10) !important;
+      --okBd: rgba(34,197,94,.35) !important;
+      --warnBg: rgba(245,158,11,.10) !important;
+      --warnBd: rgba(245,158,11,.35) !important;
     }
 
     body.day-theme{
       background:
-        radial-gradient(circle at top right, rgba(77,137,255,.10), transparent 28%),
-        radial-gradient(circle at top left, rgba(75,177,255,.10), transparent 26%),
-        linear-gradient(180deg, #eef4fb 0%, #e6edf7 42%, #dde7f4 100%) !important;
-      color:#102033 !important;
+        linear-gradient(180deg, #f0f4f8 0%, #e8edf3 50%, #dfe6ef 100%) !important;
+      color:#0f172a !important;
     }
 
     .shell{
@@ -2230,13 +2240,12 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .card,
     .modal,
     .fdpShell{
-      background:
-        linear-gradient(180deg, rgba(12,18,31,.94), rgba(10,16,27,.88)) !important;
-      border:1px solid rgba(103,180,255,.14) !important;
+      background: rgba(9,12,16,.92) !important;
+      border:1px solid rgba(255,255,255,.06) !important;
       box-shadow:
-        0 18px 40px rgba(0,0,0,.30),
-        inset 0 1px 0 rgba(255,255,255,.03) !important;
-      backdrop-filter: blur(12px) !important;
+        0 8px 24px rgba(0,0,0,.35),
+        inset 0 1px 0 rgba(255,255,255,.02) !important;
+      backdrop-filter: blur(10px) !important;
     }
 
     body.day-theme .sidebar,
@@ -2246,12 +2255,11 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     body.day-theme .card,
     body.day-theme .modal,
     body.day-theme .fdpShell{
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.96), rgba(240,245,252,.94)) !important;
-      border:1px solid rgba(82,118,170,.18) !important;
+      background: rgba(255,255,255,.95) !important;
+      border:1px solid rgba(15,23,42,.10) !important;
       box-shadow:
-        0 14px 28px rgba(44,72,116,.10),
-        inset 0 1px 0 rgba(255,255,255,.75) !important;
+        0 4px 16px rgba(15,23,42,.08),
+        inset 0 1px 0 rgba(255,255,255,.80) !important;
     }
 
     .sidebar,
@@ -2261,7 +2269,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .card,
     .modal,
     .fdpShell{
-      border-radius:20px !important;
+      border-radius:14px !important;
     }
 
     .logo,
@@ -2278,7 +2286,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .noiseMiniChoice,
     .noiseSelected{
       background: rgba(255,255,255,.03) !important;
-      border-color: rgba(103,180,255,.14) !important;
+      border-color: rgba(255,255,255,.08) !important;
     }
 
     body.day-theme .logo,
@@ -2294,18 +2302,16 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     body.day-theme .infoBtn,
     body.day-theme .noiseMiniChoice,
     body.day-theme .noiseSelected{
-      background: rgba(10,20,40,.035) !important;
-      border-color: rgba(82,118,170,.16) !important;
-      color:#102033 !important;
+      background: rgba(15,23,42,.03) !important;
+      border-color: rgba(15,23,42,.12) !important;
+      color:#0f172a !important;
     }
 
     .toolBtnSide{
-      min-height:50px !important;
-      border-radius:12px !important;
-      box-shadow:
-        0 10px 24px rgba(0,0,0,.20),
-        inset 0 1px 0 rgba(255,255,255,.025) !important;
-      transition: transform .15s ease, border-color .15s ease, background .15s ease, box-shadow .15s ease;
+      min-height:48px !important;
+      border-radius:10px !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,.15) !important;
+      transition: transform .12s ease, border-color .12s ease, background .12s ease;
     }
 
     .toolBtnSide:hover,
@@ -2314,7 +2320,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .btn:hover,
     .radioBtn:hover{
       transform: translateY(-1px);
-      border-color: rgba(103,180,255,.28) !important;
+      border-color: rgba(56,189,248,.25) !important;
       background: rgba(255,255,255,.05) !important;
     }
 
@@ -2323,8 +2329,8 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     body.day-theme .topNavBtn:hover,
     body.day-theme .btn:hover,
     body.day-theme .radioBtn:hover{
-      background: rgba(76,123,199,.08) !important;
-      border-color: rgba(76,123,199,.24) !important;
+      background: rgba(2,132,199,.06) !important;
+      border-color: rgba(2,132,199,.20) !important;
     }
 
     .toolBtnSide.primary,
@@ -2334,12 +2340,11 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .radioBtn.active,
     .noiseWrap.active,
     .etopsWrap.active{
-      border-color: rgba(103,180,255,.45) !important;
-      background:
-        linear-gradient(180deg, rgba(103,180,255,.18), rgba(103,180,255,.08)) !important;
+      border-color: rgba(56,189,248,.40) !important;
+      background: rgba(56,189,248,.12) !important;
       box-shadow:
-        0 0 0 1px rgba(103,180,255,.12) inset,
-        0 12px 24px rgba(0,0,0,.18) !important;
+        0 0 0 1px rgba(56,189,248,.10) inset,
+        0 6px 16px rgba(0,0,0,.20) !important;
     }
 
     body.day-theme .toolBtnSide.primary,
@@ -2349,26 +2354,25 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     body.day-theme .radioBtn.active,
     body.day-theme .noiseWrap.active,
     body.day-theme .etopsWrap.active{
-      border-color: rgba(74,137,255,.42) !important;
-      background:
-        linear-gradient(180deg, rgba(102,163,255,.18), rgba(102,163,255,.10)) !important;
-      color:#0c2142 !important;
+      border-color: rgba(2,132,199,.35) !important;
+      background: rgba(2,132,199,.10) !important;
+      color:#0f172a !important;
       box-shadow:
-        0 0 0 1px rgba(102,163,255,.12) inset,
-        0 10px 18px rgba(56,96,156,.10) !important;
+        0 0 0 1px rgba(2,132,199,.08) inset,
+        0 4px 12px rgba(15,23,42,.08) !important;
     }
 
     .flightStrip{
-      background:
-        linear-gradient(180deg, rgba(10,16,29,.92), rgba(10,16,29,.72)) !important;
-      border-bottom:1px solid rgba(103,180,255,.12) !important;
-      box-shadow: 0 10px 24px rgba(0,0,0,.22) !important;
+      background: rgba(6,8,12,.90) !important;
+      border-bottom:1px solid rgba(255,255,255,.06) !important;
+      box-shadow: 0 4px 16px rgba(0,0,0,.25) !important;
+      backdrop-filter: blur(10px) !important;
     }
 
     body.day-theme .flightStrip{
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.90), rgba(244,248,253,.78)) !important;
-      border-bottom:1px solid rgba(82,118,170,.14) !important;
+      background: rgba(255,255,255,.88) !important;
+      border-bottom:1px solid rgba(15,23,42,.08) !important;
+      backdrop-filter: blur(10px) !important;
     }
 
     .card h2,
@@ -2381,8 +2385,8 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .dgDrillLine,
     .lsName,
     .item-name{
-      font-weight:800 !important;
-      letter-spacing:-.01em !important;
+      font-weight:700 !important;
+      letter-spacing: 0 !important;
     }
 
     .muted,
@@ -2396,7 +2400,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .badge,
     .sidebarFooter,
     .helper{
-      color:#9fb2d9 !important;
+      color:var(--muted) !important;
     }
 
     body.day-theme .muted,
@@ -2410,15 +2414,13 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     body.day-theme .badge,
     body.day-theme .sidebarFooter,
     body.day-theme .helper{
-      color:#4d627f !important;
+      color:#475569 !important;
     }
 
     /* ===== Professional tool modals / workspaces ===== */
     .backdrop{
-      background:
-        radial-gradient(circle at top, rgba(103,180,255,.10), transparent 30%),
-        rgba(4,10,18,.72) !important;
-      backdrop-filter: blur(8px) !important;
+      background: rgba(0,0,0,.70) !important;
+      backdrop-filter: blur(6px) !important;
       padding:22px !important;
     }
 
@@ -2781,7 +2783,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       border:1px solid var(--line);
       border-radius:8px;
       padding:10px 14px;
-      font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+      font-family:var(--mono);
       font-size:12px; line-height:1.65; color:var(--cyan);
       word-break:break-all; margin-bottom:14px;
     }
@@ -2814,7 +2816,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
     .taf-period-time{ font-size:11px; color:var(--muted); }
     .taf-period-raw{
-      font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+      font-family:var(--mono);
       font-size:11px; color:var(--txt); opacity:.85; word-break:break-all;
     }
     .wx-msg{ text-align:center; padding:48px 20px; color:var(--muted); font-size:14px; }
@@ -2980,14 +2982,14 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       line-height:1.8;
       color:#e8edf2;
       letter-spacing:.02em;
-      font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace;
+      font-family:var(--mono);
     }
     /* day theme */
     body.day-theme #paTextOverlay{
       background:var(--panel);
       border-bottom-color:rgba(10,111,182,.30);
     }
-    body.day-theme #paOvContent{ color:var(--txt); font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,monospace; }
+    body.day-theme #paOvContent{ color:var(--txt); font-family:var(--mono); }
     /* â”€â”€ MEL Tool â”€â”€ */
     #melBackdrop .modal{ width:min(820px,97vw); max-height:90vh; display:flex; flex-direction:column; }
     .mel-hdr{ display:flex; align-items:center; justify-content:space-between; padding:10px 16px 0; flex-shrink:0; }
@@ -3393,7 +3395,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.13.3</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.0</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -5174,7 +5176,7 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
                 Edit this JSON to add new fields later. Each item: {"key","label","pattern","flags","group","post"}.
                 <br/>Pattern should include a capture group for the value.
               </div>
-              <textarea class="input" id="ofpExtractorJson" style="width:100%;height:220px;font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;"></textarea>
+              <textarea class="input" id="ofpExtractorJson" style="width:100%;height:220px;font-family:var(--mono);"></textarea>
               <div style="display:flex;gap:10px;margin-top:8px;">
                 <button class="btn small" id="ofpSaveExtractorsBtn">Save Extractors</button>
                 <button class="btn small" id="ofpResetExtractorsBtn">Reset Default</button>
