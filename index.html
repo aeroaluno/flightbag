@@ -3364,7 +3364,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.6</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.12.7</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -11612,16 +11612,20 @@ restoreEtops();
   if("serviceWorker" in navigator){
     navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
       .then(function(reg){
-        // Check for updates every 60 seconds
-        setInterval(function(){ reg.update().catch(function(){}); }, 60000);
-        // When a new SW is found, tell it to activate immediately
+        // Check for updates every 5 minutes
+        setInterval(function(){ reg.update().catch(function(){}); }, 300000);
+        // When a new SW is found, show subtle update banner (no auto-reload)
         reg.addEventListener("updatefound", function(){
           var nw = reg.installing;
           if(!nw) return;
           nw.addEventListener("statechange", function(){
-            if(nw.state === "activated"){
-              // New version active — reload to get fresh HTML
-              window.location.reload();
+            if(nw.state === "installed" && navigator.serviceWorker.controller){
+              // New version ready — show banner instead of auto-reload
+              var ban = document.createElement("div");
+              ban.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#28c3ff;color:#050607;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:700;z-index:99999;cursor:pointer;box-shadow:0 4px 20px rgba(0,0,0,.5);";
+              ban.textContent = "New version available — tap to update";
+              ban.onclick = function(){ window.location.reload(); };
+              document.body.appendChild(ban);
             }
           });
         });
