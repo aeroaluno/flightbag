@@ -12,7 +12,7 @@
   <title>FlightBag</title>
   <script>
   (function(){
-    var CV = "v1.13.2";
+    var CV = "v1.13.3";
     var lv = "";
     try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
     if(lv !== CV){
@@ -1214,13 +1214,23 @@
     .pf-field .pf-fk{ font-size:11px; color:var(--muted); text-transform:uppercase; font-weight:700; min-width:42px; letter-spacing:.5px; }
     .pf-field .pf-fv{ font-size:16px; font-weight:700; color:var(--txt); }
     .pf-wx-box{
-      border:1px solid rgba(255,255,255,.06); border-radius:10px; padding:8px 10px;
-      background:rgba(0,0,0,.15); font-family:'Courier New',monospace; font-size:12px;
-      color:var(--muted); min-height:36px; line-height:1.5; word-break:break-all;
+      border:1px solid rgba(40,195,255,.12); border-radius:8px; padding:10px 12px;
+      background:rgba(0,0,0,.25); font-family:'SF Mono','Menlo','Courier New',monospace;
+      font-size:13px; color:#c8d6e5; min-height:36px; line-height:1.65;
+      word-break:break-word; white-space:pre-wrap; letter-spacing:.02em;
+      max-height:140px; overflow-y:auto; -webkit-overflow-scrolling:touch;
+      border-left:3px solid var(--cyan);
     }
-    body.day-theme .pf-wx-box{ background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.08); }
-    .pf-wx-lbl{ font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:6px; }
-    .pf-wx-refresh{ background:none; border:1px solid var(--line); color:var(--cyan); font-size:14px; width:24px; height:24px; border-radius:50%; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; transition:transform .3s; }
+    .pf-wx-box.atis-box{
+      border-left-color:var(--green);
+      background:rgba(41,211,106,.04);
+      border-color:rgba(41,211,106,.15);
+      color:#d4edda;
+    }
+    body.day-theme .pf-wx-box{ background:rgba(0,0,0,.04); border-color:rgba(0,0,0,.1); color:#2d3748; border-left-color:var(--cyan); }
+    body.day-theme .pf-wx-box.atis-box{ border-left-color:var(--green); background:rgba(41,211,106,.06); color:#1a4731; }
+    .pf-wx-lbl{ font-size:11px; font-weight:800; color:var(--muted); text-transform:uppercase; letter-spacing:1px; display:flex; align-items:center; gap:6px; margin-bottom:4px; }
+    .pf-wx-refresh{ background:none; border:1px solid var(--line); color:var(--cyan); font-size:14px; width:26px; height:26px; border-radius:50%; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; padding:0; transition:transform .3s; }
     .pf-wx-refresh:active{ transform:rotate(360deg); }
     .pf-notam-btn{
       background:rgba(40,195,255,.08); color:var(--cyan); border:1px solid rgba(40,195,255,.25);
@@ -3383,7 +3393,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.13.2</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.13.3</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3776,10 +3786,14 @@ body.day-theme .panel{
               var _ta = document.createElement('textarea');
               _ta.innerHTML = txt;
               txt = _ta.value;
+              /* Clean up: collapse multiple spaces/tabs, trim lines */
+              txt = txt.replace(/\t/g, ' ').replace(/ {2,}/g, ' ').replace(/\r/g, '').trim();
               el.textContent = txt;
+              el.classList.add('atis-box');
               el.style.display='block';
               if(cb) cb(true);
             } else {
+              el.classList.remove('atis-box');
               if(cb) cb(false);
             }
           }).catch(function(){ if(cb) cb(false); });
@@ -4164,11 +4178,13 @@ body.day-theme .panel{
           <div id="arrEtaDerived" style="font-size:12px;color:var(--cyan);font-weight:600;letter-spacing:.3px;"></div>
         </div>
         <!-- Arrival ATIS row -->
-        <div style="display:flex;gap:8px;padding:4px 16px 6px;border-bottom:1px solid var(--line);align-items:flex-start;">
-          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:1px;white-space:nowrap;padding-top:3px;">ARR ATIS</div>
-          <button class="pf-wx-refresh" id="arrAtisRefresh" title="Refresh ATIS" style="flex-shrink:0;margin-top:1px;">&#x21bb;</button>
-          <div class="pf-wx-box" id="arrAtisBox" style="display:none;flex:1;max-height:80px;overflow-y:auto;font-size:12px;line-height:1.4;margin:0;padding:4px 8px;"></div>
-          <div id="arrAtisEmpty" style="font-size:12px;color:var(--muted);padding-top:3px;">—</div>
+        <div style="display:flex;gap:8px;padding:6px 16px 8px;border-bottom:1px solid var(--line);align-items:flex-start;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+            <div style="font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:1px;">ARR ATIS</div>
+            <button class="pf-wx-refresh" id="arrAtisRefresh" title="Refresh ATIS">&#x21bb;</button>
+          </div>
+          <div class="pf-wx-box atis-box" id="arrAtisBox" style="display:none;flex:1;min-width:200px;max-height:120px;margin:0;"></div>
+          <div id="arrAtisEmpty" style="font-size:13px;color:var(--muted);padding-top:2px;">—</div>
         </div>
 
         <div class="departureGrid">
@@ -5617,10 +5633,13 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
         txt = txt.replace(/&#[xX]([0-9a-fA-F]+);/g, function(m,hex){ return String.fromCharCode(parseInt(hex,16)); });
         txt = txt.replace(/&#(\d+);/g, function(m,dec){ return String.fromCharCode(parseInt(dec,10)); });
         var _ta = document.createElement('textarea'); _ta.innerHTML = txt; txt = _ta.value;
+        txt = txt.replace(/\t/g, ' ').replace(/ {2,}/g, ' ').replace(/\r/g, '').trim();
         box.textContent = txt;
+        box.classList.add('atis-box');
         box.style.display='block';
         if(empty) empty.style.display='none';
       } else {
+        box.classList.remove('atis-box');
         box.style.display='none';
         if(empty){ empty.style.display='block'; empty.textContent='No ATIS available for '+icao; }
       }
