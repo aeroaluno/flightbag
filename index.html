@@ -12,7 +12,7 @@
   <title>FlightBag</title>
   <script>
   (function(){
-    var CV = "v1.13.1";
+    var CV = "v1.13.2";
     var lv = "";
     try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
     if(lv !== CV){
@@ -476,6 +476,8 @@
       flex:1;
     }
     .view.active{ display:block; }
+    #view-departure.active,
+    #view-arrival.active{ display:flex; flex-direction:column; overflow:hidden; }
 
     /* Home */
     .home{
@@ -607,7 +609,7 @@
 
     /* Departure layout */
     .departureGrid{
-      height: calc(100% - 48px);
+      flex:1;
       min-height:0;
       display:grid;
       grid-template-columns: 1fr 310px;  /* center reserved + right checklist */
@@ -3381,7 +3383,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.13.1</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.13.2</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
