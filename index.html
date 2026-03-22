@@ -16,7 +16,7 @@
   <script>
   // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.4";
+    var CV = "v1.14.5";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
@@ -1782,12 +1782,12 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
     .toInput, .toSelect{
       width:100%;
-      border-radius:8px;
+      border-radius:6px;
       border:1px solid var(--line);
       background:rgba(255,255,255,.03);
       color:var(--txt);
-      padding:7px 8px;
-      font-size:14px;
+      padding:5px 6px;
+      font-size:13px;
       font-weight:700;
       text-align:center;
       outline:none;
@@ -1896,14 +1896,15 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
     .depField input,
     .lsInput{
-      min-height:36px !important;
-      padding:8px 10px !important;
+      min-height:30px !important;
+      padding:5px 6px !important;
       font-size:13px !important;
     }
     .lsGrid{
-      grid-template-columns:56px 70px 120px 64px !important;
-      gap:8px !important;
-      padding:7px 0 !important;
+      grid-template-columns:44px 60px 110px 50px !important;
+      gap:6px !important;
+      padding:4px 0 !important;
+      align-items:center;
     }
     .lsHead{
       font-size:10px !important;
@@ -1979,13 +1980,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
 
 
-    #depCenterPanel .collapsibleHeader .title h1{
-      font-size:14px !important;
-      line-height:1.1;
-      letter-spacing:.06em;
-      text-transform:uppercase;
-      font-weight:900;
-    }
+    /* (depCenterPanel now uses .depSec — no nested collapsibleHeaders) */
     .lsInputWrap{
       display:flex;
       align-items:center;
@@ -1996,8 +1991,8 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       min-width:0;
     }
     .lsStep{
-      width:28px;
-      height:28px;
+      width:24px;
+      height:24px;
       border-radius:999px;
       border:1px solid var(--line);
       background:var(--btn);
@@ -2007,7 +2002,7 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       justify-content:center;
       cursor:pointer;
       user-select:none;
-      font-size:14px;
+      font-size:13px;
       line-height:1;
       padding:0;
     }
@@ -2020,21 +2015,36 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
 
 
-    /* Inner cards inside depCenterPanel — remove double borders */
-    #depCenterPanel > div > .panel{
-      background:transparent !important;
-      border:1px solid var(--line) !important;
-      box-shadow:none !important;
-      border-radius:10px !important;
-      backdrop-filter:none !important;
+    /* ── Departure sections (unified panel, no nested cards) ── */
+    .depSections{
+      flex:1; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+      display:flex; flex-direction:column;
     }
-    #depCenterPanel > div > .panel .collapsibleHeader{
-      padding:8px 12px !important;
+    .depSec{
       border-bottom:1px solid var(--line);
     }
-    #depCenterPanel > div > .panel.closed .collapsibleHeader{
-      border-bottom:none;
+    .depSec:last-child{ border-bottom:none; }
+    .depSecHead{
+      display:flex; align-items:center; gap:8px;
+      padding:8px 12px; cursor:pointer; user-select:none;
     }
+    .depSecHead > *{ pointer-events:none; }
+    .depSecHead .btn{ pointer-events:auto; }
+    .depSecTitle{
+      font-size:12px; font-weight:700; text-transform:uppercase;
+      letter-spacing:.06em; color:var(--txt); flex:1;
+    }
+    .depSecChev{
+      font-size:14px; color:var(--muted); transition:transform .15s ease;
+    }
+    .depSec.closed .depSecChev{ transform:rotate(-90deg); }
+    .depSecBody{
+      padding:4px 12px 10px;
+    }
+    .depSec.closed .depSecBody{ display:none; }
+    /* Compact grids for takeoff/wind */
+    .toGrid3{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:6px; }
+    .toGrid4{ display:grid; grid-template-columns:1fr 1fr 1fr 1fr; gap:6px; }
     .lsInput{
       text-align:center;
       font-variant-numeric:tabular-nums;
@@ -3452,7 +3462,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.4</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.5</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -4029,28 +4039,19 @@ body.day-theme .panel{
 
         <div class="departureGrid">
 
-          <!-- CENTER: Stacked cards -->
+          <!-- CENTER: Unified panel with sections -->
           <section class="panel" id="depCenterPanel" style="overflow:hidden;display:flex;flex-direction:column;">
-            <div style="padding:10px; min-height:0; overflow-y:auto; display:flex; flex-direction:column; gap:10px; flex:1;">
+            <div class="depSections">
 
-              <!-- ── FINAL LOADSHEET ── -->
-              <section class="panel collapsiblePanel open" id="loadsheetPanel" style="box-shadow:none; min-height:auto;">
-                <header class="collapsibleHeader" id="loadsheetHeader" style="padding:10px 12px;">
-                  <div class="title">
-                    <h1>Final Loadsheet</h1>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
-                    <button class="btn tiny" id="clearLoadsheetBtn" type="button">Clear</button>
-                    <div class="collapseChevron" aria-hidden="true">▾</div>
-                  </div>
-                </header>
-                <div class="modal-body collapsibleBody" id="loadsheetBody" style="padding:10px;">
-                  <div class="lsGrid lsHead">
-                    <div></div>
-                    <div>FPL</div>
-                    <div>LOADSHEET</div>
-                    <div>Δ</div>
-                  </div>
+              <!-- ── LOADSHEET ── -->
+              <div class="depSec" id="loadsheetPanel">
+                <div class="depSecHead" id="loadsheetHeader">
+                  <span class="depSecTitle">Loadsheet</span>
+                  <button class="btn tiny" id="clearLoadsheetBtn" type="button">Clear</button>
+                  <span class="depSecChev">▾</span>
+                </div>
+                <div class="depSecBody" id="loadsheetBody">
+                  <div class="lsGrid lsHead"><div></div><div>FPL</div><div>LS</div><div>Δ</div></div>
                   <div class="lsGrid">
                     <div class="lsName">ZFW</div>
                     <div class="lsFpl mono" id="lsFplZfw">—</div>
@@ -4076,114 +4077,57 @@ body.day-theme .panel{
                     <div class="lsDelta mono">—</div>
                   </div>
                 </div>
-              </section>
+              </div>
 
               <!-- ── TAKEOFF DATA ── -->
-              <section class="panel collapsiblePanel open" id="toDataPanel" style="box-shadow:none; min-height:auto;">
-                <header class="collapsibleHeader" id="toDataHeader" style="padding:10px 12px;">
-                  <div class="title"><h1>Takeoff Data</h1></div>
-                  <div class="collapseChevron" aria-hidden="true">▾</div>
-                </header>
-                <div class="modal-body collapsibleBody" id="toDataBody" style="padding:10px;">
-                  <!-- Row 1: TOW | FLAP | RWY -->
-                  <div class="toGrid">
-                    <div class="toField">
-                      <label>TAKEOFF WT</label>
-                      <input id="toTow" type="text" inputmode="decimal" placeholder="—" class="toInput" />
-                    </div>
-                    <div class="toField">
-                      <label>FLAP</label>
-                      <input id="toFlap" type="text" inputmode="numeric" placeholder="—" class="toInput" />
-                    </div>
-                    <div class="toField">
-                      <label>RWY</label>
-                      <input id="toRwy" type="text" placeholder="—" class="toInput" />
-                    </div>
+              <div class="depSec" id="toDataPanel">
+                <div class="depSecHead" id="toDataHeader">
+                  <span class="depSecTitle">Takeoff Data</span>
+                  <span class="depSecChev">▾</span>
+                </div>
+                <div class="depSecBody" id="toDataBody">
+                  <div class="toGrid3">
+                    <div class="toField"><label>T/O WT</label><input id="toTow" type="text" inputmode="decimal" placeholder="—" class="toInput" /></div>
+                    <div class="toField"><label>FLAP</label><input id="toFlap" type="text" inputmode="numeric" placeholder="—" class="toInput" /></div>
+                    <div class="toField"><label>RWY</label><input id="toRwy" type="text" placeholder="—" class="toInput" /></div>
                   </div>
-                  <!-- Row 2: Full TO -->
-                  <div style="margin-top:8px;">
-                    <div class="toField">
-                      <label>FULL T/O</label>
-                      <input id="toFullTo" type="text" placeholder="—" class="toInput" style="width:100%;" />
-                    </div>
-                  </div>
-                  <!-- Row 3: V1 | VR | V2 -->
-                  <div class="toGrid" style="margin-top:8px;">
-                    <div class="toField">
-                      <label>V1</label>
-                      <input id="toV1" type="number" inputmode="numeric" placeholder="—" class="toInput" />
-                    </div>
-                    <div class="toField">
-                      <label>VR</label>
-                      <input id="toVr" type="number" inputmode="numeric" placeholder="—" class="toInput" />
-                    </div>
-                    <div class="toField">
-                      <label>V2</label>
-                      <input id="toV2" type="number" inputmode="numeric" placeholder="—" class="toInput" />
-                    </div>
+                  <div class="toGrid4" style="margin-top:6px;">
+                    <div class="toField"><label>FULL T/O</label><input id="toFullTo" type="text" placeholder="—" class="toInput" /></div>
+                    <div class="toField"><label>V1</label><input id="toV1" type="number" inputmode="numeric" placeholder="—" class="toInput" /></div>
+                    <div class="toField"><label>VR</label><input id="toVr" type="number" inputmode="numeric" placeholder="—" class="toInput" /></div>
+                    <div class="toField"><label>V2</label><input id="toV2" type="number" inputmode="numeric" placeholder="—" class="toInput" /></div>
                   </div>
                 </div>
-              </section>
+              </div>
 
-              <!-- ── WIND / CROSSWIND ── -->
-              <section class="panel collapsiblePanel open" id="xwindPanel" style="box-shadow:none; min-height:auto;">
-                <header class="collapsibleHeader" id="xwindHeader" style="padding:10px 12px;">
-                  <div class="title"><h1>Wind Analysis</h1></div>
-                  <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
-                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill from METAR">METAR</button>
-                    <div class="collapseChevron" aria-hidden="true">▾</div>
+              <!-- ── WIND ANALYSIS ── -->
+              <div class="depSec" id="xwindPanel">
+                <div class="depSecHead" id="xwindHeader">
+                  <span class="depSecTitle">Wind Analysis</span>
+                  <button class="btn tiny" id="xwindMetarBtn" type="button">METAR</button>
+                  <span class="depSecChev">▾</span>
+                </div>
+                <div class="depSecBody" id="xwindBody">
+                  <div class="toGrid4">
+                    <div class="toField"><label>RWY HDG</label><input id="xwRwyHdg" type="number" inputmode="numeric" placeholder="340" class="toInput" min="1" max="360" /></div>
+                    <div class="toField"><label>WIND DIR</label><input id="xwWindDir" type="number" inputmode="numeric" placeholder="290" class="toInput" min="0" max="360" /></div>
+                    <div class="toField"><label>WIND SPD</label><input id="xwWindSpd" type="number" inputmode="numeric" placeholder="—" class="toInput" min="0" /></div>
+                    <div class="toField"><label>GUST</label><input id="xwGust" type="number" inputmode="numeric" placeholder="—" class="toInput" min="0" /></div>
                   </div>
-                </header>
-                <div class="modal-body collapsibleBody" id="xwindBody" style="padding:10px;">
-                  <div class="xw-inputs">
-                    <div class="toField">
-                      <label>RWY HDG</label>
-                      <input id="xwRwyHdg" type="number" inputmode="numeric" placeholder="e.g. 340" class="toInput" min="1" max="360" />
-                    </div>
-                    <div class="toField">
-                      <label>WIND DIR</label>
-                      <input id="xwWindDir" type="number" inputmode="numeric" placeholder="e.g. 290" class="toInput" min="0" max="360" />
-                    </div>
-                    <div class="toField">
-                      <label>WIND SPD</label>
-                      <div style="display:flex;gap:4px;align-items:center;">
-                        <input id="xwWindSpd" type="number" inputmode="numeric" placeholder="—" class="toInput" style="flex:1;" min="0" />
-                        <span style="font-size:11px;color:var(--muted);">kt</span>
-                      </div>
-                    </div>
-                    <div class="toField">
-                      <label>GUST</label>
-                      <div style="display:flex;gap:4px;align-items:center;">
-                        <input id="xwGust" type="number" inputmode="numeric" placeholder="—" class="toInput" style="flex:1;" min="0" />
-                        <span style="font-size:11px;color:var(--muted);">kt</span>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- Result display -->
                   <div class="xw-result" id="xwResult" style="display:none;">
                     <div class="xw-result-row">
-                      <div class="xw-component">
-                        <span class="xw-comp-label">HEADWIND</span>
-                        <span class="xw-comp-value" id="xwHead">—</span>
-                      </div>
+                      <div class="xw-component"><span class="xw-comp-label">HEADWIND</span><span class="xw-comp-value" id="xwHead">—</span></div>
                       <div class="xw-divider"></div>
-                      <div class="xw-component">
-                        <span class="xw-comp-label">CROSSWIND</span>
-                        <span class="xw-comp-value" id="xwCross">—</span>
-                      </div>
+                      <div class="xw-component"><span class="xw-comp-label">CROSSWIND</span><span class="xw-comp-value" id="xwCross">—</span></div>
                     </div>
                     <div class="xw-bar-wrap">
-                      <div class="xw-bar-track">
-                        <div class="xw-bar-fill" id="xwBarFill"></div>
-                      </div>
-                      <div class="xw-bar-labels">
-                        <span>0</span><span>15</span><span>25</span><span>35</span>
-                      </div>
+                      <div class="xw-bar-track"><div class="xw-bar-fill" id="xwBarFill"></div></div>
+                      <div class="xw-bar-labels"><span>0</span><span>15</span><span>25</span><span>35</span></div>
                     </div>
                     <div class="xw-status" id="xwStatus"></div>
                   </div>
                 </div>
-              </section>
+              </div>
 
             </div>
           </section>
