@@ -1,13 +1,14 @@
 {
   "name": "FlightBag",
   "short_name": "FlightBag",
-  "description": "Pilot Electronic Flight Bag",
-  "start_url": "./",
+  "description": "Pilot Electronic Flight Bag — Pre-flight, Departure, Cruise, Arrival",
+  "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#050607",
-  "theme_color": "#050607",
-  "orientation": "landscape-primary",
+  "orientation": "any",
+  "background_color": "#040506",
+  "theme_color": "#040506",
+  "categories": ["utilities", "navigation"],
   "icons": [
     {
       "src": "./icon-180.png",

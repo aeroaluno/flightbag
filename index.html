@@ -15,7 +15,7 @@
   <link href="https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script>
   (function(){
-    var CV = "v1.14.0";
+    var CV = "v1.14.1";
     var lv = "";
     try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
     if(lv !== CV){
@@ -3395,7 +3395,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.0</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.1</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -11688,8 +11688,27 @@ restoreEtops();
   if("serviceWorker" in navigator){
     navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
       .then(function(reg){
-        setInterval(function(){ reg.update().catch(function(){}); }, 300000);
+        // Check for updates every 3 minutes
+        setInterval(function(){ reg.update().catch(function(){}); }, 180000);
       }).catch(function(){});
+
+    // Listen for update notifications from SW
+    navigator.serviceWorker.addEventListener("message", function(e){
+      if(e.data && e.data.type === "UPDATE_AVAILABLE"){
+        // Show a subtle update banner instead of alert
+        var banner = document.createElement("div");
+        banner.id = "updateBanner";
+        banner.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(56,189,248,.95);color:#040506;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);font-family:'B612',sans-serif;";
+        banner.innerHTML = "&#9992; Nova versao disponivel — toque para atualizar";
+        banner.onclick = function(){ location.reload(); };
+        // Remove existing banner if any
+        var old = document.getElementById("updateBanner");
+        if(old) old.remove();
+        document.body.appendChild(banner);
+        // Auto-dismiss after 15s
+        setTimeout(function(){ if(banner.parentNode) banner.remove(); }, 15000);
+      }
+    });
   }
 
 
