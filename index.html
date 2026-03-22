@@ -16,7 +16,7 @@
   <script>
   // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.2";
+    var CV = "v1.14.3";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
@@ -80,7 +80,7 @@
     }
 
     *{box-sizing:border-box}
-    html,body{height:100%;overflow:hidden;overscroll-behavior:none;}
+    html,body{height:100%;height:100dvh;overflow:hidden;overscroll-behavior:none;}
     body{
       margin:0;
       font-family: 'B612', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -96,6 +96,7 @@
     /* --- App shell --- */
     .shell{
       height:100vh;
+      height:100dvh;
       display:grid;
       grid-template-columns: 84px 1fr;
       gap:8px;
@@ -3139,21 +3140,21 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       scrollbar-width:thin;
     }
 
+    /* ── RESPONSIVE: iPad Split View / Slide Over ─────────────────────── */
+
+    /* 1180px — Narrow landscape (2/3 split) */
     @media (max-width: 1180px){
       .departureGrid{
-        grid-template-columns:minmax(0,1fr) 300px !important;
+        grid-template-columns:minmax(0,1fr) 280px !important;
       }
-      #paBackdrop .grid2{
-        grid-template-columns:1fr !important;
-      }
+      .grid2,
+      #paBackdrop .grid2,
       #arrPaBackdrop .grid2{
-        grid-template-columns:1fr !important;
-      }
-      .grid2{
         grid-template-columns:1fr !important;
       }
     }
 
+    /* 980px — Half screen split */
     @media (max-width: 980px){
       .shell{
         grid-template-columns:1fr !important;
@@ -3170,6 +3171,62 @@ body.day-theme .scratchColorBtn[data-color="default"]{
       .modal-body{
         padding:14px !important;
       }
+      /* Flight strip compact */
+      .flightStrip{ padding-left:14px !important; }
+      .flightStrip .fsTimesInline{ display:none !important; }
+    }
+
+    /* 768px — Narrow half / wide 1/3 */
+    @media (max-width: 768px){
+      /* Nav buttons: hide labels, show icons only */
+      .topNavBtn .lb{ display:none !important; }
+      .topNavBtn{ padding:6px 10px !important; }
+      .menuBrand{ display:none !important; }
+      /* Pre-Flight: stack columns */
+      .pf-main{ grid-template-columns:1fr !important; }
+      .pf-top-row{ flex-wrap:wrap !important; }
+      .pf-footer{ grid-template-columns:repeat(2,1fr) !important; }
+      /* Dep data bar: wrap */
+      .dep-bar{ flex-wrap:wrap !important; }
+      /* Arrival data bar */
+      .arr-data-bar{ flex-wrap:wrap !important; }
+    }
+
+    /* 600px — Slide Over / narrow 1/3 split */
+    @media (max-width: 600px){
+      .topMenu{ padding:4px 8px !important; gap:6px !important; }
+      .topNavBtn{ padding:5px 8px !important; min-height:28px !important; }
+      .topNavBtn .ic{ font-size:13px !important; }
+      .topWidgets{ padding:4px 8px !important; font-size:12px !important; }
+      /* Pre-Flight badges compact */
+      .pf-badge .pf-val{ font-size:13px !important; }
+      .pf-badge .pf-lbl{ font-size:9px !important; }
+      .pf-scan-btn{ padding:5px 10px !important; font-size:12px !important; }
+      /* Collapsible panels full width */
+      .collapsiblePanel{ margin:0 !important; }
+      /* Flight strip: minimal */
+      .flightStrip{ height:40px !important; gap:8px !important; }
+      .flightStrip .fsCallsign{ font-size:13px !important; }
+      .flightStrip .fsRoute{ max-width:140px !important; font-size:11px !important; }
+      .flightStrip .fsRouteGroup{ gap:6px !important; }
+      /* ICAO smaller */
+      .pf-icao{ font-size:22px !important; }
+      /* Footer data */
+      .pf-foot-item .pf-fv{ font-size:14px !important; }
+    }
+
+    /* 440px — Ultra-narrow Slide Over */
+    @media (max-width: 440px){
+      .shell{ padding:4px !important; }
+      .topMenu{ border-radius:8px !important; }
+      .topWidgets{ border-radius:8px !important; }
+      .panel{ border-radius:8px !important; }
+      .menuNav{ gap:4px !important; }
+      .topNavBtn{ padding:4px 6px !important; }
+      .pf-footer{ grid-template-columns:1fr 1fr !important; gap:4px !important; padding:4px 8px !important; }
+      .pf-main{ gap:4px !important; }
+      .pf-col{ padding:8px 10px !important; }
+      .pf-wx-box{ font-size:11px !important; padding:6px 8px !important; }
     }
 
 
@@ -3382,7 +3439,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.2</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.3</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
