@@ -16,7 +16,7 @@
   <script>
   // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.3";
+    var CV = "v1.14.4";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
@@ -1809,8 +1809,8 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     /* ===== Wind / Crosswind Card ===== */
     .xw-inputs{
       display:grid;
-      grid-template-columns:1fr 1fr 1fr 1fr;
-      gap:8px;
+      grid-template-columns:1fr 1fr;
+      gap:8px 12px;
     }
     .xw-result{
       margin-top:12px;
@@ -1955,7 +1955,9 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     .collapsibleHeader > *{
       pointer-events:none;
     }
-    .collapsibleHeader #clearLoadsheetBtn{
+    .collapsibleHeader #clearLoadsheetBtn,
+    .collapsibleHeader #xwindMetarBtn,
+    .collapsibleHeader .btn{
       pointer-events:auto;
     }
     .collapseChevron{
@@ -2018,9 +2020,20 @@ body.day-theme .scratchColorBtn[data-color="default"]{
     }
 
 
-    #depCenterPanel > div{
-      grid-template-columns: 0.9fr 1.1fr !important;
-      align-items:start;
+    /* Inner cards inside depCenterPanel — remove double borders */
+    #depCenterPanel > div > .panel{
+      background:transparent !important;
+      border:1px solid var(--line) !important;
+      box-shadow:none !important;
+      border-radius:10px !important;
+      backdrop-filter:none !important;
+    }
+    #depCenterPanel > div > .panel .collapsibleHeader{
+      padding:8px 12px !important;
+      border-bottom:1px solid var(--line);
+    }
+    #depCenterPanel > div > .panel.closed .collapsibleHeader{
+      border-bottom:none;
     }
     .lsInput{
       text-align:center;
@@ -3439,7 +3452,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.3</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.4</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -4116,12 +4129,12 @@ body.day-theme .panel{
               <section class="panel collapsiblePanel open" id="xwindPanel" style="box-shadow:none; min-height:auto;">
                 <header class="collapsibleHeader" id="xwindHeader" style="padding:10px 12px;">
                   <div class="title"><h1>Wind Analysis</h1></div>
-                  <div class="collapseChevron" aria-hidden="true">▾</div>
+                  <div style="display:flex; align-items:center; gap:8px; margin-left:auto;">
+                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill from METAR">METAR</button>
+                    <div class="collapseChevron" aria-hidden="true">▾</div>
+                  </div>
                 </header>
                 <div class="modal-body collapsibleBody" id="xwindBody" style="padding:10px;">
-                  <div style="display:flex;justify-content:flex-end;margin-bottom:8px;">
-                    <button class="btn tiny" id="xwindMetarBtn" type="button" title="Auto-fill from METAR">METAR</button>
-                  </div>
                   <div class="xw-inputs">
                     <div class="toField">
                       <label>RWY HDG</label>
