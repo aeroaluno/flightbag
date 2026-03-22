@@ -14,23 +14,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet">
   <script>
+  // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.1";
-    var lv = "";
-    try{ lv = localStorage.getItem("fb_sw_ver") || ""; }catch(e){}
-    if(lv !== CV){
-      try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
-      if("serviceWorker" in navigator){
-        navigator.serviceWorker.getRegistrations().then(function(r){
-          r.forEach(function(x){ x.unregister(); });
-        }).catch(function(){});
-      }
-      if("caches" in window){
-        caches.keys().then(function(k){
-          k.forEach(function(c){ caches.delete(c); });
-        }).catch(function(){});
-      }
-    }
+    var CV = "v1.14.2";
+    try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
 <style>
@@ -3395,7 +3382,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.1</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.2</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -9560,7 +9547,12 @@ function parseDeckCrew(raw){
           }
         }catch(e){}
 
-        // 5) Reload with cache-buster (avoids Safari/HTTP cache showing old index.html)
+        // 5) Tell SW to clear its caches too
+        if(navigator.serviceWorker && navigator.serviceWorker.controller){
+          navigator.serviceWorker.controller.postMessage("clearAll");
+        }
+
+        // 6) Reload with cache-buster (avoids Safari/HTTP cache showing old index.html)
         const base = window.location.pathname.replace(/\/[^\/]*$/, "/");
         const target = base + "index.html?v=" + Date.now() + (window.location.hash || "");
         window.location.href = target;
