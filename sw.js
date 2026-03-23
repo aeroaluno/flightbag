@@ -1,16 +1,20 @@
 // sw.js — FlightBag
-// v3.0.0 — Cache-first navigation (matching Angular NGSW "performance" mode)
-// Key: ALWAYS serve index.html from cache, update in background on idle
+// v3.1.0 — Cache-first + IndexedDB backup (survives iOS cache eviction)
+// Triple storage: Cache API (fast) → IndexedDB (persistent) → Network (fallback)
 
-const SW_VERSION = "v3.0.0";
+const SW_VERSION = "v3.1.0";
 const CACHE_CORE = "fb-core-v16";
 const CACHE_OCR  = "fb-ocr-v1";
 const CACHE_CDN  = "fb-cdn-v3";
+const IDB_NAME   = "fb-offline";
+const IDB_STORE  = "html";
+const IDB_KEY    = "index";
 
 const CORE_FILES = [
     "./",
     "./index.html",
     "./manifest.webmanifest",
+    "./manifest.json",
     "./icon-180.png",
 ];
 
@@ -22,38 +26,84 @@ const OCR_FILES = [
 ];
 
 const FONT_CSS_URL = "https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap";
-
 const CDN_PATTERNS = ["fonts.googleapis.com", "fonts.gstatic.com"];
 
-// ── INSTALL ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// IndexedDB helpers — backup storage that survives iOS cache eviction
+// ══════════════════════════════════════════════════════════════════════════
+
+function idbOpen() {
+    return new Promise((resolve, reject) => {
+        const req = indexedDB.open(IDB_NAME, 1);
+        req.onupgradeneeded = () => {
+            const db = req.result;
+            if (!db.objectStoreNames.contains(IDB_STORE)) {
+                db.createObjectStore(IDB_STORE);
+            }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error);
+    });
+}
+
+function idbPut(key, value) {
+    return idbOpen().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readwrite");
+        tx.objectStore(IDB_STORE).put(value, key);
+        tx.oncomplete = () => { db.close(); resolve(); };
+        tx.onerror = () => { db.close(); reject(tx.error); };
+    })).catch(() => {});
+}
+
+function idbGet(key) {
+    return idbOpen().then(db => new Promise((resolve, reject) => {
+        const tx = db.transaction(IDB_STORE, "readonly");
+        const req = tx.objectStore(IDB_STORE).get(key);
+        req.onsuccess = () => { db.close(); resolve(req.result || null); };
+        req.onerror = () => { db.close(); resolve(null); };
+    })).catch(() => null);
+}
+
+// ══════════════════════════════════════════════════════════════════════════
+// INSTALL
+// ══════════════════════════════════════════════════════════════════════════
+
 self.addEventListener("install", (event) => {
     event.waitUntil(
         (async () => {
-            // Core files — must succeed
+            // 1. Core files → Cache API
             const core = await caches.open(CACHE_CORE);
             try {
                 await core.addAll(CORE_FILES);
             } catch (e) {
-                // Individual fallback
                 await Promise.allSettled(
-                    CORE_FILES.map((u) =>
-                        fetch(u).then((r) => r.ok ? core.put(u, r) : null).catch(() => {})
+                    CORE_FILES.map(u =>
+                        fetch(u).then(r => r.ok ? core.put(u, r) : null).catch(() => {})
                     )
                 );
             }
 
-            // OCR files — skip if already cached (large files)
+            // 2. Save index.html to IndexedDB as backup
+            try {
+                const htmlResp = await core.match("./index.html", { ignoreVary: true });
+                if (htmlResp) {
+                    const htmlText = await htmlResp.clone().text();
+                    await idbPut(IDB_KEY, htmlText);
+                }
+            } catch (e) {}
+
+            // 3. OCR files (skip if cached)
             const ocr = await caches.open(CACHE_OCR);
             await Promise.allSettled(
-                OCR_FILES.map((u) =>
-                    ocr.match(u, { ignoreVary: true }).then((ex) => {
+                OCR_FILES.map(u =>
+                    ocr.match(u, { ignoreVary: true }).then(ex => {
                         if (ex) return;
-                        return fetch(u).then((r) => r.ok ? ocr.put(u, r) : null);
+                        return fetch(u).then(r => r.ok ? ocr.put(u, r) : null);
                     }).catch(() => {})
                 )
             );
 
-            // Google Fonts — prefetch CSS + WOFF2
+            // 4. Google Fonts
             try {
                 const cdn = await caches.open(CACHE_CDN);
                 const cssResp = await fetch(FONT_CSS_URL);
@@ -63,11 +113,11 @@ self.addEventListener("install", (event) => {
                     const woff2 = cssText.match(/url\((https:\/\/fonts\.gstatic\.com[^)]+)\)/g);
                     if (woff2) {
                         await Promise.allSettled(
-                            woff2.map((m) => {
+                            woff2.map(m => {
                                 const url = m.slice(4, -1);
-                                return cdn.match(url, { ignoreVary: true }).then((ex) => {
+                                return cdn.match(url, { ignoreVary: true }).then(ex => {
                                     if (ex) return;
-                                    return fetch(url, { mode: "cors" }).then((r) =>
+                                    return fetch(url, { mode: "cors" }).then(r =>
                                         r.ok ? cdn.put(url, r) : null
                                     );
                                 });
@@ -82,26 +132,58 @@ self.addEventListener("install", (event) => {
     );
 });
 
-// ── ACTIVATE ─────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// ACTIVATE
+// ══════════════════════════════════════════════════════════════════════════
+
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         (async () => {
-            // Delete ALL caches that don't match current version
             const valid = new Set([CACHE_CORE, CACHE_OCR, CACHE_CDN]);
             const keys = await caches.keys();
-            await Promise.all(keys.filter((k) => !valid.has(k)).map((k) => caches.delete(k)));
-            // Take control immediately
+            await Promise.all(keys.filter(k => !valid.has(k)).map(k => caches.delete(k)));
             await self.clients.claim();
+
+            // Verify cache integrity — restore from IDB if Cache API was evicted
+            try {
+                const core = await caches.open(CACHE_CORE);
+                const cached = await core.match("./index.html", { ignoreVary: true });
+                if (!cached) {
+                    // Cache API was evicted! Restore from IndexedDB
+                    const htmlText = await idbGet(IDB_KEY);
+                    if (htmlText) {
+                        const resp = new Response(htmlText, {
+                            headers: { "Content-Type": "text/html;charset=utf-8" }
+                        });
+                        await core.put("./index.html", resp.clone());
+                        await core.put(new URL("./", self.location).href, resp.clone());
+                        await core.put(new URL("./index.html", self.location).href, resp);
+                    }
+                }
+            } catch (e) {}
         })()
     );
 });
 
-// ── MESSAGE ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// MESSAGE
+// ══════════════════════════════════════════════════════════════════════════
+
 self.addEventListener("message", (event) => {
     if (event.data === "skipWaiting") self.skipWaiting();
     if (event.data === "clearAll") {
         event.waitUntil(
-            caches.keys().then((ks) => Promise.all(ks.map((k) => caches.delete(k))))
+            (async () => {
+                const ks = await caches.keys();
+                await Promise.all(ks.map(k => caches.delete(k)));
+                // Also clear IDB backup
+                try {
+                    const db = await idbOpen();
+                    const tx = db.transaction(IDB_STORE, "readwrite");
+                    tx.objectStore(IDB_STORE).clear();
+                    tx.oncomplete = () => db.close();
+                } catch (e) {}
+            })()
         );
     }
     if (event.data === "getVersion") {
@@ -109,37 +191,34 @@ self.addEventListener("message", (event) => {
     }
 });
 
-// ── FETCH ────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// FETCH
+// ══════════════════════════════════════════════════════════════════════════
+
 self.addEventListener("fetch", (event) => {
     const req = event.request;
     if (req.method !== "GET") return;
     const url = new URL(req.url);
 
-    // ── NAVIGATION ─────────────────────────────────────────────────────
-    // CACHE-FIRST (like Angular NGSW "performance" mode):
-    // Always return cached index.html instantly. Update in background.
+    // Navigation → cache-first with IDB fallback
     if (req.mode === "navigate") {
         event.respondWith(serveNavigation(event));
         return;
     }
 
-    // ── SAME-ORIGIN ────────────────────────────────────────────────────
+    // Same-origin assets → cache-first
     if (url.origin === self.location.origin) {
-        if (isOcr(url.pathname)) {
-            event.respondWith(cacheFirst(req, CACHE_OCR));
-        } else {
-            event.respondWith(cacheFirst(req, CACHE_CORE));
-        }
+        event.respondWith(cacheFirst(req, isOcr(url.pathname) ? CACHE_OCR : CACHE_CORE));
         return;
     }
 
-    // ── CDN (fonts) ────────────────────────────────────────────────────
-    if (CDN_PATTERNS.some((p) => url.hostname.includes(p))) {
+    // CDN (fonts) → cache-first
+    if (CDN_PATTERNS.some(p => url.hostname.includes(p))) {
         event.respondWith(cacheFirst(req, CACHE_CDN));
         return;
     }
 
-    // ── EXTERNAL APIs — pass through (no caching) ──────────────────────
+    // External APIs → pass through
 });
 
 // ══════════════════════════════════════════════════════════════════════════
@@ -147,45 +226,60 @@ self.addEventListener("fetch", (event) => {
 // ══════════════════════════════════════════════════════════════════════════
 
 /**
- * Navigation: pure cache-first, background update.
- * This is the #1 reason the reference app works offline perfectly.
+ * Navigation: Triple fallback — Cache API → IndexedDB → Network → Offline page
  */
 async function serveNavigation(event) {
     const cache = await caches.open(CACHE_CORE);
 
-    // 1) Try cache — multiple URL patterns (GitHub Pages quirk)
+    // 1) Try Cache API (fastest)
     const cached = await matchHtml(cache);
+    if (cached) {
+        scheduleBackgroundUpdate(event.request, cache);
+        return cached;
+    }
 
-    // 2) Schedule background update (non-blocking, like NGSW idle scheduler)
-    scheduleBackgroundUpdate(event.request, cache, cached);
-
-    // 3) If cached, return immediately — DONE
-    if (cached) return cached;
-
-    // 4) No cache — first visit, must use network
+    // 2) Cache API was evicted — try IndexedDB backup
     try {
-        const resp = await fetch(event.request);
-        if (resp && resp.ok) {
+        const htmlText = await idbGet(IDB_KEY);
+        if (htmlText) {
+            // Restore to Cache API for next time
+            const resp = new Response(htmlText, {
+                headers: { "Content-Type": "text/html;charset=utf-8" }
+            });
             await storeHtml(cache, resp.clone());
+            scheduleBackgroundUpdate(event.request, cache);
             return resp;
         }
     } catch (e) {}
 
-    // 5) Total failure — show offline page
+    // 3) Nothing cached — must use network (first visit)
+    try {
+        const resp = await fetch(event.request);
+        if (resp && resp.ok) {
+            await storeHtml(cache, resp.clone());
+            // Also backup to IndexedDB
+            try {
+                const text = await resp.clone().text();
+                await idbPut(IDB_KEY, text);
+            } catch (e) {}
+            return resp;
+        }
+    } catch (e) {}
+
+    // 4) Total failure
     return offlinePage();
 }
 
 /**
- * Try to find cached HTML under any URL variant.
- * Safari/iOS can request the page under different URLs.
+ * Match cached HTML under multiple URL patterns.
  */
 async function matchHtml(cache) {
     const opts = { ignoreSearch: true, ignoreVary: true };
     const urls = [
-        new URL("./index.html", self.location).href,
-        new URL("./", self.location).href,
         "./index.html",
         "./",
+        new URL("./index.html", self.location).href,
+        new URL("./", self.location).href,
     ];
     for (const u of urls) {
         const m = await cache.match(u, opts);
@@ -195,55 +289,58 @@ async function matchHtml(cache) {
 }
 
 /**
- * Store HTML under all URL patterns for maximum cache-hit rate.
+ * Store HTML under all URL patterns.
  */
 async function storeHtml(cache, resp) {
-    const urls = [
-        new URL("./index.html", self.location).href,
-        new URL("./", self.location).href,
-    ];
-    for (const u of urls) {
-        await cache.put(u, resp.clone()).catch(() => {});
-    }
+    await Promise.all([
+        cache.put("./index.html", resp.clone()).catch(() => {}),
+        cache.put("./", resp.clone()).catch(() => {}),
+        cache.put(new URL("./index.html", self.location).href, resp.clone()).catch(() => {}),
+        cache.put(new URL("./", self.location).href, resp.clone()).catch(() => {}),
+    ]);
 }
 
 /**
- * Background update — fetch fresh index.html and notify if changed.
- * Like NGSW's idle.schedule("check-updates-on-navigation").
+ * Background update — fetch new HTML, update cache + IDB, notify if changed.
  */
-function scheduleBackgroundUpdate(req, cache, oldCached) {
-    // Use setTimeout to avoid blocking the response
+function scheduleBackgroundUpdate(req, cache) {
     setTimeout(async () => {
         try {
             const resp = await fetch(req);
             if (!resp || !resp.ok) return;
 
+            // Check if content changed before updating
+            const oldCached = await matchHtml(cache);
+            const changed = oldCached && (
+                (oldCached.headers.get("etag") || "") !== (resp.headers.get("etag") || "") ||
+                (oldCached.headers.get("content-length") || "") !== (resp.headers.get("content-length") || "")
+            );
+
+            // Update Cache API
             await storeHtml(cache, resp.clone());
-            // Also store under the request URL itself
             await cache.put(req, resp.clone()).catch(() => {});
 
-            // Detect changes and notify
-            if (oldCached) {
-                const changed =
-                    (oldCached.headers.get("etag") || "") !== (resp.headers.get("etag") || "") ||
-                    (oldCached.headers.get("content-length") || "") !== (resp.headers.get("content-length") || "");
-                if (changed) {
-                    const clients = await self.clients.matchAll();
-                    clients.forEach((c) =>
-                        c.postMessage({ type: "UPDATE_AVAILABLE", version: SW_VERSION })
-                    );
-                }
+            // Update IndexedDB backup
+            try {
+                const text = await resp.clone().text();
+                await idbPut(IDB_KEY, text);
+            } catch (e) {}
+
+            // Notify clients if content changed
+            if (changed) {
+                const clients = await self.clients.matchAll();
+                clients.forEach(c =>
+                    c.postMessage({ type: "UPDATE_AVAILABLE", version: SW_VERSION })
+                );
             }
         } catch (e) {
-            // Offline — silently ignore
+            // Offline — silent
         }
-    }, 100);
+    }, 200);
 }
 
 /**
- * Cache-First: return cache if available, else fetch + cache.
- * Used for ALL same-origin assets (not just OCR/fonts).
- * This matches NGSW's "prefetch" installMode behavior.
+ * Cache-First for all assets.
  */
 async function cacheFirst(req, cacheName) {
     const cache = await caches.open(cacheName);
@@ -260,7 +357,9 @@ async function cacheFirst(req, cacheName) {
     }
 }
 
-// ── HELPERS ──────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════════════════
 
 function isOcr(p) {
     return p.includes("tesseract") || p.includes("worker.min.js") || p.includes("traineddata");
