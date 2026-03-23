@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <link rel="manifest" href="./manifest.json" />
+  <link rel="manifest" href="./manifest.webmanifest" />
   <meta name="theme-color" content="#040506" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -17,7 +17,7 @@
   <script>
   // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.7";
+    var CV = "v1.15.0";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
@@ -3463,7 +3463,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.7</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.15.0</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
