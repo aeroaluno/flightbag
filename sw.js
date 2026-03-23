@@ -1,14 +1,13 @@
 // sw.js — FlightBag
-// v2.0.0 — Aggressive prefetch + stale-while-revalidate (inspired by Angular NGSW)
-// Strategy: cache everything on install, serve from cache, update in background
+// v2.1.0 — Bulletproof offline (inspired by Angular NGSW + reference app)
+// Strategy: aggressive prefetch, cache-first for assets, stale-while-revalidate for HTML
 
-const SW_VERSION = "v2.0.0";
-const CACHE_CORE = "fb-core-v14";
+const SW_VERSION = "v2.1.0";
+const CACHE_CORE = "fb-core-v15";
 const CACHE_OCR  = "fb-ocr-v1";
-const CACHE_CDN  = "fb-cdn-v1";
+const CACHE_CDN  = "fb-cdn-v2";
 
 // ── FILES TO PREFETCH ON INSTALL ─────────────────────────────────────────
-// These are downloaded immediately when the SW installs (before any user action)
 const CORE_FILES = [
     "./",
     "./index.html",
@@ -23,21 +22,22 @@ const OCR_FILES = [
     "./eng.traineddata.gz",
 ];
 
-// CDN resources that should be cached for offline use
+// Google Fonts CSS URL to prefetch
+const FONT_CSS_URL = "https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap";
+
+// CDN patterns to cache opportunistically
 const CDN_PATTERNS = [
     "fonts.googleapis.com",
     "fonts.gstatic.com",
 ];
 
 // ── INSTALL ──────────────────────────────────────────────────────────────
-// Prefetch all core files into cache immediately
 self.addEventListener("install", (event) => {
     event.waitUntil(
         (async () => {
-            // Cache core files (index.html, manifest, icons)
+            // 1. Cache core files
             const coreCache = await caches.open(CACHE_CORE);
-            await coreCache.addAll(CORE_FILES).catch((e) => {
-                // If any file fails, try them individually
+            await coreCache.addAll(CORE_FILES).catch(() => {
                 return Promise.allSettled(
                     CORE_FILES.map((url) =>
                         fetch(url).then((r) => {
@@ -47,12 +47,11 @@ self.addEventListener("install", (event) => {
                 );
             });
 
-            // Cache OCR files (large, do individually so one failure doesn't block all)
+            // 2. Cache OCR files (skip if already cached — they're large)
             const ocrCache = await caches.open(CACHE_OCR);
             await Promise.allSettled(
                 OCR_FILES.map((url) =>
                     ocrCache.match(url).then((existing) => {
-                        // Only fetch if not already cached (these are large)
                         if (existing) return;
                         return fetch(url).then((r) => {
                             if (r.ok) return ocrCache.put(url, r);
@@ -61,7 +60,31 @@ self.addEventListener("install", (event) => {
                 )
             );
 
-            // Activate immediately
+            // 3. Prefetch Google Fonts (CSS + WOFF2 files)
+            try {
+                const cdnCache = await caches.open(CACHE_CDN);
+                const fontCssResp = await fetch(FONT_CSS_URL);
+                if (fontCssResp.ok) {
+                    const cssText = await fontCssResp.clone().text();
+                    await cdnCache.put(FONT_CSS_URL, fontCssResp);
+                    // Extract woff2 URLs from CSS and prefetch them
+                    const woff2Urls = cssText.match(/url\((https:\/\/fonts\.gstatic\.com[^)]+)\)/g);
+                    if (woff2Urls) {
+                        await Promise.allSettled(
+                            woff2Urls.map((m) => {
+                                const u = m.slice(4, -1);
+                                return cdnCache.match(u).then((ex) => {
+                                    if (ex) return;
+                                    return fetch(u, { mode: "cors" }).then((r) => {
+                                        if (r.ok) return cdnCache.put(u, r);
+                                    });
+                                });
+                            })
+                        );
+                    }
+                }
+            } catch (e) { /* fonts are non-critical */ }
+
             self.skipWaiting();
         })()
     );
@@ -71,7 +94,6 @@ self.addEventListener("install", (event) => {
 self.addEventListener("activate", (event) => {
     event.waitUntil(
         (async () => {
-            // Clean up old caches that don't match current version
             const validCaches = [CACHE_CORE, CACHE_OCR, CACHE_CDN];
             const allKeys = await caches.keys();
             await Promise.all(
@@ -79,7 +101,6 @@ self.addEventListener("activate", (event) => {
                     .filter((k) => !validCaches.includes(k))
                     .map((k) => caches.delete(k))
             );
-            // Take control of all open tabs immediately
             await self.clients.claim();
         })()
     );
@@ -87,9 +108,7 @@ self.addEventListener("activate", (event) => {
 
 // ── MESSAGE ──────────────────────────────────────────────────────────────
 self.addEventListener("message", (event) => {
-    if (event.data === "skipWaiting") {
-        self.skipWaiting();
-    }
+    if (event.data === "skipWaiting") self.skipWaiting();
     if (event.data === "clearAll") {
         event.waitUntil(
             caches.keys().then((keys) =>
@@ -109,101 +128,156 @@ self.addEventListener("fetch", (event) => {
 
     const url = new URL(req.url);
 
-    // ── NAVIGATION (index.html) ──────────────────────────────────────────
-    // Stale-while-revalidate: serve cache instantly, update in background
+    // ── NAVIGATION (always serve index.html from cache) ────────────────
     if (req.mode === "navigate") {
-        event.respondWith(staleWhileRevalidate(req, CACHE_CORE));
+        event.respondWith(handleNavigation(req));
         return;
     }
 
-    // ── SAME-ORIGIN ASSETS ───────────────────────────────────────────────
+    // ── SAME-ORIGIN ASSETS ─────────────────────────────────────────────
     if (url.origin === self.location.origin) {
-        // OCR files: cache-first (large, rarely change)
         if (isOcrFile(url.pathname)) {
             event.respondWith(cacheFirst(req, CACHE_OCR));
             return;
         }
-        // Other same-origin: stale-while-revalidate
         event.respondWith(staleWhileRevalidate(req, CACHE_CORE));
         return;
     }
 
-    // ── CDN RESOURCES (fonts, etc) ───────────────────────────────────────
+    // ── CDN (fonts) — cache-first ──────────────────────────────────────
     if (CDN_PATTERNS.some((p) => url.hostname.includes(p))) {
         event.respondWith(cacheFirst(req, CACHE_CDN));
         return;
     }
 
-    // ── EXTERNAL APIs (CheckWX, Aviation Edge, Worker) ───────────────────
-    // Don't cache API responses — let them pass through to network
+    // ── EXTERNAL APIs — network only, no caching ───────────────────────
 });
 
 // ── STRATEGIES ───────────────────────────────────────────────────────────
 
 /**
- * Stale-While-Revalidate:
- * 1. Return cached version instantly (fast!)
- * 2. Fetch fresh version in background
- * 3. Update cache for next visit
- * 4. Notify app if new version found
+ * Navigation handler with multiple fallbacks.
+ * The key to bulletproof offline: always have something to show.
+ */
+async function handleNavigation(req) {
+    const cache = await caches.open(CACHE_CORE);
+
+    // Try to get cached version first (for instant display)
+    const cached = await findCachedHtml(cache);
+
+    // Fire background update (don't block the response)
+    const fetchPromise = fetchAndUpdate(req, cache, cached);
+
+    // If we have cache, return it immediately
+    if (cached) return cached;
+
+    // No cache — must wait for network
+    try {
+        const networkResp = await fetchPromise;
+        if (networkResp && networkResp.ok) return networkResp;
+    } catch (e) { /* fall through to offline page */ }
+
+    return offlinePage();
+}
+
+/**
+ * Find cached HTML using multiple URL patterns.
+ * GitHub Pages may cache under different URLs.
+ */
+async function findCachedHtml(cache) {
+    // Try exact paths that GitHub Pages may use
+    const candidates = [
+        "./index.html",
+        "./",
+        new URL("./index.html", self.location).href,
+        new URL("./", self.location).href,
+    ];
+
+    for (const url of candidates) {
+        const match = await cache.match(url, { ignoreSearch: true, ignoreVary: true });
+        if (match) return match;
+    }
+
+    // Last resort: find ANY cached HTML
+    const keys = await cache.keys();
+    for (const key of keys) {
+        const resp = await cache.match(key);
+        if (resp && resp.headers.get("content-type")?.includes("text/html")) {
+            return resp;
+        }
+    }
+
+    return null;
+}
+
+/**
+ * Fetch fresh version and update cache + notify clients.
+ */
+async function fetchAndUpdate(req, cache, oldCached) {
+    try {
+        const resp = await fetch(req);
+        if (!resp || !resp.ok) return resp;
+
+        // Store under both the request URL and ./index.html
+        await cache.put(req, resp.clone()).catch(() => {});
+        await cache.put(
+            new URL("./index.html", self.location).href,
+            resp.clone()
+        ).catch(() => {});
+        await cache.put(
+            new URL("./", self.location).href,
+            resp.clone()
+        ).catch(() => {});
+
+        // Check if content actually changed
+        if (oldCached) {
+            const oldLen = oldCached.headers.get("content-length");
+            const newLen = resp.headers.get("content-length");
+            const oldEtag = oldCached.headers.get("etag");
+            const newEtag = resp.headers.get("etag");
+            if (
+                (oldEtag && newEtag && oldEtag !== newEtag) ||
+                (oldLen && newLen && oldLen !== newLen)
+            ) {
+                const clients = await self.clients.matchAll();
+                clients.forEach((c) => {
+                    c.postMessage({ type: "UPDATE_AVAILABLE", version: SW_VERSION });
+                });
+            }
+        }
+
+        return resp;
+    } catch (e) {
+        return null;
+    }
+}
+
+/**
+ * Stale-While-Revalidate for non-navigation requests.
  */
 async function staleWhileRevalidate(req, cacheName) {
     const cache = await caches.open(cacheName);
     const cached = await cache.match(req, { ignoreSearch: true, ignoreVary: true });
 
-    // Background update (don't await — fire and forget)
     const fetchPromise = fetch(req)
-        .then(async (resp) => {
+        .then((resp) => {
             if (resp && resp.ok) {
-                await cache.put(req, resp.clone()).catch(() => {});
-                // Also store as ./index.html for navigation fallback
-                if (req.mode === "navigate") {
-                    await cache.put(
-                        new URL("./index.html", self.location).href,
-                        resp.clone()
-                    ).catch(() => {});
-                }
-                // If we had a cached version, check if content changed
-                if (cached) {
-                    const oldEtag = cached.headers.get("etag");
-                    const newEtag = resp.headers.get("etag");
-                    const oldLen = cached.headers.get("content-length");
-                    const newLen = resp.headers.get("content-length");
-                    if (
-                        (oldEtag && newEtag && oldEtag !== newEtag) ||
-                        (oldLen && newLen && oldLen !== newLen)
-                    ) {
-                        // Notify all clients that new content is available
-                        const clients = await self.clients.matchAll();
-                        clients.forEach((client) => {
-                            client.postMessage({
-                                type: "UPDATE_AVAILABLE",
-                                version: SW_VERSION,
-                            });
-                        });
-                    }
-                }
+                cache.put(req, resp.clone()).catch(() => {});
             }
             return resp;
         })
         .catch(() => null);
 
-    // If we have a cached version, return it immediately
     if (cached) return cached;
 
-    // No cache — must wait for network
     const networkResp = await fetchPromise;
     if (networkResp) return networkResp;
 
-    // Nothing — show offline page for navigation
-    if (req.mode === "navigate") return offlinePage();
     return new Response("", { status: 408 });
 }
 
 /**
- * Cache-First:
- * Return cached version if available, otherwise fetch and cache.
- * Best for large static files (OCR, fonts) that rarely change.
+ * Cache-First for large static files (OCR, fonts).
  */
 async function cacheFirst(req, cacheName) {
     const cache = await caches.open(cacheName);
@@ -237,7 +311,7 @@ function offlinePage() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<title>FlightBag</title>
+<title>FlightBag — Offline</title>
 <style>
   body{margin:0;font-family:'B612',system-ui,sans-serif;background:#040506;color:#dce4ed;
        display:flex;align-items:center;justify-content:center;min-height:100vh;text-align:center;}
