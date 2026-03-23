@@ -15,11 +15,22 @@
   <link href="https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
   <noscript><link href="https://fonts.googleapis.com/css2?family=B612:ital,wght@0,400;0,700;1,400;1,700&family=B612+Mono:wght@400;700&display=swap" rel="stylesheet"></noscript>
   <script>
-  // SW version tracker — NEVER delete caches when offline
+  // SW version + immediate re-registration if SW was killed by iOS
   (function(){
-    var CV = "v1.15.1";
+    var CV = "v1.15.2";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
+    // Immediately re-register SW if it's not controlling this page
+    // (iOS can kill SW registration after hours of inactivity)
+    if("serviceWorker" in navigator){
+      if(!navigator.serviceWorker.controller){
+        // No SW controlling this page — re-register NOW (before anything else loads)
+        navigator.serviceWorker.register("./sw.js").catch(function(){});
+      }
+    }
   })();
+  // Global error handler — prevent unhandled errors from killing the app
+  window.addEventListener("error", function(e){ try{ console.error("FB:",e.message); }catch(x){} });
+  window.addEventListener("unhandledrejection", function(e){ try{ e.preventDefault(); console.error("FB promise:",e.reason); }catch(x){} });
   </script>
 <style>
     :root{
@@ -3463,7 +3474,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.15.1</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.15.2</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -11715,16 +11726,14 @@ restoreEtops();
     // iOS can evict Cache API after hours of inactivity.
     // This keeps an IndexedDB backup that the SW can restore from.
     (function selfHeal(){
+      // 1. Backup HTML to IndexedDB
       function backupToIDB(){
         try{
           var req = indexedDB.open("fb-offline", 1);
           req.onupgradeneeded = function(){ req.result.createObjectStore("html"); };
           req.onsuccess = function(){
             var db = req.result;
-            // Get current HTML
-            var html = document.documentElement.outerHTML;
-            // Use the original fetched HTML if available, otherwise use full DOCTYPE
-            var fullHtml = "<!doctype html>\n" + html;
+            var fullHtml = "<!doctype html>\n" + document.documentElement.outerHTML;
             var tx = db.transaction("html", "readwrite");
             tx.objectStore("html").put(fullHtml, "index");
             tx.oncomplete = function(){ db.close(); };
@@ -11732,19 +11741,60 @@ restoreEtops();
           };
         }catch(e){}
       }
-      // Backup on load
-      setTimeout(backupToIDB, 5000);
-      // Re-backup every 30 minutes to keep storage "fresh"
-      setInterval(backupToIDB, 1800000);
-      // Also backup when app becomes visible (user returns to app)
+
+      // 2. Force Cache API to re-cache current page (in case iOS evicted it)
+      function refreshCacheAPI(){
+        try{
+          if(!("caches" in window)) return;
+          caches.open("fb-core-v16").then(function(cache){
+            // Re-store the current page HTML in cache under all URL patterns
+            var html = "<!doctype html>\n" + document.documentElement.outerHTML;
+            var resp = new Response(html, { headers:{"Content-Type":"text/html;charset=utf-8"} });
+            var base = location.href.replace(/[?#].*$/,"").replace(/\/[^\/]*$/,"/");
+            cache.put(base + "index.html", resp.clone()).catch(function(){});
+            cache.put(base, resp.clone()).catch(function(){});
+            cache.put("./index.html", resp.clone()).catch(function(){});
+            cache.put("./", resp).catch(function(){});
+          }).catch(function(){});
+        }catch(e){}
+      }
+
+      // 3. Re-register SW if it was killed
+      function ensureSW(){
+        try{
+          if(!("serviceWorker" in navigator)) return;
+          navigator.serviceWorker.getRegistration().then(function(reg){
+            if(!reg){
+              // SW was completely unregistered — re-register
+              navigator.serviceWorker.register("./sw.js").catch(function(){});
+            }
+          }).catch(function(){});
+        }catch(e){}
+      }
+
+      // Run all on load (staggered to not block)
+      setTimeout(backupToIDB, 3000);
+      setTimeout(refreshCacheAPI, 4000);
+      setTimeout(ensureSW, 5000);
+
+      // Re-run every 15 minutes to keep storage "fresh" and prevent eviction
+      setInterval(function(){
+        backupToIDB();
+        refreshCacheAPI();
+        ensureSW();
+      }, 900000);
+
+      // Also run on every visibility change (user returns to app)
       document.addEventListener("visibilitychange", function(){
         if(document.visibilityState === "visible"){
-          // Re-request persistent storage on every resume
           if(navigator.storage && navigator.storage.persist){
             navigator.storage.persist().catch(function(){});
           }
-          // Re-backup
-          setTimeout(backupToIDB, 2000);
+          setTimeout(function(){
+            backupToIDB();
+            refreshCacheAPI();
+            ensureSW();
+          }, 1000);
         }
       });
     })();
