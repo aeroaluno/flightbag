@@ -17,7 +17,7 @@
   <script>
   // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.6";
+    var CV = "v1.14.7";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
@@ -3463,7 +3463,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.6</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.7</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -11693,26 +11693,35 @@ restoreEtops();
   // Service Worker (GitHub Pages offline)
   // ==========================
   if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("./sw.js", { updateViaCache: "none" })
+    // Register SW WITHOUT updateViaCache:"none" — this allows the browser
+    // to use HTTP cache for sw.js, which is critical for iOS offline recovery.
+    // When iOS kills the SW process and tries to re-register offline,
+    // updateViaCache:"none" forces a network fetch → fails → no SW → no offline.
+    // Default behavior uses HTTP cache (GitHub Pages: max-age=600) as fallback.
+    navigator.serviceWorker.register("./sw.js")
       .then(function(reg){
-        // Check for updates every 3 minutes
-        setInterval(function(){ reg.update().catch(function(){}); }, 180000);
+        // Check for updates every 5 minutes (only when online)
+        setInterval(function(){
+          if(navigator.onLine) reg.update().catch(function(){});
+        }, 300000);
       }).catch(function(){});
+
+    // Request persistent storage — prevents iOS from evicting our caches
+    if(navigator.storage && navigator.storage.persist){
+      navigator.storage.persist().catch(function(){});
+    }
 
     // Listen for update notifications from SW
     navigator.serviceWorker.addEventListener("message", function(e){
       if(e.data && e.data.type === "UPDATE_AVAILABLE"){
-        // Show a subtle update banner instead of alert
         var banner = document.createElement("div");
         banner.id = "updateBanner";
         banner.style.cssText = "position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99999;background:rgba(56,189,248,.95);color:#040506;padding:12px 24px;border-radius:12px;font-size:14px;font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.3);cursor:pointer;display:flex;align-items:center;gap:8px;backdrop-filter:blur(8px);font-family:'B612',sans-serif;";
         banner.innerHTML = "&#9992; Nova versao disponivel — toque para atualizar";
         banner.onclick = function(){ location.reload(); };
-        // Remove existing banner if any
         var old = document.getElementById("updateBanner");
         if(old) old.remove();
         document.body.appendChild(banner);
-        // Auto-dismiss after 15s
         setTimeout(function(){ if(banner.parentNode) banner.remove(); }, 15000);
       }
     });
