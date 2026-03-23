@@ -17,7 +17,7 @@
   <script>
   // SW version tracker — NEVER delete caches when offline
   (function(){
-    var CV = "v1.14.8";
+    var CV = "v1.14.7";
     try{ localStorage.setItem("fb_sw_ver", CV); }catch(e){}
   })();
   </script>
@@ -3463,7 +3463,7 @@ body.day-theme .panel{
       </section>
 
       <div class="sidebarFooter">
-        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.8</div>
+        <div style="font-size:10px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);margin-bottom:4px;">v1.14.7</div>
         <button class="clearCacheBtn" id="clearCacheBtn" title="Force update app">🔄 Clear Cache</button>
         Tools (left)<br/>
         OFP (center)
@@ -3840,7 +3840,7 @@ body.day-theme .panel{
           if(!el){ if(cb) cb(false); return; }
           el.style.display='none';
           el.textContent='';
-          fetch(WORKER_BASE+'/atis?icao='+icao+'&_t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+          fetch(WORKER_BASE+'/atis?icao='+icao).then(function(r){ return r.json(); }).then(function(j){
             var txt = '';
             if(type==='dep' && j.dep) txt = j.dep;
             else if(type==='arr' && j.arr) txt = j.arr;
@@ -3874,7 +3874,7 @@ body.day-theme .panel{
           if(!el) return;
           var url='https://api.checkwx.com/v2/'+type+'/'+icao+'/decoded?x-api-key='+WX_KEY;
           el.textContent='Loading...';
-          fetch(url, {cache:'no-store'}).then(function(r){return r.json();}).then(function(j){
+          fetch(url).then(function(r){return r.json();}).then(function(j){
             if(j && j.data && j.data.length){
               var d=j.data[0];
               el.textContent = d.raw_text || JSON.stringify(d).substring(0,200);
@@ -5647,7 +5647,7 @@ Thank you for choosing Qatar Airways, The World's Best Airline.</div>
     if(empty) empty.textContent='Loading...';
     if(overlayEmpty) overlayEmpty.textContent='Loading...';
     box.style.display='none';
-    fetch('https://notam-proxy.qr-flightbag.workers.dev/atis?icao='+icao+'&_t='+Date.now(), {cache:'no-store'}).then(function(r){ return r.json(); }).then(function(j){
+    fetch('https://notam-proxy.qr-flightbag.workers.dev/atis?icao='+icao).then(function(r){ return r.json(); }).then(function(j){
       var txt = j.arr || '';
       if(txt){
         txt = txt.replace(/&#[xX]([0-9a-fA-F]+);/g, function(m,hex){ return String.fromCharCode(parseInt(hex,16)); });
